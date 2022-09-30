@@ -24,6 +24,11 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = "(module\n  (func(nop))\n)"
+  expected = ['module', ['func', ['nop']]]
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     pp s_expression
@@ -63,7 +68,7 @@ class SExpressionParser
   end
 
   def parse_atom
-    read %r{[^) \n]+}
+    read %r{[^() \n]+}
   end
 
   def can_read?(pattern)
