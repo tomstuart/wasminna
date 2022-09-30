@@ -48,15 +48,20 @@ class SExpressionParser
     expression
   end
 
+  def parse_expressions
+    expressions = []
+    loop do
+      skip_whitespace
+      break if can_read? %r{\)}
+      expressions << parse_expression
+    end
+    expressions
+  end
+
   def parse_expression
     if can_read? %r{\(}
-      expressions = []
       read %r{\(}
-      loop do
-        skip_whitespace
-        break if can_read? %r{\)}
-        expressions << parse_expression
-      end
+      expressions = parse_expressions
       read %r{\)}
       expressions
     else
