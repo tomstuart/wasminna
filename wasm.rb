@@ -54,6 +54,11 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = '"hello \" world"'
+  expected = ['"hello \" world"']
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     pp s_expression
@@ -107,7 +112,7 @@ class SExpressionParser
 
   def parse_string
     read %r{"}
-    string = read %r{[^"]*}
+    string = read %r{(\\"|[^"])*}
     read %r{"}
     %Q{"#{string}"}
   end
