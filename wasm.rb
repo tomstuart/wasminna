@@ -1,36 +1,36 @@
 def main
   input = 'hello'
-  expected = 'hello'
-  actual = SExpressionParser.new.parse(input)
-  raise actual.inspect unless actual == expected
-
-  input = '(hello)'
   expected = ['hello']
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = '(hello)'
+  expected = [['hello']]
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   input = '(hello world)'
-  expected = ['hello', 'world']
+  expected = [['hello', 'world']]
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
   input = '((hello goodbye) world)'
-  expected = [['hello', 'goodbye'], 'world']
+  expected = [[['hello', 'goodbye'], 'world']]
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
   input = "(module\n  (func (nop))\n)"
-  expected = ['module', ['func', ['nop']]]
+  expected = [['module', ['func', ['nop']]]]
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
   input = "(module\n  (func(nop))\n)"
-  expected = ['module', ['func', ['nop']]]
+  expected = [['module', ['func', ['nop']]]]
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
   input = "(module\n  (func (nop)nop)\n)"
-  expected = ['module', ['func', ['nop'], 'nop']]
+  expected = [['module', ['func', ['nop'], 'nop']]]
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
@@ -43,16 +43,16 @@ end
 class SExpressionParser
   def parse(string)
     self.string = string
-    expression = parse_expression
+    expressions = parse_expressions
     read %r{\z}
-    expression
+    expressions
   end
 
   def parse_expressions
     expressions = []
     loop do
       skip_whitespace
-      break if can_read? %r{\)}
+      break if can_read? %r{\)|\z}
       expressions << parse_expression
     end
     expressions
