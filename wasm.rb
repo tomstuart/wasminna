@@ -29,11 +29,15 @@ class SExpressionParser
       read %r{\)}
       expressions
     else
-      read %r{[^)]+}
+      parse_atom
     end
   end
 
   private
+
+  def parse_atom
+    read %r{[^)]+}
+  end
 
   def can_read?(pattern)
     %r{\A#{pattern}}.match?(string)
