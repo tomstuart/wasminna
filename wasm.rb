@@ -48,16 +48,16 @@ end
 class SExpressionParser
   def parse(string)
     self.string = string
-    expressions = parse_expressions
+    expressions = parse_expressions terminated_by: %r{\z}
     read %r{\z}
     expressions
   end
 
-  def parse_expressions
+  def parse_expressions(terminated_by:)
     expressions = []
     loop do
       skip_whitespace
-      break if can_read? %r{\)|\z}
+      break if can_read? terminated_by
       expressions << parse_expression
     end
     expressions
@@ -66,7 +66,7 @@ class SExpressionParser
   def parse_expression
     if can_read? %r{\(}
       read %r{\(}
-      expressions = parse_expressions
+      expressions = parse_expressions terminated_by: %r{\)}
       read %r{\)}
       expressions
     else
