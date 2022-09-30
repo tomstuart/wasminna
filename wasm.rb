@@ -28,7 +28,9 @@ end
 class SExpressionParser
   def parse(string)
     self.string = string
-    parse_expression
+    expression = parse_expression
+    read %r{\z}
+    expression
   end
 
   def parse_expression
