@@ -4,8 +4,10 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise unless actual == expected
 
-  s_expression = SExpressionParser.new.parse(ARGF.read)
-  pp s_expression
+  unless ARGV.empty?
+    s_expression = SExpressionParser.new.parse(ARGF.read)
+    pp s_expression
+  end
 end
 
 class SExpressionParser
