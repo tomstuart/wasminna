@@ -9,6 +9,16 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = '(hello world)'
+  expected = ['hello', 'world']
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
+  input = '((hello goodbye) world)'
+  expected = [['hello', 'goodbye'], 'world']
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     pp s_expression
@@ -25,7 +35,11 @@ class SExpressionParser
     if can_read? %r{\(}
       expressions = []
       read %r{\(}
-      expressions << parse_expression
+      loop do
+        skip_whitespace
+        break if can_read? %r{\)}
+        expressions << parse_expression
+      end
       read %r{\)}
       expressions
     else
@@ -35,8 +49,14 @@ class SExpressionParser
 
   private
 
+  def skip_whitespace
+    if can_read? %r{ +}
+      read %r{ +}
+    end
+  end
+
   def parse_atom
-    read %r{[^)]+}
+    read %r{[^) ]+}
   end
 
   def can_read?(pattern)
