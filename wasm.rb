@@ -34,6 +34,11 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = '(module) (module)'
+  expected = [['module'], ['module']]
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     pp s_expression
