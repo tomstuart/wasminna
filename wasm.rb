@@ -39,6 +39,11 @@ def main
   actual = SExpressionParser.new.parse(input)
   raise actual.inspect unless actual == expected
 
+  input = ";; Tokens can be delimited by parentheses\n\n(module\n  (func(nop))\n)"
+  expected = [['module', ['func', ['nop']]]]
+  actual = SExpressionParser.new.parse(input)
+  raise actual.inspect unless actual == expected
+
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     pp s_expression
@@ -56,7 +61,7 @@ class SExpressionParser
   def parse_expressions(terminated_by:)
     expressions = []
     loop do
-      skip_whitespace
+      skip_whitespace_and_comments
       break if can_read? terminated_by
       expressions << parse_expression
     end
@@ -76,9 +81,15 @@ class SExpressionParser
 
   private
 
-  def skip_whitespace
-    if can_read? %r{[ \n]+}
-      read %r{[ \n]+}
+  def skip_whitespace_and_comments
+    loop do
+      if can_read? %r{[ \n]+}
+        read %r{[ \n]+}
+      elsif can_read? %r{;;.*$}
+        read %r{;;.*$}
+      else
+        break
+      end
     end
   end
 
