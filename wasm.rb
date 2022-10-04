@@ -73,6 +73,10 @@ class SExpressionParser
     expressions
   end
 
+  private
+
+  attr_accessor :string
+
   def parse_expressions(terminated_by:)
     expressions = []
     loop do
@@ -95,8 +99,6 @@ class SExpressionParser
       parse_atom
     end
   end
-
-  private
 
   def skip_whitespace_and_comments
     loop do
@@ -130,8 +132,6 @@ class SExpressionParser
     self.string = match.post_match
     match.to_s
   end
-
-  attr_accessor :string
 end
 
 main
