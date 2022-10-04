@@ -25,10 +25,23 @@ class Interpreter
       in ['assert_return', ['invoke', name], ['i32.const', expected_value]]
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
+
+        actual_value = evaluate(function.body)
+
+        if actual_value == expected_value
+          puts "#{actual_value.inspect} == #{expected_value.inspect}"
+        else
+          raise "expected #{expected_value.inspect}, got #{actual_value.inspect}"
+        end
       in ['assert_malformed', *]
         # TODO
       end
     end
+  end
+
+  private
+
+  def evaluate(expression)
   end
 end
 
