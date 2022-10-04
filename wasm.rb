@@ -89,10 +89,7 @@ class SExpressionParser
 
   def parse_expression
     if can_read? %r{\(}
-      read %r{\(}
-      expressions = parse_expressions terminated_by: %r{\)}
-      read %r{\)}
-      expressions
+      parse_list
     elsif can_read? %r{"}
       parse_string
     else
@@ -110,6 +107,13 @@ class SExpressionParser
         break
       end
     end
+  end
+
+  def parse_list
+    read %r{\(}
+    expressions = parse_expressions terminated_by: %r{\)}
+    read %r{\)}
+    expressions
   end
 
   def parse_string
