@@ -64,11 +64,18 @@ class Interpreter
         string.to_i(10)
       end
 
-    if signed
-      (1 << bits) - magnitude
-    else
-      magnitude
-    end
+    value =
+      if signed
+        (1 << bits) - magnitude
+      else
+        magnitude
+      end
+
+    mask(value, bits:)
+  end
+
+  def mask(value, bits:)
+    value & ((1 << bits) - 1)
   end
 end
 
