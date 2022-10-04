@@ -124,13 +124,17 @@ class SExpressionParser
   end
 
   def can_read?(pattern)
-    %r{\A#{pattern}}.match?(string)
+    !try_match(pattern).nil?
   end
 
   def read(pattern)
-    match = %r{\A#{pattern}}.match(string) or raise "couldn’t match #{pattern} in #{string.inspect}"
+    match = try_match(pattern) or raise "couldn’t match #{pattern} in #{string.inspect}"
     self.string = match.post_match
     match.to_s
+  end
+
+  def try_match(pattern)
+    %r{\A#{pattern}}.match(string)
   end
 end
 
