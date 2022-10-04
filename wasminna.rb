@@ -47,11 +47,17 @@ class Interpreter
     case expression
     in ['return', return_expression]
       evaluate(return_expression)
-    in ['i32.const' | 'i64.const' => instruction, value]
-      bits = instruction.slice(%r{\d+}).to_i
-      interpret_integer(value, bits:)
-    in ['i32.add' | 'i64.add', left, right]
-      evaluate(left) + evaluate(right)
+    in [%r{i(?<bits>32|64).(?<operation>.+)}, *arguments]
+      match = Regexp.last_match
+      bits = match[:bits].to_i
+      operation = match[:operation]
+
+      case [operation, *arguments]
+      in ['const', value]
+        interpret_integer(value, bits:)
+      in ['add', left, right]
+        evaluate(left) + evaluate(right)
+      end
     end
   end
 
