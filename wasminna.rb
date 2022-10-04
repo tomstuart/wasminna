@@ -52,10 +52,20 @@ class Interpreter
   end
 
   def interpret_integer(string, bits:)
-    if string.start_with?('0x')
-      string.to_i(16)
+    signed = string.start_with?('-')
+    string = string.tr('-', '')
+
+    magnitude =
+      if string.start_with?('0x')
+        string.to_i(16)
+      else
+        string.to_i(10)
+      end
+
+    if signed
+      (1 << bits) - magnitude
     else
-      string.to_i(10)
+      magnitude
     end
   end
 end
