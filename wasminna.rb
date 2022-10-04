@@ -42,6 +42,12 @@ class Interpreter
   private
 
   def evaluate(expression)
+    case expression
+    in ['return', return_expression]
+      evaluate(return_expression)
+    in ['i32.const', value]
+      value
+    end
   end
 end
 
