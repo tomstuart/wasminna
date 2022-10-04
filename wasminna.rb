@@ -22,8 +22,9 @@ class Interpreter
             functions << Function.new(name:, body:)
           end
         end
-      in ['assert_return', *]
-        # TODO
+      in ['assert_return', ['invoke', name], ['i32.const', expected_value]]
+        function = functions.detect { |function| function.name == name }
+        raise "couldn’t find function #{name}" if function.nil?
       in ['assert_malformed', *]
         # TODO
       end
