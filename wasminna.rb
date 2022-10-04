@@ -22,11 +22,12 @@ class Interpreter
             functions << Function.new(name:, body:)
           end
         end
-      in ['assert_return', ['invoke', name], ['i32.const', expected]]
+      in ['assert_return', ['invoke', name], ['i32.const' | 'i64.const' => instruction, expected]]
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
 
-        expected_value = interpret_integer(expected, bits: 32)
+        bits = instruction.slice(%r{\d+}).to_i
+        expected_value = interpret_integer(expected, bits:)
         actual_value = evaluate(function.body)
 
         if actual_value == expected_value
@@ -46,9 +47,10 @@ class Interpreter
     case expression
     in ['return', return_expression]
       evaluate(return_expression)
-    in ['i32.const', value]
-      interpret_integer(value, bits: 32)
-    in ['i32.add', left, right]
+    in ['i32.const' | 'i64.const' => instruction, value]
+      bits = instruction.slice(%r{\d+}).to_i
+      interpret_integer(value, bits:)
+    in ['i32.add' | 'i64.add', left, right]
       evaluate(left) + evaluate(right)
     end
   end
