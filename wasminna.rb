@@ -9,6 +9,16 @@ end
 
 class Interpreter
   def interpret(script)
+    script.each do |command|
+      case command
+      in ['module', *]
+        # TODO
+      in ['assert_return', *]
+        # TODO
+      in ['assert_malformed', *]
+        # TODO
+      end
+    end
   end
 end
 
