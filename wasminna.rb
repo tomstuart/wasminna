@@ -26,7 +26,7 @@ class Interpreter
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
 
-        expected_value = interpret_integer(expected)
+        expected_value = interpret_integer(expected, bits: 32)
         actual_value = evaluate(function.body)
 
         if actual_value == expected_value
@@ -47,11 +47,11 @@ class Interpreter
     in ['return', return_expression]
       evaluate(return_expression)
     in ['i32.const', value]
-      interpret_integer(value)
+      interpret_integer(value, bits: 32)
     end
   end
 
-  def interpret_integer(string)
+  def interpret_integer(string, bits:)
     if string.start_with?('0x')
       string.to_i(16)
     else
