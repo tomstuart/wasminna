@@ -22,7 +22,11 @@ class Interpreter
             functions << Function.new(name:, body:)
           end
         end
-      in ['assert_return', ['invoke', name], [%r{i(?<bits>32|64).const} => instruction, expected]]
+      in [
+        'assert_return',
+        ['invoke', name],
+        [%r{i(?<bits>32|64).const} => instruction, expected]
+      ]
         match = Regexp.last_match
         bits = match[:bits].to_i
 
