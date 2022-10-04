@@ -22,10 +22,11 @@ class Interpreter
             functions << Function.new(name:, body:)
           end
         end
-      in ['assert_return', ['invoke', name], ['i32.const', expected_value]]
+      in ['assert_return', ['invoke', name], ['i32.const', expected]]
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
 
+        expected_value = interpret_integer(expected)
         actual_value = evaluate(function.body)
 
         if actual_value == expected_value
@@ -46,8 +47,12 @@ class Interpreter
     in ['return', return_expression]
       evaluate(return_expression)
     in ['i32.const', value]
-      value
+      interpret_integer(value)
     end
+  end
+
+  def interpret_integer(string)
+    string
   end
 end
 
