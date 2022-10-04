@@ -52,7 +52,11 @@ class Interpreter
   end
 
   def interpret_integer(string)
-    string
+    if string.start_with?('0x')
+      string.to_i(16)
+    else
+      string.to_i(10)
+    end
   end
 end
 
