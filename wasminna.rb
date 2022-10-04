@@ -48,6 +48,8 @@ class Interpreter
       evaluate(return_expression)
     in ['i32.const', value]
       interpret_integer(value, bits: 32)
+    in ['i32.add', left, right]
+      evaluate(left) + evaluate(right)
     end
   end
 
