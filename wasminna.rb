@@ -8,7 +8,8 @@ def main
 end
 
 class Interpreter
-  Function = Struct.new(:name, :body, keyword_init: true)
+  Parameter = Struct.new(:name, keyword_init: true)
+  Function = Struct.new(:name, :parameters, :body, keyword_init: true)
 
   def interpret(script)
     functions = []
@@ -19,7 +20,12 @@ class Interpreter
         expressions.each do |expression|
           case expression
           in ['func', ['export', name], *parameters, ['result', _], body]
-            functions << Function.new(name:, body:)
+            parameters =
+              parameters.map do |parameter; name|
+                parameter => ['param', name, _]
+                Parameter.new(name:)
+              end
+            functions << Function.new(name:, parameters:, body:)
           end
         end
       in [
