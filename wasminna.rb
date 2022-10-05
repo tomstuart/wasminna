@@ -87,6 +87,11 @@ class Interpreter
         unsigned(signed_result, bits:)
       in ['div_u', left, right]
         divide(evaluate(left, locals:), evaluate(right, locals:))
+      in ['rem_s', left, right]
+        signed_left = signed(evaluate(left, locals:), bits:)
+        signed_right = signed(evaluate(right, locals:), bits:)
+        signed_result = modulo(signed_left, signed_right)
+        unsigned(signed_result, bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
@@ -99,6 +104,10 @@ class Interpreter
     else
       quotient
     end
+  end
+
+  def modulo(dividend, divisor)
+    dividend - (divisor * divide(dividend, divisor))
   end
 
   def signed(unsigned, bits:)
