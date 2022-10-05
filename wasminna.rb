@@ -124,6 +124,14 @@ class Interpreter
           count += 1
         end
         count
+      in ['ctz', value]
+        value = evaluate(value, locals:)
+        count = 0
+        0.upto(bits - 1) do |position|
+          break if (value & (1 << position)).nonzero?
+          count += 1
+        end
+        count
       end.then { |value| mask(value, bits:) }
     end
   end
