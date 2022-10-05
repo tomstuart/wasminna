@@ -40,7 +40,7 @@ class Interpreter
         raise "couldn’t find function #{name}" if function.nil?
 
         expected_value = interpret_integer(expected, bits:)
-        actual_value = evaluate(function.body)
+        actual_value = evaluate(function.body, locals: {})
 
         if actual_value == expected_value
           puts "#{actual_value.inspect} == #{expected_value.inspect}"
@@ -55,10 +55,10 @@ class Interpreter
 
   private
 
-  def evaluate(expression)
+  def evaluate(expression, locals:)
     case expression
     in ['return', return_expression]
-      evaluate(return_expression)
+      evaluate(return_expression, locals:)
     in [%r{\Ai(?<bits>32|64)\.(?<operation>.+)\z}, *arguments]
       match = Regexp.last_match
       bits = match[:bits].to_i
@@ -68,7 +68,7 @@ class Interpreter
       in ['const', value]
         interpret_integer(value, bits:)
       in ['add', left, right]
-        evaluate(left) + evaluate(right)
+        evaluate(left, locals:) + evaluate(right, locals:)
       end
     end
   end
