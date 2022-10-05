@@ -83,9 +83,19 @@ class Interpreter
       in ['div_s', left, right]
         signed_left = signed(evaluate(left, locals:), bits:)
         signed_right = signed(evaluate(right, locals:), bits:)
-        signed_result = signed_left / signed_right
+        signed_result = divide(signed_left, signed_right)
         unsigned(signed_result, bits:)
       end.then { |value| mask(value, bits:) }
+    end
+  end
+
+  def divide(dividend, divisor)
+    quotient = dividend / divisor
+
+    if quotient.negative? && (dividend % divisor).nonzero?
+      quotient + 1
+    else
+      quotient
     end
   end
 
