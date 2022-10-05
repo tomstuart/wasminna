@@ -102,6 +102,10 @@ class Interpreter
         evaluate(left, locals:) ^ evaluate(right, locals:)
       in ['shl', left, right]
         evaluate(left, locals:) << (evaluate(right, locals:) % bits)
+      in ['shr_s', left, right]
+        signed_left = signed(evaluate(left, locals:), bits:)
+        signed_result = signed_left >> (evaluate(right, locals:) % bits)
+        unsigned(signed_result, bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
