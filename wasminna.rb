@@ -148,6 +148,8 @@ class Interpreter
         bool(evaluate(value, locals:).zero?)
       in ['eq', left, right]
         bool(evaluate(left, locals:) == evaluate(right, locals:))
+      in ['ne', left, right]
+        bool(evaluate(left, locals:) != evaluate(right, locals:))
       end.then { |value| mask(value, bits:) }
     end
   end
