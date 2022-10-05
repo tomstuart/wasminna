@@ -132,6 +132,13 @@ class Interpreter
           count += 1
         end
         count
+      in ['popcnt', value]
+        value = evaluate(value, locals:)
+        count = 0
+        0.upto(bits - 1) do |position|
+          count += 1 if (value & (1 << position)).nonzero?
+        end
+        count
       end.then { |value| mask(value, bits:) }
     end
   end
