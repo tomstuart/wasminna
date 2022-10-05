@@ -123,7 +123,8 @@ class Interpreter
   end
 
   def mask(value, bits:)
-    value & ((1 << bits) - 1)
+    size = 1 << bits
+    value & (size - 1)
   end
 end
 
