@@ -64,6 +64,8 @@ class Interpreter
     case expression
     in ['return', return_expression]
       evaluate(return_expression, locals:)
+    in ['local.get', name]
+      locals.fetch(name)
     in [%r{\Ai(?<bits>32|64)\.(?<operation>.+)\z}, *arguments]
       match = Regexp.last_match
       bits = match[:bits].to_i
