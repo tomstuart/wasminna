@@ -139,9 +139,11 @@ class Interpreter
           count += 1 if (value & (1 << position)).nonzero?
         end
         count
-      in ['extend8_s', value]
+      in [%r{\Aextend(?<bits>8|16)_s\z}, value]
+        match = Regexp.last_match
+        extend_bits = match[:bits].to_i
         value = evaluate(value, locals:)
-        unsigned(signed(value, bits: 8), bits:)
+        unsigned(signed(value, bits: extend_bits), bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
