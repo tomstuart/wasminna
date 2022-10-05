@@ -96,6 +96,8 @@ class Interpreter
         modulo(evaluate(left, locals:), evaluate(right, locals:))
       in ['and', left, right]
         evaluate(left, locals:) & evaluate(right, locals:)
+      in ['or', left, right]
+        evaluate(left, locals:) | evaluate(right, locals:)
       end.then { |value| mask(value, bits:) }
     end
   end
