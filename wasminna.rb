@@ -98,6 +98,8 @@ class Interpreter
         evaluate(left, locals:) & evaluate(right, locals:)
       in ['or', left, right]
         evaluate(left, locals:) | evaluate(right, locals:)
+      in ['xor', left, right]
+        evaluate(left, locals:) ^ evaluate(right, locals:)
       end.then { |value| mask(value, bits:) }
     end
   end
