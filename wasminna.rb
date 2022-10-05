@@ -106,6 +106,8 @@ class Interpreter
         signed_left = signed(evaluate(left, locals:), bits:)
         signed_result = signed_left >> (evaluate(right, locals:) % bits)
         unsigned(signed_result, bits:)
+      in ['shr_u', left, right]
+        evaluate(left, locals:) >> (evaluate(right, locals:) % bits)
       end.then { |value| mask(value, bits:) }
     end
   end
