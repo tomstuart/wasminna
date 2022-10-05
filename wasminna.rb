@@ -108,6 +108,10 @@ class Interpreter
         unsigned(signed_result, bits:)
       in ['shr_u', left, right]
         evaluate(left, locals:) >> (evaluate(right, locals:) % bits)
+      in ['rotl', left, right]
+        value = evaluate(left, locals:)
+        distance = evaluate(right, locals:) % bits
+        (value << distance) | (value >> (bits - distance))
       end.then { |value| mask(value, bits:) }
     end
   end
