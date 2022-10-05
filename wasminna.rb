@@ -85,6 +85,8 @@ class Interpreter
         signed_right = signed(evaluate(right, locals:), bits:)
         signed_result = divide(signed_left, signed_right)
         unsigned(signed_result, bits:)
+      in ['div_u', left, right]
+        divide(evaluate(left, locals:), evaluate(right, locals:))
       end.then { |value| mask(value, bits:) }
     end
   end
