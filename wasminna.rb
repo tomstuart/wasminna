@@ -94,6 +94,8 @@ class Interpreter
         unsigned(signed_result, bits:)
       in ['rem_u', left, right]
         modulo(evaluate(left, locals:), evaluate(right, locals:))
+      in ['and', left, right]
+        evaluate(left, locals:) & evaluate(right, locals:)
       end.then { |value| mask(value, bits:) }
     end
   end
