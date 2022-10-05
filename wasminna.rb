@@ -18,13 +18,13 @@ class Interpreter
       in ['module', *expressions]
         expressions.each do |expression|
           case expression
-          in ['func', ['export', name], ['result', _], body]
+          in ['func', ['export', name], *parameters, ['result', _], body]
             functions << Function.new(name:, body:)
           end
         end
       in [
         'assert_return',
-        ['invoke', name],
+        ['invoke', name, *arguments],
         [%r{\Ai(?<bits>32|64)\.const\z} => instruction, expected]
       ]
         match = Regexp.last_match
