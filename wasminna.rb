@@ -154,6 +154,8 @@ class Interpreter
         bool(signed(evaluate(left, locals:), bits:) < signed(evaluate(right, locals:), bits:))
       in ['lt_u', left, right]
         bool(evaluate(left, locals:) < evaluate(right, locals:))
+      in ['le_s', left, right]
+        bool(signed(evaluate(left, locals:), bits:) <= signed(evaluate(right, locals:), bits:))
       end.then { |value| mask(value, bits:) }
     end
   end
