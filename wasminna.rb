@@ -52,7 +52,7 @@ class Interpreter
         else
           raise "expected #{expected_value.inspect}, got #{actual_value.inspect}"
         end
-      in ['assert_malformed', *]
+      in ['assert_malformed' | 'assert_trap', *]
         # TODO
       end
     end
