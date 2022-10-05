@@ -68,7 +68,7 @@ class Interpreter
   end
 
   def interpret_integer(string, bits:)
-    signed = string.start_with?('-')
+    negated = string.start_with?('-')
     string = string.tr('-', '')
 
     magnitude =
@@ -79,7 +79,7 @@ class Interpreter
       end
 
     value =
-      if signed
+      if negated
         (1 << bits) - magnitude
       else
         magnitude
