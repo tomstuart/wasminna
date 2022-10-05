@@ -16,3 +16,4 @@ jobs:
         ruby-version: '3.1'
     - run: ruby -Iwasminna wasminna/s_expression_parser_test.rb
     - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/int_literals.wast
+    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/i32.wast
