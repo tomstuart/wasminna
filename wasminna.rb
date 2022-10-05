@@ -80,6 +80,11 @@ class Interpreter
         evaluate(left, locals:) - evaluate(right, locals:)
       in ['mul', left, right]
         evaluate(left, locals:) * evaluate(right, locals:)
+      in ['div_s', left, right]
+        signed_left = signed(evaluate(left, locals:), bits:)
+        signed_right = signed(evaluate(right, locals:), bits:)
+        signed_result = signed_left / signed_right
+        unsigned(signed_result, bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
