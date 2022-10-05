@@ -116,6 +116,14 @@ class Interpreter
         value = evaluate(left, locals:)
         distance = evaluate(right, locals:) % bits
         (value << (bits - distance)) | (value >> distance)
+      in ['clz', value]
+        value = evaluate(value, locals:)
+        count = 0
+        (bits - 1).downto(0) do |position|
+          break if (value & (1 << position)).nonzero?
+          count += 1
+        end
+        count
       end.then { |value| mask(value, bits:) }
     end
   end
