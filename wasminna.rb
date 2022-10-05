@@ -76,6 +76,8 @@ class Interpreter
         interpret_integer(value, bits:)
       in ['add', left, right]
         evaluate(left, locals:) + evaluate(right, locals:)
+      in ['sub', left, right]
+        evaluate(left, locals:) - evaluate(right, locals:)
       end.then { |value| mask(value, bits:) }
     end
   end
