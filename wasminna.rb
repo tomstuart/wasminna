@@ -100,6 +100,8 @@ class Interpreter
         evaluate(left, locals:) | evaluate(right, locals:)
       in ['xor', left, right]
         evaluate(left, locals:) ^ evaluate(right, locals:)
+      in ['shl', left, right]
+        evaluate(left, locals:) << (evaluate(right, locals:) % bits)
       end.then { |value| mask(value, bits:) }
     end
   end
