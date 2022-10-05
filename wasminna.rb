@@ -158,6 +158,7 @@ class Interpreter
   end
 
   def signed(unsigned, bits:)
+    unsigned = mask(unsigned, bits:)
     size = 1 << bits
 
     if unsigned < size / 2
@@ -168,6 +169,7 @@ class Interpreter
   end
 
   def unsigned(signed, bits:)
+    signed = mask(signed, bits:)
     size = 1 << bits
 
     if signed.negative?
