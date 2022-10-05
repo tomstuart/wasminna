@@ -112,6 +112,10 @@ class Interpreter
         value = evaluate(left, locals:)
         distance = evaluate(right, locals:) % bits
         (value << distance) | (value >> (bits - distance))
+      in ['rotr', left, right]
+        value = evaluate(left, locals:)
+        distance = evaluate(right, locals:) % bits
+        (value << (bits - distance)) | (value >> distance)
       end.then { |value| mask(value, bits:) }
     end
   end
