@@ -120,7 +120,7 @@ class Interpreter
         value = evaluate(value, locals:)
         count = 0
         (bits - 1).downto(0) do |position|
-          break if (value & (1 << position)).nonzero?
+          break if value[position].nonzero?
           count += 1
         end
         count
@@ -128,7 +128,7 @@ class Interpreter
         value = evaluate(value, locals:)
         count = 0
         0.upto(bits - 1) do |position|
-          break if (value & (1 << position)).nonzero?
+          break if value[position].nonzero?
           count += 1
         end
         count
@@ -136,7 +136,7 @@ class Interpreter
         value = evaluate(value, locals:)
         count = 0
         0.upto(bits - 1) do |position|
-          count += 1 if (value & (1 << position)).nonzero?
+          count += 1 if value[position].nonzero?
         end
         count
       in [%r{\Aextend(?<bits>8|16)_s\z}, value]
