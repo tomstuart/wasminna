@@ -164,6 +164,8 @@ class Interpreter
         bool(evaluate(left, locals:) > evaluate(right, locals:))
       in ['ge_s', left, right]
         bool(signed(evaluate(left, locals:), bits:) >= signed(evaluate(right, locals:), bits:))
+      in ['ge_u', left, right]
+        bool(evaluate(left, locals:) >= evaluate(right, locals:))
       end.then { |value| mask(value, bits:) }
     end
   end
