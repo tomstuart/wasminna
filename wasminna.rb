@@ -139,6 +139,9 @@ class Interpreter
           count += 1 if (value & (1 << position)).nonzero?
         end
         count
+      in ['extend8_s', value]
+        value = evaluate(value, locals:)
+        unsigned(signed(value, bits: 8), bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
