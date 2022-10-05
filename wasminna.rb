@@ -25,7 +25,7 @@ class Interpreter
       in [
         'assert_return',
         ['invoke', name],
-        [%r{i(?<bits>32|64).const} => instruction, expected]
+        [%r{i(?<bits>32|64)\.const} => instruction, expected]
       ]
         match = Regexp.last_match
         bits = match[:bits].to_i
@@ -53,7 +53,7 @@ class Interpreter
     case expression
     in ['return', return_expression]
       evaluate(return_expression)
-    in [%r{i(?<bits>32|64).(?<operation>.+)}, *arguments]
+    in [%r{i(?<bits>32|64)\.(?<operation>.+)}, *arguments]
       match = Regexp.last_match
       bits = match[:bits].to_i
       operation = match[:operation]
