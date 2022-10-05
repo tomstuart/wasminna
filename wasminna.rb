@@ -144,6 +144,8 @@ class Interpreter
         extend_bits = match[:bits].to_i
         value = evaluate(value, locals:)
         unsigned(signed(value, bits: extend_bits), bits:)
+      in ['eqz', value]
+        bool(evaluate(value, locals:).zero?)
       end.then { |value| mask(value, bits:) }
     end
   end
@@ -160,6 +162,10 @@ class Interpreter
 
   def modulo(dividend, divisor)
     dividend - (divisor * divide(dividend, divisor))
+  end
+
+  def bool(value)
+    value ? 1 : 0
   end
 
   def signed(unsigned, bits:)
