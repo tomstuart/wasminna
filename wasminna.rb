@@ -40,7 +40,12 @@ class Interpreter
         raise "couldn’t find function #{name}" if function.nil?
 
         expected_value = interpret_integer(expected, bits:)
-        actual_value = evaluate(function.body, locals: {})
+
+        parameter_names = function.parameters.map(&:name)
+        argument_values =
+          arguments.map { |argument| evaluate(argument, locals: {}) }
+        locals = parameter_names.zip(argument_values).to_h
+        actual_value = evaluate(function.body, locals:)
 
         if actual_value == expected_value
           puts "#{actual_value.inspect} == #{expected_value.inspect}"
