@@ -84,6 +84,26 @@ class Interpreter
     end
   end
 
+  def signed(unsigned, bits:)
+    size = 1 << bits
+
+    if unsigned < size / 2
+      unsigned
+    else
+      unsigned - size
+    end
+  end
+
+  def unsigned(signed, bits:)
+    size = 1 << bits
+
+    if signed.negative?
+      signed + size
+    else
+      signed
+    end
+  end
+
   def interpret_integer(string, bits:)
     negated = string.start_with?('-')
     string = string.tr('-', '')
