@@ -91,14 +91,11 @@ class Interpreter
         string.to_i(10)
       end
 
-    value =
-      if negated
-        (1 << bits) - magnitude
-      else
-        magnitude
-      end
-
-    mask(value, bits:)
+    if negated
+      (1 << bits) - magnitude
+    else
+      magnitude
+    end
   end
 
   def mask(value, bits:)
