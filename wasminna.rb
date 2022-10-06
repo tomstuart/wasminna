@@ -144,6 +144,8 @@ class Interpreter
         extend_bits = match[:bits].to_i
         value = evaluate(value, locals:)
         unsigned(signed(value, bits: extend_bits), bits:)
+      in ['extend_i32_u', value]
+        evaluate(value, locals:)
       in ['eqz', value]
         bool(evaluate(value, locals:).zero?)
       in ['eq', left, right]
