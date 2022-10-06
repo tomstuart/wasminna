@@ -116,27 +116,13 @@ class Interpreter
         (value << (bits - distance)) | (value >> distance)
       in ['clz', value]
         value = evaluate(value, locals:)
-        count = 0
-        (bits - 1).downto(0) do |position|
-          break if value[position].nonzero?
-          count += 1
-        end
-        count
+        0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
       in ['ctz', value]
         value = evaluate(value, locals:)
-        count = 0
-        0.upto(bits - 1) do |position|
-          break if value[position].nonzero?
-          count += 1
-        end
-        count
+        0.upto(bits).take_while { |count| value[0, count].zero? }.last
       in ['popcnt', value]
         value = evaluate(value, locals:)
-        count = 0
-        0.upto(bits - 1) do |position|
-          count += 1 if value[position].nonzero?
-        end
-        count
+        0.upto(bits - 1).count { |position| value[position].nonzero? }
       in [%r{\Aextend(_i)?(8|16|32)_s\z}, value]
         extend_bits = operation.slice(%r{\d+}).to_i(10)
         value = evaluate(value, locals:)
