@@ -31,10 +31,9 @@ class Interpreter
       in [
         'assert_return',
         ['invoke', name, *arguments],
-        [%r{\Ai(?<bits>32|64)\.const\z} => instruction, expected]
+        ['i32.const' | 'i64.const' => instruction, expected]
       ]
-        match = Regexp.last_match
-        bits = match[:bits].to_i
+        bits = instruction.slice(%r{\d+}).to_i(10)
 
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
@@ -66,10 +65,9 @@ class Interpreter
       evaluate(return_expression, locals:)
     in ['local.get', name]
       locals.fetch(name)
-    in [%r{\Ai(?<bits>32|64)\.(?<operation>.+)\z}, *arguments]
-      match = Regexp.last_match
-      bits = match[:bits].to_i
-      operation = match[:operation]
+    in [%r{\Ai(32|64)\.} => instruction, *arguments]
+      type, operation = instruction.split('.')
+      bits = type.slice(%r{\d+}).to_i(10)
 
       case [operation, *arguments]
       in ['const', value]
@@ -139,9 +137,8 @@ class Interpreter
           count += 1 if value[position].nonzero?
         end
         count
-      in [%r{\Aextend(?:_i)?(?<bits>8|16|32)_s\z}, value]
-        match = Regexp.last_match
-        extend_bits = match[:bits].to_i
+      in [%r{\Aextend(_i)?(8|16|32)_s\z}, value]
+        extend_bits = operation.slice(%r{\d+}).to_i(10)
         value = evaluate(value, locals:)
         unsigned(signed(value, bits: extend_bits), bits:)
       in ['extend_i32_u', value]
