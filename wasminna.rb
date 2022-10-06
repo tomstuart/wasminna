@@ -166,6 +166,8 @@ class Interpreter
         bool(signed(evaluate(left, locals:), bits:) >= signed(evaluate(right, locals:), bits:))
       in ['ge_u', left, right]
         bool(evaluate(left, locals:) >= evaluate(right, locals:))
+      in ['wrap_i64', value]
+        evaluate(value, locals:)
       end.then { |value| mask(value, bits:) }
     end
   end
