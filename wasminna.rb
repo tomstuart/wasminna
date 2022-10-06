@@ -237,21 +237,14 @@ class Interpreter
   end
 
   def interpret_integer(string, bits:)
-    negated = string.start_with?('-')
-    string = string.tr('-', '')
-
-    magnitude =
-      if string.start_with?('0x')
+    value =
+      if string.delete_prefix('-').start_with?('0x')
         string.to_i(16)
       else
         string.to_i(10)
       end
 
-    if negated
-      (1 << bits) - magnitude
-    else
-      magnitude
-    end
+    unsigned(value, bits:)
   end
 
   def mask(value, bits:)
