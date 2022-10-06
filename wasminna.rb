@@ -73,40 +73,50 @@ class Interpreter
       in ['const', value]
         interpret_integer(value, bits:)
       in ['add', left, right]
-        evaluate(left, locals:) + evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left + right
       in ['sub', left, right]
-        evaluate(left, locals:) - evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left - right
       in ['mul', left, right]
-        evaluate(left, locals:) * evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left * right
       in ['div_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           divide(left, right)
         end
       in ['div_u', left, right]
-        divide(evaluate(left, locals:), evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        divide(left, right)
       in ['rem_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           modulo(left, right)
         end
       in ['rem_u', left, right]
-        modulo(evaluate(left, locals:), evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        modulo(left, right)
       in ['and', left, right]
-        evaluate(left, locals:) & evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left & right
       in ['or', left, right]
-        evaluate(left, locals:) | evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left | right
       in ['xor', left, right]
-        evaluate(left, locals:) ^ evaluate(right, locals:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left ^ right
       in ['shl', left, right]
-        evaluate(left, locals:) << (evaluate(right, locals:) % bits)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left << (right % bits)
       in ['shr_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, bits:) do |left|
           left >> (right % bits)
         end
       in ['shr_u', left, right]
-        evaluate(left, locals:) >> (evaluate(right, locals:) % bits)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        left >> (right % bits)
       in ['rotl', left, right]
         value = evaluate(left, locals:)
         distance = evaluate(right, locals:) % bits
@@ -131,39 +141,46 @@ class Interpreter
       in ['extend_i32_u', value]
         evaluate(value, locals:)
       in ['eqz', value]
-        bool(evaluate(value, locals:).zero?)
+        value = evaluate(value, locals:)
+        bool(value.zero?)
       in ['eq', left, right]
-        bool(evaluate(left, locals:) == evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left == right)
       in ['ne', left, right]
-        bool(evaluate(left, locals:) != evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left != right)
       in ['lt_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left < right)
         end
       in ['lt_u', left, right]
-        bool(evaluate(left, locals:) < evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left < right)
       in ['le_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left <= right)
         end
       in ['le_u', left, right]
-        bool(evaluate(left, locals:) <= evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left <= right)
       in ['gt_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left > right)
         end
       in ['gt_u', left, right]
-        bool(evaluate(left, locals:) > evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left > right)
       in ['ge_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left >= right)
         end
       in ['ge_u', left, right]
-        bool(evaluate(left, locals:) >= evaluate(right, locals:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        bool(left >= right)
       in ['wrap_i64', value]
         evaluate(value, locals:)
       end.then { |value| mask(value, bits:) }
