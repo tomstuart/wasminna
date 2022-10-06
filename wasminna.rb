@@ -79,17 +79,17 @@ class Interpreter
       in ['mul', left, right]
         evaluate(left, locals:) * evaluate(right, locals:)
       in ['div_s', left, right]
-        signed_left = signed(evaluate(left, locals:), bits:)
-        signed_right = signed(evaluate(right, locals:), bits:)
-        signed_result = divide(signed_left, signed_right)
-        unsigned(signed_result, bits:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          divide(left, right)
+        end
       in ['div_u', left, right]
         divide(evaluate(left, locals:), evaluate(right, locals:))
       in ['rem_s', left, right]
-        signed_left = signed(evaluate(left, locals:), bits:)
-        signed_right = signed(evaluate(right, locals:), bits:)
-        signed_result = modulo(signed_left, signed_right)
-        unsigned(signed_result, bits:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          modulo(left, right)
+        end
       in ['rem_u', left, right]
         modulo(evaluate(left, locals:), evaluate(right, locals:))
       in ['and', left, right]
@@ -155,6 +155,13 @@ class Interpreter
         evaluate(value, locals:)
       end.then { |value| mask(value, bits:) }
     end
+  end
+
+  def with_signed(unsigned_left, unsigned_right, bits:)
+    signed_left = signed(unsigned_left, bits:)
+    signed_right = signed(unsigned_right, bits:)
+    signed_result = yield(signed_left, signed_right)
+    unsigned(signed_result, bits:)
   end
 
   def divide(dividend, divisor)
