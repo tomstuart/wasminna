@@ -28,11 +28,7 @@ class Interpreter
             functions << Function.new(name:, parameters:, body:)
           end
         end
-      in [
-        'assert_return',
-        ['invoke', name, *arguments],
-        expected
-      ]
+      in ['assert_return', ['invoke', name, *arguments], expected]
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
 
