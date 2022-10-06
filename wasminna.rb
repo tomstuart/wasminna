@@ -71,122 +71,93 @@ class Interpreter
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
+      arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
       case [operation, *arguments]
       in ['add', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left + right
       in ['sub', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left - right
       in ['mul', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left * right
       in ['div_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           divide(left, right)
         end
       in ['div_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         divide(left, right)
       in ['rem_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           modulo(left, right)
         end
       in ['rem_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         modulo(left, right)
       in ['and', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left & right
       in ['or', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left | right
       in ['xor', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         left ^ right
       in ['shl', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         right %= bits
         left << right
       in ['shr_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         right %= bits
         with_signed(left, bits:) do |left|
           left >> right
         end
       in ['shr_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         right %= bits
         left >> right
       in ['rotl', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         right %= bits
         (left << right) | (left >> (bits - right))
       in ['rotr', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         right %= bits
         (left << (bits - right)) | (left >> right)
       in ['clz', value]
-        value = evaluate(value, locals:)
         0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
       in ['ctz', value]
-        value = evaluate(value, locals:)
         0.upto(bits).take_while { |count| value[0, count].zero? }.last
       in ['popcnt', value]
-        value = evaluate(value, locals:)
         0.upto(bits - 1).count { |position| value[position].nonzero? }
       in [%r{\Aextend(_i)?(8|16|32)_s\z}, value]
         extend_bits = operation.slice(%r{\d+}).to_i(10)
-        value = evaluate(value, locals:)
         unsigned(signed(value, bits: extend_bits), bits:)
       in ['extend_i32_u', value]
-        evaluate(value, locals:)
+        value
       in ['eqz', value]
-        value = evaluate(value, locals:)
         bool(value.zero?)
       in ['eq', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left == right)
       in ['ne', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left != right)
       in ['lt_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left < right)
         end
       in ['lt_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left < right)
       in ['le_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left <= right)
         end
       in ['le_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left <= right)
       in ['gt_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left > right)
         end
       in ['gt_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left > right)
       in ['ge_s', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         with_signed(left, right, bits:) do |left, right|
           bool(left >= right)
         end
       in ['ge_u', left, right]
-        left, right = evaluate(left, locals:), evaluate(right, locals:)
         bool(left >= right)
       in ['wrap_i64', value]
-        evaluate(value, locals:)
+        value
       end.then { |value| mask(value, bits:) }
     end
   end
