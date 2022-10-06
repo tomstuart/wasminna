@@ -121,13 +121,13 @@ class Interpreter
         right %= bits
         left >> right
       in ['rotl', left, right]
-        value = evaluate(left, locals:)
-        distance = evaluate(right, locals:) % bits
-        (value << distance) | (value >> (bits - distance))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        right %= bits
+        (left << right) | (left >> (bits - right))
       in ['rotr', left, right]
-        value = evaluate(left, locals:)
-        distance = evaluate(right, locals:) % bits
-        (value << (bits - distance)) | (value >> distance)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        right %= bits
+        (left << (bits - right)) | (left >> right)
       in ['clz', value]
         value = evaluate(value, locals:)
         0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
