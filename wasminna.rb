@@ -65,13 +65,14 @@ class Interpreter
       evaluate(return_expression, locals:)
     in ['local.get', name]
       locals.fetch(name)
+    in ['i32.const' | 'i64.const' => instruction, value]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      interpret_integer(value, bits:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
 
       case [operation, *arguments]
-      in ['const', value]
-        interpret_integer(value, bits:)
       in ['add', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
         left + right
