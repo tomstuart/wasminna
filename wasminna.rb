@@ -101,9 +101,10 @@ class Interpreter
       in ['shl', left, right]
         evaluate(left, locals:) << (evaluate(right, locals:) % bits)
       in ['shr_s', left, right]
-        signed_left = signed(evaluate(left, locals:), bits:)
-        signed_result = signed_left >> (evaluate(right, locals:) % bits)
-        unsigned(signed_result, bits:)
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, bits:) do |left|
+          left >> (right % bits)
+        end
       in ['shr_u', left, right]
         evaluate(left, locals:) >> (evaluate(right, locals:) % bits)
       in ['rotl', left, right]
@@ -157,10 +158,9 @@ class Interpreter
     end
   end
 
-  def with_signed(unsigned_left, unsigned_right, bits:)
-    signed_left = signed(unsigned_left, bits:)
-    signed_right = signed(unsigned_right, bits:)
-    signed_result = yield(signed_left, signed_right)
+  def with_signed(*unsigned_args, bits:)
+    signed_args = unsigned_args.map { |arg| signed(arg, bits:) }
+    signed_result = yield *signed_args
     unsigned(signed_result, bits:)
   end
 
