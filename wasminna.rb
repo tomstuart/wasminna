@@ -31,14 +31,12 @@ class Interpreter
       in [
         'assert_return',
         ['invoke', name, *arguments],
-        ['i32.const' | 'i64.const' => instruction, expected]
+        expected
       ]
-        bits = instruction.slice(%r{\d+}).to_i(10)
-
         function = functions.detect { |function| function.name == name }
         raise "couldn’t find function #{name}" if function.nil?
 
-        expected_value = interpret_integer(expected, bits:)
+        expected_value = evaluate(expected, locals: {})
 
         parameter_names = function.parameters.map(&:name)
         argument_values =
