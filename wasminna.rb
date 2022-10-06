@@ -108,15 +108,18 @@ class Interpreter
         left ^ right
       in ['shl', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
-        left << (right % bits)
+        right %= bits
+        left << right
       in ['shr_s', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
+        right %= bits
         with_signed(left, bits:) do |left|
-          left >> (right % bits)
+          left >> right
         end
       in ['shr_u', left, right]
         left, right = evaluate(left, locals:), evaluate(right, locals:)
-        left >> (right % bits)
+        right %= bits
+        left >> right
       in ['rotl', left, right]
         value = evaluate(left, locals:)
         distance = evaluate(right, locals:) % bits
