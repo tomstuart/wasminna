@@ -137,19 +137,31 @@ class Interpreter
       in ['ne', left, right]
         bool(evaluate(left, locals:) != evaluate(right, locals:))
       in ['lt_s', left, right]
-        bool(signed(evaluate(left, locals:), bits:) < signed(evaluate(right, locals:), bits:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          bool(left < right)
+        end
       in ['lt_u', left, right]
         bool(evaluate(left, locals:) < evaluate(right, locals:))
       in ['le_s', left, right]
-        bool(signed(evaluate(left, locals:), bits:) <= signed(evaluate(right, locals:), bits:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          bool(left <= right)
+        end
       in ['le_u', left, right]
         bool(evaluate(left, locals:) <= evaluate(right, locals:))
       in ['gt_s', left, right]
-        bool(signed(evaluate(left, locals:), bits:) > signed(evaluate(right, locals:), bits:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          bool(left > right)
+        end
       in ['gt_u', left, right]
         bool(evaluate(left, locals:) > evaluate(right, locals:))
       in ['ge_s', left, right]
-        bool(signed(evaluate(left, locals:), bits:) >= signed(evaluate(right, locals:), bits:))
+        left, right = evaluate(left, locals:), evaluate(right, locals:)
+        with_signed(left, right, bits:) do |left, right|
+          bool(left >= right)
+        end
       in ['ge_u', left, right]
         bool(evaluate(left, locals:) >= evaluate(right, locals:))
       in ['wrap_i64', value]
