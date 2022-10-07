@@ -225,8 +225,7 @@ class Interpreter
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-')
 
-    case string
-    in %r{
+    if match = %r{
       \A
       nan
       (?:
@@ -236,8 +235,7 @@ class Interpreter
         )
       )?
       \z
-    }x
-      match = Regexp.last_match
+    }x.match(string)
       value = [Float::NAN].pack('F').unpack1('L')
 
       unless match[:payload].nil?
@@ -252,6 +250,8 @@ class Interpreter
       end
 
       value
+    else
+      raise "can’t parse float: #{string.inspect}"
     end
   end
 
