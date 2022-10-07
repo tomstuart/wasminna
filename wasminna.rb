@@ -231,6 +231,23 @@ class Interpreter
       )?
       \z
     }x
+  HEXFLOAT_REGEXP =
+    %r{
+      \A
+      0x
+      (?<p>
+        [0-9a-f]+
+      )
+      \.
+      (?<q>
+        [0-9a-f]+
+      )
+      p
+      (?<e>
+        [0-9]+
+      )
+      \z
+    }x
 
   def interpret_float(string, bits:)
     raise unless bits == 32
@@ -252,6 +269,12 @@ class Interpreter
         nan
       elsif string == 'inf'
         [Float::INFINITY].pack('F').unpack1('L')
+      elsif match = HEXFLOAT_REGEXP.match(string)
+        p, q, e = match.values_at(:p, :q, :e)
+        value =
+          (p.to_i(16) + (q.to_i(16) * (16 ** -q.length))) * (2 ** e.to_i(10))
+
+        [value].pack('F').unpack1('L')
       else
         raise "can’t parse float: #{string.inspect}"
       end
