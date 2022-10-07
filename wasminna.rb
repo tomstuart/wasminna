@@ -156,7 +156,8 @@ class Interpreter
       in ['wrap_i64', value]
         value
       in ['reinterpret_f32', value]
-        raise unless bits == 32
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        raise unless bits == float_bits
         value
       end.then { |value| mask(value, bits:) }
     end
