@@ -276,7 +276,7 @@ class Interpreter
     }x
 
   def interpret_float(string, bits:)
-    raise unless bits == 32
+    raise "unsupported float width: #{bits}" unless bits == 32
 
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-')
