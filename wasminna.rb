@@ -219,13 +219,8 @@ class Interpreter
     unsigned(value, bits:)
   end
 
-  def interpret_float(string, bits:)
-    raise unless bits == 32
-
-    negated = string.start_with?('-')
-    string = string.delete_prefix('+').delete_prefix('-')
-
-    if match = %r{
+  NAN_REGEXP =
+    %r{
       \A
       nan
       (?:
@@ -235,7 +230,15 @@ class Interpreter
         )
       )?
       \z
-    }x.match(string)
+    }x
+
+  def interpret_float(string, bits:)
+    raise unless bits == 32
+
+    negated = string.start_with?('-')
+    string = string.delete_prefix('+').delete_prefix('-')
+
+    if match = NAN_REGEXP.match(string)
       value = [Float::NAN].pack('F').unpack1('L')
 
       unless match[:payload].nil?
