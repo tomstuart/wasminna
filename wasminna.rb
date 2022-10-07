@@ -253,6 +253,8 @@ class Interpreter
       end
 
       value
+    elsif string == 'inf'
+      [Float::INFINITY].pack('F').unpack1('L')
     else
       raise "can’t parse float: #{string.inspect}"
     end
