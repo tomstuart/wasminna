@@ -155,7 +155,7 @@ class Interpreter
         bool(left >= right)
       in ['wrap_i64', value]
         value
-      in ['reinterpret_f32', value]
+      in ['reinterpret_f32' | 'reinterpret_f64', value]
         float_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == float_bits
         value
