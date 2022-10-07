@@ -238,32 +238,29 @@ class Interpreter
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-')
 
-    if match = NAN_REGEXP.match(string)
-      value = [Float::NAN].pack('F').unpack1('L')
+    value =
+      if match = NAN_REGEXP.match(string)
+        nan = [Float::NAN].pack('F').unpack1('L')
 
-      unless match[:payload].nil?
-        payload = match[:payload].to_i(16)
-        mask_bits = 9
-        top_mask = ((1 << mask_bits) - 1) << (bits - mask_bits)
-        value = (value & top_mask) | payload
+        unless match[:payload].nil?
+          payload = match[:payload].to_i(16)
+          mask_bits = 9
+          top_mask = ((1 << mask_bits) - 1) << (bits - mask_bits)
+          nan = (nan & top_mask) | payload
+        end
+
+        nan
+      elsif string == 'inf'
+        [Float::INFINITY].pack('F').unpack1('L')
+      else
+        raise "can’t parse float: #{string.inspect}"
       end
 
-      if negated
-        value |= 1 << (bits - 1)
-      end
-
-      value
-    elsif string == 'inf'
-      value = [Float::INFINITY].pack('F').unpack1('L')
-
-      if negated
-        value |= 1 << (bits - 1)
-      end
-
-      value
-    else
-      raise "can’t parse float: #{string.inspect}"
+    if negated
+      value |= 1 << (bits - 1)
     end
+
+    value
   end
 
   def mask(value, bits:)
