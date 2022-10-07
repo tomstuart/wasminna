@@ -226,8 +226,26 @@ class Interpreter
     string = string.delete_prefix('+').delete_prefix('-')
 
     case string
-    in 'nan'
+    in %r{
+      \A
+      nan
+      (?:
+        :0x
+        (?<payload>
+          [0-9a-f]+
+        )
+      )?
+      \z
+    }x
+      match = Regexp.last_match
       value = [Float::NAN].pack('F').unpack1('L')
+
+      unless match[:payload].nil?
+        payload = match[:payload].to_i(16)
+        mask_bits = 9
+        top_mask = ((1 << mask_bits) - 1) << (bits - mask_bits)
+        value = (value & top_mask) | payload
+      end
 
       if negated
         value |= 1 << (bits - 1)
