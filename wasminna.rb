@@ -254,7 +254,13 @@ class Interpreter
 
       value
     elsif string == 'inf'
-      [Float::INFINITY].pack('F').unpack1('L')
+      value = [Float::INFINITY].pack('F').unpack1('L')
+
+      if negated
+        value |= 1 << (bits - 1)
+      end
+
+      value
     else
       raise "can’t parse float: #{string.inspect}"
     end
