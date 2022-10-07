@@ -155,6 +155,9 @@ class Interpreter
         bool(left >= right)
       in ['wrap_i64', value]
         value
+      in ['reinterpret_f32', value]
+        raise unless bits == 32
+        value
       end.then { |value| mask(value, bits:) }
     end
   end
