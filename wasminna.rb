@@ -276,37 +276,43 @@ class Interpreter
     }x
 
   def interpret_float(string, bits:)
-    raise "unsupported float width: #{bits}" unless bits == 32
+    pack_format, unpack_format, exponent_bits =
+      case bits
+      in 32
+        ['F', 'L', 8]
+      else
+        raise "unsupported float width: #{bits}"
+      end
 
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-')
 
     value =
       if match = NAN_REGEXP.match(string)
-        nan = [Float::NAN].pack('F').unpack1('L')
+        nan = [Float::NAN].pack(pack_format).unpack1(unpack_format)
 
         unless match[:payload].nil?
           payload = match[:payload].to_i(16)
-          mask_bits = 9
+          mask_bits = exponent_bits + 1
           top_mask = ((1 << mask_bits) - 1) << (bits - mask_bits)
           nan = (nan & top_mask) | payload
         end
 
         nan
       elsif string == 'inf'
-        [Float::INFINITY].pack('F').unpack1('L')
+        [Float::INFINITY].pack(pack_format).unpack1(unpack_format)
       elsif match = HEXFLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
         value =
           (p.to_i(16) + (q.to_i(16) * (16 ** -q.length))) * (2 ** e.to_i(10))
 
-        [value].pack('F').unpack1('L')
+        [value].pack(pack_format).unpack1(unpack_format)
       elsif match = FLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
         value =
           (p.to_i(10) + (q.to_i(10) * (10 ** -q.length))) * (10 ** e.to_i(10))
 
-        [value].pack('F').unpack1('L')
+        [value].pack(pack_format).unpack1(unpack_format)
       else
         raise "can’t parse float: #{string.inspect}"
       end
