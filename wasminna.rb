@@ -62,6 +62,9 @@ class Interpreter
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
+    in ['f32.const' => instruction, value]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      interpret_float(value, bits:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
@@ -211,6 +214,15 @@ class Interpreter
       end
 
     unsigned(value, bits:)
+  end
+
+  def interpret_float(string, bits:)
+    raise unless bits == 32
+
+    case string
+    in 'nan'
+      [Float::NAN].pack('F').unpack1('L')
+    end
   end
 
   def mask(value, bits:)
