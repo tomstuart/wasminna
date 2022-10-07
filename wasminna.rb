@@ -222,6 +222,8 @@ class Interpreter
   def interpret_float(string, bits:)
     raise unless bits == 32
 
+    string = string.delete_prefix('+')
+
     case string
     in 'nan'
       [Float::NAN].pack('F').unpack1('L')
