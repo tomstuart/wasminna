@@ -241,7 +241,7 @@ class Interpreter
       (?:
         \.
         (?<q>
-          [0-9a-f]+
+          [0-9a-f]*
         )
       )?
       p
