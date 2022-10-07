@@ -238,10 +238,12 @@ class Interpreter
       (?<p>
         [0-9a-f]+
       )
-      \.
-      (?<q>
-        [0-9a-f]+
-      )
+      (?:
+        \.
+        (?<q>
+          [0-9a-f]+
+        )
+      )?
       p
       (?<e>
         [+-]?
@@ -271,7 +273,7 @@ class Interpreter
       elsif string == 'inf'
         [Float::INFINITY].pack('F').unpack1('L')
       elsif match = HEXFLOAT_REGEXP.match(string)
-        p, q, e = match.values_at(:p, :q, :e)
+        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
         value =
           (p.to_i(16) + (q.to_i(16) * (16 ** -q.length))) * (2 ** e.to_i(10))
 
