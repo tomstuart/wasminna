@@ -244,7 +244,7 @@ class Interpreter
       )
       p
       (?<e>
-        \+?
+        [+-]?
         [0-9]+
       )
       \z
