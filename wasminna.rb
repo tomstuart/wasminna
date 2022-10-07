@@ -41,9 +41,9 @@ class Interpreter
         actual_value = evaluate(function.body, locals:)
 
         if actual_value == expected_value
-          puts "#{actual_value.inspect} == #{expected_value.inspect}"
+          puts "#{name.tr('"', '')}: #{actual_value.inspect} == #{expected_value.inspect}"
         else
-          raise "expected #{expected_value.inspect}, got #{actual_value.inspect}"
+          raise "#{name.tr('"', '')}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
         end
       in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
         # TODO
