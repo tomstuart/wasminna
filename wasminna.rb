@@ -62,7 +62,7 @@ class Interpreter
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
-    in ['f32.const' => instruction, value]
+    in ['f32.const' | 'f64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_float(value, bits:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
@@ -280,6 +280,8 @@ class Interpreter
       case bits
       in 32
         ['F', 'L', 8]
+      in 64
+        ['D', 'Q', 11]
       else
         raise "unsupported float width: #{bits}"
       end
