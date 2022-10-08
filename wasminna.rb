@@ -227,7 +227,7 @@ class Interpreter
       (?:
         :0x
         (?<payload>
-          [0-9a-f]+
+          \h+
         )
       )?
       \z
@@ -237,12 +237,12 @@ class Interpreter
       \A
       0x
       (?<p>
-        [0-9a-f]+
+        \h+
       )
       (?:
         \.
         (?<q>
-          [0-9a-f]*
+          \h*
         )
       )?
       (?:
