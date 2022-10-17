@@ -289,7 +289,7 @@ class Interpreter
       end
 
     negated = string.start_with?('-')
-    string = string.delete_prefix('+').delete_prefix('-')
+    string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
 
     value =
       if match = NAN_REGEXP.match(string)
