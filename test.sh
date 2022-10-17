@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -ex
 
 WASMINNA_PATH=$(dirname "$0")
 
