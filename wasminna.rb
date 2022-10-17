@@ -244,7 +244,7 @@ class Interpreter
       arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
       case [operation, *arguments]
-      in ['convert_i32_s', value]
+      in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == 32
         float = signed(value, bits: integer_bits).to_f
