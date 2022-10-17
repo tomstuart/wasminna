@@ -17,6 +17,8 @@ class Interpreter
 
     script.each do |command|
       case command
+      in ['module', 'binary', *]
+        # TODO
       in ['module', *expressions]
         expressions.each do |expression|
           case expression
@@ -31,7 +33,10 @@ class Interpreter
         end
       in ['assert_return', ['invoke', name, *arguments], expected]
         function = functions.detect { |function| function.name == name }
-        raise "couldn’t find function #{name}" if function.nil?
+        if function.nil?
+          warn "couldn’t find function #{name} (could be binary?), skipping"
+          next
+        end
 
         expected_value = evaluate(expected, locals: {})
 
