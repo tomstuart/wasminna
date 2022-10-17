@@ -247,7 +247,7 @@ class Interpreter
         )
       )?
       (?:
-        p
+        [Pp]
         (?<e>
           [+-]?
           [0-9]+
@@ -268,7 +268,7 @@ class Interpreter
         )
       )?
       (?:
-        e
+        [Ee]
         (?<e>
           [+-]?
           [0-9]+
