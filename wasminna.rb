@@ -166,16 +166,12 @@ class Interpreter
         raise unless bits == float_bits
         value
       in ['trunc_f32_s', value]
-        raise unless bits == 32
         unsigned([value].pack('L').unpack1('F').truncate, bits:)
       in ['trunc_f64_s', value]
-        raise unless bits == 32
         unsigned([value].pack('Q').unpack1('D').truncate, bits:)
       in ['trunc_f32_u', value]
-        raise unless bits == 32
         [value].pack('L').unpack1('F').truncate
       in ['trunc_f64_u', value]
-        raise unless bits == 32
         [value].pack('Q').unpack1('D').truncate
       end.then { |value| mask(value, bits:) }
     end
