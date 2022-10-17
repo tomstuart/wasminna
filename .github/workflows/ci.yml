@@ -19,3 +19,4 @@ jobs:
     - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/i32.wast
     - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/i64.wast
     - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/int_exprs.wast
+    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/float_literals.wast
