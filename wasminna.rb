@@ -187,6 +187,22 @@ class Interpreter
         unsigned([value].pack('Q').unpack1('D').truncate, bits:)
       in ['trunc_f32_u', value]
         [value].pack('L').unpack1('F').truncate
+      in ['trunc_sat_f32_u', value]
+        result = [value].pack('L').unpack1('F')
+        result =
+          if result.nan?
+            0
+          elsif result.infinite?
+            result
+          else
+            result.truncate
+          end
+
+        size = 1 << bits
+        min, max = 0, size - 1
+        result = result.clamp(min, max)
+
+        result
       in ['trunc_f64_u', value]
         [value].pack('Q').unpack1('D').truncate
       end.then { |value| mask(value, bits:) }
