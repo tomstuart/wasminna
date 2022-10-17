@@ -4,11 +4,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
+      WASMINNA_PATH: wasminna
       WASM_SPEC_PATH: spec
     steps:
     - uses: actions/checkout@v3
       with:
-        path: wasminna
+        path: ${{ env.WASMINNA_PATH }}
     - uses: actions/checkout@v3
       with:
         repository: WebAssembly/spec
@@ -16,4 +17,5 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.1'
-    - run: wasminna/test.sh
+    - run: |
+        "$WASMINNA_PATH"/test.sh
