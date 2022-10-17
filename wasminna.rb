@@ -174,6 +174,9 @@ class Interpreter
       in ['trunc_f32_u', value]
         raise unless bits == 32
         [value].pack('L').unpack1('F').truncate
+      in ['trunc_f64_u', value]
+        raise unless bits == 32
+        [value].pack('Q').unpack1('D').truncate
       end.then { |value| mask(value, bits:) }
     end
   end
