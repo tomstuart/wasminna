@@ -221,6 +221,22 @@ class Interpreter
         result
       in ['trunc_f64_u', value]
         [value].pack('Q').unpack1('D').truncate
+      in ['trunc_sat_f64_u', value]
+        result = [value].pack('Q').unpack1('D')
+        result =
+          if result.nan?
+            0
+          elsif result.infinite?
+            result
+          else
+            result.truncate
+          end
+
+        size = 1 << bits
+        min, max = 0, size - 1
+        result = result.clamp(min, max)
+
+        result
       end.then { |value| mask(value, bits:) }
     in [%r{\Af(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
