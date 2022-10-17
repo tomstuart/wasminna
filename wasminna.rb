@@ -174,6 +174,18 @@ class Interpreter
       in ['trunc_f64_u', value]
         [value].pack('Q').unpack1('D').truncate
       end.then { |value| mask(value, bits:) }
+    in [%r{\Af(32|64)\.} => instruction, *arguments]
+      type, operation = instruction.split('.')
+      bits = type.slice(%r{\d+}).to_i(10)
+      arguments = arguments.map { |arg| evaluate(arg, locals:) }
+
+      case [operation, *arguments]
+      in ['convert_i32_s', value]
+        integer_bits = operation.slice(%r{\d+}).to_i(10)
+        raise unless bits == 32
+        float = signed(value, bits: integer_bits).to_f
+        [float].pack('F').unpack1('L')
+      end
     end
   end
 
