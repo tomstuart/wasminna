@@ -309,13 +309,13 @@ class Interpreter
         value =
           (p.to_i(16) + (q.to_i(16) * (16 ** -q.length))) * (2 ** e.to_i(10))
 
-        [value].pack(pack_format).unpack1(unpack_format)
+        [value.to_f].pack(pack_format).unpack1(unpack_format)
       elsif match = FLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
         value =
           (p.to_i(10) + (q.to_i(10) * (10 ** -q.length))) * (10 ** e.to_i(10))
 
-        [value].pack(pack_format).unpack1(unpack_format)
+        [value.to_f].pack(pack_format).unpack1(unpack_format)
       else
         raise "can’t parse float: #{string.inspect}"
       end
