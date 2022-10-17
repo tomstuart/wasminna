@@ -3,6 +3,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      WASM_SPEC_PATH: spec
     steps:
     - uses: actions/checkout@v3
       with:
@@ -14,9 +16,4 @@ jobs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.1'
-    - run: ruby -Iwasminna wasminna/s_expression_parser_test.rb
-    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/int_literals.wast
-    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/i32.wast
-    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/i64.wast
-    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/int_exprs.wast
-    - run: ruby -Iwasminna wasminna/wasminna.rb spec/test/core/float_literals.wast
+    - run: wasminna/test.sh
