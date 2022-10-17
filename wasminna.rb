@@ -168,6 +168,9 @@ class Interpreter
       in ['trunc_f32_s', value]
         raise unless bits == 32
         unsigned([value].pack('L').unpack1('F').truncate, bits:)
+      in ['trunc_f64_s', value]
+        raise unless bits == 32
+        unsigned([value].pack('Q').unpack1('D').truncate, bits:)
       in ['trunc_f32_u', value]
         raise unless bits == 32
         [value].pack('L').unpack1('F').truncate
