@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 WASMINNA_PATH=$(dirname "$0")
 
 ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/s_expression_parser_test.rb
