@@ -225,7 +225,7 @@ class Interpreter
     %r{
       \A
       nan
-      (?:
+      (
         :0x
         (?<payload>
           [[:xdigit:]]+
@@ -240,13 +240,13 @@ class Interpreter
       (?<p>
         [[:xdigit:]]+
       )
-      (?:
+      (
         \.
         (?<q>
           [[:xdigit:]]*
         )
       )?
-      (?:
+      (
         [Pp]
         (?<e>
           [+-]?
@@ -261,13 +261,13 @@ class Interpreter
       (?<p>
         [[:digit:]]+
       )
-      (?:
+      (
         \.
         (?<q>
           [[:digit:]]*
         )
       )?
-      (?:
+      (
         [Ee]
         (?<e>
           [+-]?
