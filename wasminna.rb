@@ -165,6 +165,9 @@ class Interpreter
         float_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == float_bits
         value
+      in ['trunc_f32_s', value]
+        raise unless bits == 32
+        unsigned([value].pack('L').unpack1('F').truncate, bits:)
       end.then { |value| mask(value, bits:) }
     end
   end
