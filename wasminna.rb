@@ -124,7 +124,7 @@ class Interpreter
         0.upto(bits).take_while { |count| value[0, count].zero? }.last
       in ['popcnt', value]
         0.upto(bits - 1).count { |position| value[position].nonzero? }
-      in [%r{\Aextend(_i)?(8|16|32)_s\z}, value]
+      in ['extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s', value]
         extend_bits = operation.slice(%r{\d+}).to_i(10)
         unsigned(signed(value, bits: extend_bits), bits:)
       in ['extend_i32_u', value]
