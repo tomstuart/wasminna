@@ -169,7 +169,14 @@ class Interpreter
         unsigned([value].pack('L').unpack1('F').truncate, bits:)
       in ['trunc_sat_f32_s', value]
         result = [value].pack('L').unpack1('F')
-        result = result.truncate unless result.infinite?
+        result =
+          if result.nan?
+            0
+          elsif result.infinite?
+            result
+          else
+            result.truncate
+          end
 
         size = 1 << bits
         min, max = -(size / 2), (size / 2) - 1
