@@ -317,7 +317,7 @@ class Interpreter
       (
         :0x
         (?<payload>
-          [[:xdigit:]]+
+          \h+
         )
       )?
       \z
@@ -327,19 +327,19 @@ class Interpreter
       \A
       0x
       (?<p>
-        [[:xdigit:]]+
+        \h+
       )
       (
         \.
         (?<q>
-          [[:xdigit:]]*
+          \h*
         )
       )?
       (
         [Pp]
         (?<e>
           [+-]?
-          [[:digit:]]+
+          \d+
         )
       )?
       \z
@@ -348,19 +348,19 @@ class Interpreter
     %r{
       \A
       (?<p>
-        [[:digit:]]+
+        \d+
       )
       (
         \.
         (?<q>
-          [[:digit:]]*
+          \d*
         )
       )?
       (
         [Ee]
         (?<e>
           [+-]?
-          [[:digit:]]+
+          \d+
         )
       )?
       \z
