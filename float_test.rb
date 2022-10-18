@@ -9,6 +9,7 @@ def main
   assert_float_encoding 0x3ff0_0000_0000_0000, 1, 1, bits: 64
 
   assert_float_decoding 0, 1, false, 0x0000_0000, bits: 32
+  assert_float_decoding 1, 2 ** 149, false, 0x0000_0001, bits: 32
 end
 
 def assert_float_encoding(expected, numerator, denominator, negated: false, bits:)

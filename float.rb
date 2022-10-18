@@ -23,6 +23,12 @@ module Wasminna
       if exponent.zero?
         # either zero or subnormal
         significand = fraction
+
+        if significand.nonzero?
+          # subnormal
+          exponent -= fraction_bits - 1
+          exponent -= exponent_bias
+        end
       else
         significand = fraction | (1 << fraction_bits)
         exponent -= fraction_bits
