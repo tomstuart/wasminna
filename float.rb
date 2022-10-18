@@ -101,9 +101,11 @@ module Wasminna
         exponent_bias = (1 << (exponent_bits - 1)) - 1
         fraction_bits = significand_bits - 1
 
-        # calculate the range of valid significands
+        # calculate the range of valid significands and exponents
         min_significand = 1 << (significand_bits - 1)
         max_significand = (1 << significand_bits) - 1
+        min_exponent = -exponent_bias
+        max_exponent = exponent_bias
 
         self => { numerator:, denominator: }
 
@@ -115,14 +117,14 @@ module Wasminna
           exponent = fraction_bits
 
           numerator, denominator, exponent =
-            scale_significand(numerator, denominator, min_significand, max_significand, exponent)
+            scale_significand(numerator, denominator, min_significand, max_significand, exponent, min_exponent, max_exponent)
 
           # round the significand if necessary
           significand, remainder = numerator.divmod(denominator)
           if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
             significand += 1
             numerator, denominator, exponent =
-              scale_significand(significand, 1, min_significand, max_significand, exponent)
+              scale_significand(significand, 1, min_significand, max_significand, exponent, min_exponent, max_exponent)
             significand = numerator / denominator
           end
 
@@ -138,16 +140,16 @@ module Wasminna
 
       private
 
-      def scale_significand(numerator, denominator, min_significand, max_significand, exponent)
+      def scale_significand(numerator, denominator, min_significand, max_significand, exponent, min_exponent, max_exponent)
         # scale the significand up/down until it’s in range
         # and adjust the exponent to account for scaling
         loop do
           significand = numerator / denominator
 
-          if significand < min_significand
+          if significand < min_significand && exponent > min_exponent
             numerator <<= 1
             exponent -= 1
-          elsif significand > max_significand
+          elsif significand > max_significand && exponent < max_exponent
             denominator <<= 1
             exponent += 1
           else
