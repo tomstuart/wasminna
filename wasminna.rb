@@ -265,6 +265,9 @@ class Interpreter
       in ['promote_f32', value]
         raise unless bits == 64
         Wasminna::Float.decode(value, bits: 32).encode(bits:)
+      in ['demote_f64', value]
+        raise unless bits == 32
+        Wasminna::Float.decode(value, bits: 64).encode(bits:)
       end
     end
   end
