@@ -2,6 +2,10 @@ module Wasminna
   module Float
     module_function
 
+    def from_integer(integer)
+      Finite.new(numerator: integer.abs, denominator: 1, negated: integer.negative?)
+    end
+
     def decode(encoded, bits:)
       exponent_bits, significand_bits =
         case bits

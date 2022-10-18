@@ -248,9 +248,9 @@ class Interpreter
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
-        Wasminna::Float::Finite.new(numerator: integer.abs, denominator: 1, negated: integer.negative?).encode(bits:)
+        Wasminna::Float.from_integer(integer).encode(bits:)
       in ['convert_i32_u' | 'convert_i64_u', value]
-        Wasminna::Float::Finite.new(numerator: value, denominator: 1, negated: false).encode(bits:)
+        Wasminna::Float.from_integer(value).encode(bits:)
       in ['promote_f32', value]
         raise unless bits == 64
         Wasminna::Float.decode(value, bits: 32).encode(bits:)
