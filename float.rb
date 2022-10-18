@@ -25,8 +25,9 @@ module Wasminna
       negated = sign == 1
 
       if exponent == (1 << exponent_bits) - 1
-        # either infinity or NaN
-        return Infinite.new(negated:)
+        return fraction.zero? ?
+          Infinite.new(negated:) :
+          Nan.new(payload: fraction, negated:)
       end
 
       if exponent.zero?
@@ -67,6 +68,24 @@ module Wasminna
         sign = negated ? 1 : 0
         exponent = (1 << exponent_bits) - 1
         (sign << exponent_bits | exponent) << fraction_bits
+      end
+    end
+
+    Nan = Struct.new(:payload, :negated, keyword_init: true) do
+      def encode(bits:)
+        exponent_bits, significand_bits =
+          case bits
+          in 32
+            [8, 24]
+          in 64
+            [11, 53]
+          end
+        fraction_bits = significand_bits - 1
+
+        sign = negated ? 1 : 0
+        exponent = (1 << exponent_bits) - 1
+        fraction = payload & ((1 << fraction_bits) - 1)
+        (sign << exponent_bits | exponent) << fraction_bits | fraction
       end
     end
 
