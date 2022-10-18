@@ -13,13 +13,13 @@ def main
 end
 
 def assert_float_encoding(expected, numerator, denominator, negated: false, bits:)
-  actual = Wasminna::Float.encode(numerator, denominator, negated:, bits:)
+  actual = Wasminna::Float::Finite.new(numerator:, denominator:, negated:).encode(bits:)
   raise "expected #{expected}, got #{actual}" unless actual == expected
 end
 
 def assert_float_decoding(expected_numerator, expected_denominator, expected_negated, encoded, bits:)
   actual = Wasminna::Float.decode(encoded, bits:)
-  raise actual.inspect unless actual == [expected_numerator, expected_denominator, expected_negated]
+  raise actual.inspect unless [actual.numerator, actual.denominator, actual.negated] == [expected_numerator, expected_denominator, expected_negated]
 end
 
 main
