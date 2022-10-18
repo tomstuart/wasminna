@@ -29,6 +29,9 @@ module Wasminna
         significand, remainder = numerator.divmod(denominator)
         if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
           significand += 1
+          numerator, denominator, exponent =
+            scale_significand(significand, 1, min_significand, max_significand, exponent)
+          significand = numerator / denominator
         end
 
         # add bias to exponent
