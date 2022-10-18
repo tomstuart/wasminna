@@ -39,15 +39,26 @@ class Interpreter
           next
         end
 
-        expected_value = evaluate(expected, locals: {})
-
         parameter_names = function.parameters.map(&:name)
         argument_values =
           arguments.map { |argument| evaluate(argument, locals: {}) }
         locals = parameter_names.zip(argument_values).to_h
         actual_value = evaluate(function.body, locals:)
 
-        if actual_value == expected_value
+        case expected
+        in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+          expected_value = nan
+          bits = instruction.slice(%r{\d+}).to_i(10)
+          float = [actual_value].
+            pack({ 32 => 'L', 64 => 'Q' }.fetch(bits)).
+            unpack1({ 32 => 'F', 64 => 'D' }.fetch(bits))
+          success = float.nan? # TODO check whether canonical or arithmetic
+        else
+          expected_value = evaluate(expected, locals: {})
+          success = actual_value == expected_value
+        end
+
+        if success
           puts "#{name.tr('"', '')}: #{actual_value.inspect} == #{expected_value.inspect}"
         else
           raise "#{name.tr('"', '')}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
