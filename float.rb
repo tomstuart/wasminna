@@ -85,6 +85,8 @@ module Wasminna
         sign = negated ? 1 : 0
         exponent = (1 << exponent_bits) - 1
         fraction = payload & ((1 << fraction_bits) - 1)
+        fraction |= 1 << (fraction_bits - 1) if fraction.zero?
+
         (sign << exponent_bits | exponent) << fraction_bits | fraction
       end
     end
