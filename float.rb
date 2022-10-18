@@ -15,33 +15,38 @@ module Wasminna
       min_significand = 1 << (significand_bits - 1)
       max_significand = (1 << significand_bits) - 1
 
-      # initialise the exponent to account for normalised significand format
-      exponent = fraction_bits
+      if numerator.zero?
+        exponent = 0
+        significand = 0
+      else
+        # initialise the exponent to account for normalised significand format
+        exponent = fraction_bits
 
-      # scale the significand up/down until it’s in range
-      # and adjust the exponent to account for scaling
-      loop do
-        significand = numerator / denominator
+        # scale the significand up/down until it’s in range
+        # and adjust the exponent to account for scaling
+        loop do
+          significand = numerator / denominator
 
-        if significand < min_significand
-          numerator <<= 1
-          exponent -= 1
-        elsif significand > max_significand
-          denominator <<= 1
-          exponent += 1
-        else
-          break
+          if significand < min_significand
+            numerator <<= 1
+            exponent -= 1
+          elsif significand > max_significand
+            denominator <<= 1
+            exponent += 1
+          else
+            break
+          end
         end
-      end
 
-      # round the significand if necessary
-      significand, remainder = numerator.divmod(denominator)
-      if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
-        significand += 1
-      end
+        # round the significand if necessary
+        significand, remainder = numerator.divmod(denominator)
+        if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
+          significand += 1
+        end
 
-      # add bias to exponent
-      exponent += exponent_bias
+        # add bias to exponent
+        exponent += exponent_bias
+      end
 
       # assemble bits into float
       sign = negated ? 1 : 0
