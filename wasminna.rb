@@ -251,6 +251,11 @@ class Interpreter
         Wasminna::Float.encode(integer.abs, 1, negated: integer.negative?, bits:)
       in ['convert_i32_u' | 'convert_i64_u', value]
         Wasminna::Float.encode(value, 1, negated: false, bits:)
+      in ['promote_f32', value]
+        raise unless bits == 64
+        numerator, denominator, negated =
+          Wasminna::Float.decode(value, bits: 32)
+        Wasminna::Float.encode(numerator, denominator, negated:, bits:)
       end
     end
   end
