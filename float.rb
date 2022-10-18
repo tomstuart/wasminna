@@ -130,6 +130,9 @@ module Wasminna
 
           if significand < min_significand
             exponent -= 1
+          elsif significand > max_significand
+            significand = 0
+            exponent += 1
           end
 
           # add bias to exponent
