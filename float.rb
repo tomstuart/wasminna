@@ -22,21 +22,8 @@ module Wasminna
         # initialise the exponent to account for normalised significand format
         exponent = fraction_bits
 
-        # scale the significand up/down until it’s in range
-        # and adjust the exponent to account for scaling
-        loop do
-          significand = numerator / denominator
-
-          if significand < min_significand
-            numerator <<= 1
-            exponent -= 1
-          elsif significand > max_significand
-            denominator <<= 1
-            exponent += 1
-          else
-            break
-          end
-        end
+        numerator, denominator, exponent =
+          scale_significand(numerator, denominator, min_significand, max_significand, exponent)
 
         # round the significand if necessary
         significand, remainder = numerator.divmod(denominator)
@@ -52,6 +39,26 @@ module Wasminna
       sign = negated ? 1 : 0
       fraction = significand & ((1 << fraction_bits) - 1)
       (sign << exponent_bits | exponent) << fraction_bits | fraction
+    end
+
+    def scale_significand(numerator, denominator, min_significand, max_significand, exponent)
+      # scale the significand up/down until it’s in range
+      # and adjust the exponent to account for scaling
+      loop do
+        significand = numerator / denominator
+
+        if significand < min_significand
+          numerator <<= 1
+          exponent -= 1
+        elsif significand > max_significand
+          denominator <<= 1
+          exponent += 1
+        else
+          break
+        end
+      end
+
+      [numerator, denominator, exponent]
     end
   end
 end
