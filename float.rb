@@ -104,7 +104,7 @@ module Wasminna
         # calculate the range of valid significands and exponents
         min_significand = 1 << (significand_bits - 1)
         max_significand = (1 << significand_bits) - 1
-        min_exponent = -exponent_bias
+        min_exponent = -exponent_bias + 1
         max_exponent = exponent_bias
 
         self => { numerator:, denominator: }
@@ -126,6 +126,10 @@ module Wasminna
             numerator, denominator, exponent =
               scale_significand(significand, 1, min_significand, max_significand, exponent, min_exponent, max_exponent)
             significand = numerator / denominator
+          end
+
+          if significand < min_significand
+            exponent -= 1
           end
 
           # add bias to exponent
