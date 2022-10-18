@@ -247,7 +247,6 @@ class Interpreter
       case [operation, *arguments]
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
-        raise unless bits == 32
         integer = signed(value, bits: integer_bits)
         Wasminna::Float.encode(integer.abs, 1, negated: integer.negative?, bits:)
       end
