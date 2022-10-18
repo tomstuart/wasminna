@@ -24,6 +24,11 @@ module Wasminna
       sign = encoded & 1
       negated = sign == 1
 
+      if exponent == (1 << exponent_bits) - 1
+        # either infinity or NaN
+        return Infinite.new(negated:)
+      end
+
       if exponent.zero?
         # either zero or subnormal
         significand = fraction
@@ -46,6 +51,23 @@ module Wasminna
       end
 
       Finite.new(numerator:, denominator:, negated:)
+    end
+
+    Infinite = Struct.new(:negated, keyword_init: true) do
+      def encode(bits:)
+        exponent_bits, significand_bits =
+          case bits
+          in 32
+            [8, 24]
+          in 64
+            [11, 53]
+          end
+        fraction_bits = significand_bits - 1
+
+        sign = negated ? 1 : 0
+        exponent = (1 << exponent_bits) - 1
+        (sign << exponent_bits | exponent) << fraction_bits
+      end
     end
 
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
