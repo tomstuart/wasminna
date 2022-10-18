@@ -268,6 +268,10 @@ class Interpreter
       in ['demote_f64', value]
         raise unless bits == 32
         Wasminna::Float.decode(value, bits: 64).encode(bits:)
+      in ['reinterpret_i32' | 'reinterpret_i64', value]
+        integer_bits = operation.slice(%r{\d+}).to_i(10)
+        raise unless bits == integer_bits
+        value
       end
     end
   end
