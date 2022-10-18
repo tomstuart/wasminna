@@ -249,6 +249,8 @@ class Interpreter
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
         Wasminna::Float.encode(integer.abs, 1, negated: integer.negative?, bits:)
+      in ['convert_i32_u' | 'convert_i64_u', value]
+        Wasminna::Float.encode(value, 1, negated: false, bits:)
       end
     end
   end
