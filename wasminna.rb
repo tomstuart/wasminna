@@ -1,4 +1,5 @@
 require 'bigdecimal'
+require 'float'
 require 's_expression_parser'
 
 def main
@@ -247,8 +248,8 @@ class Interpreter
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == 32
-        float = signed(value, bits: integer_bits).to_f
-        [float].pack('F').unpack1('L')
+        integer = signed(value, bits: integer_bits)
+        Wasminna::Float.encode(integer.abs, 1, negated: integer.negative?, bits:)
       end
     end
   end
