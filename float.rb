@@ -7,6 +7,8 @@ module Wasminna
         case bits
         in 32
           [8, 24]
+        in 64
+          [11, 53]
         end
       exponent_bias = (1 << (exponent_bits - 1)) - 1
       fraction_bits = significand_bits - 1
