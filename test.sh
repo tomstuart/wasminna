@@ -4,7 +4,10 @@ set -ex
 
 WASMINNA_PATH=$(dirname "$0")
 
-ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/s_expression_parser_test.rb
+for test in s_expression_parser_test float_test
+do
+  ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/$test.rb
+done
 
 for script in int_literals i32 i64 int_exprs float_literals conversions
 do
