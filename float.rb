@@ -99,10 +99,10 @@ module Wasminna
         format = Format.for(bits:)
 
         # calculate the range of valid significands and exponents
-        min_significand = 1 << (format.significand_bits - 1)
-        max_significand = (1 << format.significand_bits) - 1
-        min_exponent = -format.exponent_bias + 1
-        max_exponent = format.exponent_bias
+        significands =
+          1 << (format.significand_bits - 1) .. (1 << format.significand_bits) - 1
+        exponents =
+          -format.exponent_bias + 1 .. format.exponent_bias
 
         self => { numerator:, denominator: }
 
@@ -114,20 +114,20 @@ module Wasminna
           exponent = format.fraction_bits
 
           numerator, denominator, exponent =
-            scale_significand(numerator, denominator, min_significand, max_significand, exponent, min_exponent, max_exponent)
+            scale_significand(numerator, denominator, significands, exponent, exponents)
 
           # round the significand if necessary
           significand, remainder = numerator.divmod(denominator)
           if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
             significand += 1
             numerator, denominator, exponent =
-              scale_significand(significand, 1, min_significand, max_significand, exponent, min_exponent, max_exponent)
+              scale_significand(significand, 1, significands, exponent, exponents)
             significand = numerator / denominator
           end
 
-          if significand < min_significand
+          if significand < significands.min
             exponent -= 1
-          elsif significand > max_significand
+          elsif significand > significands.max
             significand = 0
             exponent += 1
           end
@@ -144,16 +144,16 @@ module Wasminna
 
       private
 
-      def scale_significand(numerator, denominator, min_significand, max_significand, exponent, min_exponent, max_exponent)
+      def scale_significand(numerator, denominator, significands, exponent, exponents)
         # scale the significand up/down until it’s in range
         # and adjust the exponent to account for scaling
         loop do
           significand = numerator / denominator
 
-          if significand < min_significand && exponent > min_exponent
+          if significand < significands.min && exponent > exponents.min
             numerator <<= 1
             exponent -= 1
-          elsif significand > max_significand && exponent < max_exponent
+          elsif significand > significands.max && exponent < exponents.max
             denominator <<= 1
             exponent += 1
           else
