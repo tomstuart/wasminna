@@ -114,14 +114,14 @@ module Wasminna
           exponent = format.fraction_bits
 
           numerator, denominator, exponent =
-            scale_significand(numerator, denominator, exponent, significands, exponents)
+            scale_quotient(numerator, denominator, exponent, significands, exponents)
 
           # round the significand if necessary
           significand, remainder = numerator.divmod(denominator)
           if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
             significand += 1
             numerator, denominator, exponent =
-              scale_significand(significand, 1, exponent, significands, exponents)
+              scale_quotient(significand, 1, exponent, significands, exponents)
             significand = numerator / denominator
           end
 
@@ -144,16 +144,16 @@ module Wasminna
 
       private
 
-      def scale_significand(numerator, denominator, exponent, significands, exponents)
-        # scale the significand up/down until it’s in range
+      def scale_quotient(numerator, denominator, exponent, quotients, exponents)
+        # scale the quotient up/down until it’s in range
         # and adjust the exponent to account for scaling
         loop do
-          significand = numerator / denominator
+          quotient = numerator / denominator
 
-          if significand < significands.min && exponents.include?(exponent - 1)
+          if quotient < quotients.min && exponents.include?(exponent - 1)
             numerator <<= 1
             exponent -= 1
-          elsif significand > significands.max && exponents.include?(exponent + 1)
+          elsif quotient > quotients.max && exponents.include?(exponent + 1)
             denominator <<= 1
             exponent += 1
           else
