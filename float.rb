@@ -110,8 +110,7 @@ module Wasminna
         if significand < format.significands.min
           exponent = format.exponents.min - 1
         elsif significand > format.significands.max
-          significand = 0
-          exponent = format.exponents.max + 1
+          return Infinite.new(negated:).encode(bits:)
         end
 
         # add bias to exponent
