@@ -127,7 +127,7 @@ module Wasminna
 
       def approximate_within(format:)
         approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
-        approximation.scale_and_round_quotient \
+        approximation.fit_within \
           quotients: format.significands,
           exponents: format.exponents
 
@@ -139,12 +139,12 @@ module Wasminna
     end
 
     Approximation = Struct.new(:numerator, :denominator, :exponent, keyword_init: true) do
-      def scale_and_round_quotient(quotients:, exponents:)
-        scale_quotient(quotients:, exponents:)
-        round_quotient(quotients:, exponents:)
+      def fit_within(quotients:, exponents:)
+        scale_within(quotients:, exponents:)
+        round_within(quotients:, exponents:)
       end
 
-      def scale_quotient(quotients:, exponents:)
+      def scale_within(quotients:, exponents:)
         # scale the quotient up/down until it’s in range
         # and adjust the exponent to account for scaling
         loop do
@@ -162,13 +162,13 @@ module Wasminna
         end
       end
 
-      def round_quotient(quotients:, exponents:)
+      def round_within(quotients:, exponents:)
         quotient, remainder = numerator.divmod(denominator)
 
         if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
           self.numerator = quotient + 1
           self.denominator = 1
-          scale_quotient(quotients:, exponents:)
+          scale_within(quotients:, exponents:)
         end
       end
     end
