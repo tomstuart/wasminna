@@ -49,9 +49,8 @@ class Interpreter
         in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
           expected_value = nan
           bits = instruction.slice(%r{\d+}).to_i(10)
-          float = [actual_value].
-            pack({ 32 => 'L', 64 => 'Q' }.fetch(bits)).
-            unpack1({ 32 => 'F', 64 => 'D' }.fetch(bits))
+          format = Wasminna::Float::Format.for(bits:)
+          float = Wasminna::Float.decode(actual_value, format:).to_f
           success = float.nan? # TODO check whether canonical or arithmetic
         else
           expected_value = evaluate(expected, locals: {})
@@ -179,9 +178,12 @@ class Interpreter
         raise unless bits == float_bits
         value
       in ['trunc_f32_s', value]
-        unsigned([value].pack('L').unpack1('F').truncate, bits:)
+        format = Wasminna::Float::Format.for(bits: 32)
+        float = Wasminna::Float.decode(value, format:).to_f
+        unsigned(float.truncate, bits:)
       in ['trunc_sat_f32_s', value]
-        result = [value].pack('L').unpack1('F')
+        format = Wasminna::Float::Format.for(bits: 32)
+        result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
             0
@@ -197,9 +199,12 @@ class Interpreter
 
         unsigned(result, bits:)
       in ['trunc_f64_s', value]
-        unsigned([value].pack('Q').unpack1('D').truncate, bits:)
+        format = Wasminna::Float::Format.for(bits: 64)
+        float = Wasminna::Float.decode(value, format:).to_f
+        unsigned(float.truncate, bits:)
       in ['trunc_sat_f64_s', value]
-        result = [value].pack('Q').unpack1('D')
+        format = Wasminna::Float::Format.for(bits: 64)
+        result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
             0
@@ -215,9 +220,11 @@ class Interpreter
 
         unsigned(result, bits:)
       in ['trunc_f32_u', value]
-        [value].pack('L').unpack1('F').truncate
+        format = Wasminna::Float::Format.for(bits: 32)
+        Wasminna::Float.decode(value, format:).to_f.truncate
       in ['trunc_sat_f32_u', value]
-        result = [value].pack('L').unpack1('F')
+        format = Wasminna::Float::Format.for(bits: 32)
+        result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
             0
@@ -233,9 +240,11 @@ class Interpreter
 
         result
       in ['trunc_f64_u', value]
-        [value].pack('Q').unpack1('D').truncate
+        format = Wasminna::Float::Format.for(bits: 64)
+        Wasminna::Float.decode(value, format:).to_f.truncate
       in ['trunc_sat_f64_u', value]
-        result = [value].pack('Q').unpack1('D')
+        format = Wasminna::Float::Format.for(bits: 64)
+        result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
             0
