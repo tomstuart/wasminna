@@ -76,9 +76,7 @@ module Wasminna
       Finite.new(numerator: integer.abs, denominator: 1, negated: integer.negative?)
     end
 
-    def decode(encoded, bits:)
-      format = Format.for(bits:)
-
+    def decode(encoded, format:)
       format.unpack(encoded) => { negated:, exponent:, fraction: }
 
       case exponent
@@ -105,9 +103,7 @@ module Wasminna
     end
 
     Infinite = Struct.new(:negated, keyword_init: true) do
-      def encode(bits:)
-        format = Format.for(bits:)
-
+      def encode(format:)
         format.pack \
           negated:,
           exponent: format.exponents.max,
@@ -118,9 +114,7 @@ module Wasminna
     Nan = Struct.new(:payload, :negated, keyword_init: true) do
       include MaskHelper
 
-      def encode(bits:)
-        format = Format.for(bits:)
-
+      def encode(format:)
         fraction = mask(payload, bits: format.fraction_bits)
         fraction |= 1 << (format.fraction_bits - 1) if fraction.zero?
 
@@ -134,14 +128,13 @@ module Wasminna
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
       include MaskHelper
 
-      def encode(bits:)
-        format = Format.for(bits:)
+      def encode(format:)
         significand, exponent = approximate_within(format:)
 
         if significand < format.significands.min
           exponent = format.exponents.min
         elsif significand > format.significands.max
-          return Infinite.new(negated:).encode(bits:)
+          return Infinite.new(negated:).encode(format:)
         end
 
         format.pack \

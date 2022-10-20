@@ -253,21 +253,24 @@ class Interpreter
     in [%r{\Af(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
+      format = Wasminna::Float::Format.for(bits:)
       arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
       case [operation, *arguments]
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
-        Wasminna::Float.from_integer(integer).encode(bits:)
+        Wasminna::Float.from_integer(integer).encode(format:)
       in ['convert_i32_u' | 'convert_i64_u', value]
-        Wasminna::Float.from_integer(value).encode(bits:)
+        Wasminna::Float.from_integer(value).encode(format:)
       in ['promote_f32', value]
         raise unless bits == 64
-        Wasminna::Float.decode(value, bits: 32).encode(bits:)
+        input_format = Wasminna::Float::Format.for(bits: 32)
+        Wasminna::Float.decode(value, format: input_format).encode(format:)
       in ['demote_f64', value]
         raise unless bits == 32
-        Wasminna::Float.decode(value, bits: 64).encode(bits:)
+        input_format = Wasminna::Float::Format.for(bits: 64)
+        Wasminna::Float.decode(value, format: input_format).encode(format:)
       in ['reinterpret_i32' | 'reinterpret_i64', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == integer_bits
