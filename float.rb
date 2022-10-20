@@ -157,13 +157,12 @@ module Wasminna
 
       def round_quotient(numerator, denominator, exponent, quotients, exponents)
         quotient, remainder = numerator.divmod(denominator)
-        if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
-          quotient += 1
-          numerator, denominator, exponent =
-            scale_quotient(quotient, 1, exponent, quotients, exponents)
-        end
 
-        [numerator, denominator, exponent]
+        if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
+          scale_quotient(quotient + 1, 1, exponent, quotients, exponents)
+        else
+          [numerator, denominator, exponent]
+        end
       end
     end
   end
