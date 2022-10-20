@@ -393,54 +393,44 @@ class Interpreter
     }x
 
   def interpret_float(string, bits:)
-    pack_format, unpack_format, exponent_bits =
-      case bits
-      in 32
-        ['F', 'L', 8]
-      in 64
-        ['D', 'Q', 11]
-      else
-        raise "unsupported float width: #{bits}"
-      end
+    format = Wasminna::Float::Format.for(bits:)
 
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
 
-    value =
-      if match = NAN_REGEXP.match(string)
-        nan = [Float::NAN].pack(pack_format).unpack1(unpack_format)
+    if match = NAN_REGEXP.match(string)
+      Wasminna::Float::Nan.new(payload: match[:payload].to_s.to_i(16), negated:).encode(format:)
+    elsif string == 'inf'
+      Wasminna::Float::Infinite.new(negated:).encode(format:)
+    elsif match = HEXFLOAT_REGEXP.match(string)
+      p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
-        unless match[:payload].nil?
-          payload = match[:payload].to_i(16)
-          mask_bits = exponent_bits + 1
-          top_mask = ((1 << mask_bits) - 1) << (bits - mask_bits)
-          nan = (nan & top_mask) | payload
-        end
-
-        nan
-      elsif string == 'inf'
-        [Float::INFINITY].pack(pack_format).unpack1(unpack_format)
-      elsif match = HEXFLOAT_REGEXP.match(string)
-        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-        value =
-          (p.to_i(16) + (q.to_i(16) * (BigDecimal(16) ** -q.length))) * (BigDecimal(2) ** e.to_i(10))
-
-        [value].pack(pack_format).unpack1(unpack_format)
-      elsif match = FLOAT_REGEXP.match(string)
-        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-        value =
-          (p.to_i(10) + (q.to_i(10) * (BigDecimal(10) ** -q.length))) * (BigDecimal(10) ** e.to_i(10))
-
-        [value].pack(pack_format).unpack1(unpack_format)
+      numerator, denominator = [p, q].join.to_i(16), 16 ** q.length
+      exponent = e.to_i(10)
+      scale = 2 ** exponent.abs
+      if exponent.negative?
+        denominator *= scale
       else
-        raise "can’t parse float: #{string.inspect}"
+        numerator *= scale
       end
 
-    if negated
-      value |= 1 << (bits - 1)
-    end
+      Wasminna::Float::Finite.new(numerator:, denominator:, negated:).encode(format:)
+    elsif match = FLOAT_REGEXP.match(string)
+      p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
-    value
+      numerator, denominator = [p, q].join.to_i(10), 10 ** q.length
+      exponent = e.to_i(10)
+      scale = 10 ** exponent.abs
+      if exponent.negative?
+        denominator *= scale
+      else
+        numerator *= scale
+      end
+
+      Wasminna::Float::Finite.new(numerator:, denominator:, negated:).encode(format:)
+    else
+      raise "can’t parse float: #{string.inspect}"
+    end
   end
 
   def mask(value, bits:)
