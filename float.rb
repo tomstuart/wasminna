@@ -45,11 +45,12 @@ module Wasminna
         exponent -= exponent_bias
       end
 
-      if exponent.negative?
-        numerator, denominator = significand, 2 ** exponent.abs
-      else
-        numerator, denominator = significand * (2 ** exponent), 1
-      end
+      numerator, denominator =
+        if exponent.negative?
+          [significand, 2 ** exponent.abs]
+        else
+          [significand * (2 ** exponent), 1]
+        end
 
       Finite.new(numerator:, denominator:, negated:)
     end
