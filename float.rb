@@ -34,6 +34,16 @@ module Wasminna
       def pack(sign:, exponent:, fraction:)
         (sign << exponent_bits | exponent) << fraction_bits | fraction
       end
+
+      def unpack(encoded)
+        fraction = encoded & ((1 << fraction_bits) - 1)
+        encoded >>= fraction_bits
+        exponent = encoded & ((1 << exponent_bits) - 1)
+        encoded >>= exponent_bits
+        sign = encoded & 1
+
+        { sign:, exponent:, fraction: }
+      end
     end
 
     module_function
@@ -45,11 +55,7 @@ module Wasminna
     def decode(encoded, bits:)
       format = Format.for(bits:)
 
-      fraction = encoded & ((1 << format.fraction_bits) - 1)
-      encoded >>= format.fraction_bits
-      exponent = encoded & ((1 << format.exponent_bits) - 1)
-      encoded >>= format.exponent_bits
-      sign = encoded & 1
+      format.unpack(encoded) => { sign:, exponent:, fraction: }
       negated = sign == 1
 
       if exponent == (1 << format.exponent_bits) - 1
