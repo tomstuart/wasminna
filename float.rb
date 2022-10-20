@@ -145,8 +145,6 @@ module Wasminna
       end
 
       def scale_within(quotients:, exponents:)
-        # scale the quotient up/down until it’s in range
-        # and adjust the exponent to account for scaling
         loop do
           quotient = numerator / denominator
 
