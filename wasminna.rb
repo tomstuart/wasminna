@@ -83,7 +83,7 @@ class Interpreter
     in ['f32.const' | 'f64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       format = Wasminna::Float::Format.for(bits:)
-      interpret_float(value, format:)
+      Wasminna::Float.parse(value, format:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
@@ -335,101 +335,6 @@ class Interpreter
       end
 
     unsigned(value, bits:)
-  end
-
-  NAN_REGEXP =
-    %r{
-      \A
-      nan
-      (
-        :0x
-        (?<payload>
-          \h+
-        )
-      )?
-      \z
-    }x
-  HEXFLOAT_REGEXP =
-    %r{
-      \A
-      0x
-      (?<p>
-        \h+
-      )
-      (
-        \.
-        (?<q>
-          \h*
-        )
-      )?
-      (
-        [Pp]
-        (?<e>
-          [+-]?
-          \d+
-        )
-      )?
-      \z
-    }x
-  FLOAT_REGEXP =
-    %r{
-      \A
-      (?<p>
-        \d+
-      )
-      (
-        \.
-        (?<q>
-          \d*
-        )
-      )?
-      (
-        [Ee]
-        (?<e>
-          [+-]?
-          \d+
-        )
-      )?
-      \z
-    }x
-
-  def interpret_float(string, format:)
-    negated = string.start_with?('-')
-    string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
-
-    if match = NAN_REGEXP.match(string)
-      Wasminna::Float::Nan.new(payload: match[:payload].to_s.to_i(16), negated:).encode(format:)
-    elsif string == 'inf'
-      Wasminna::Float::Infinite.new(negated:).encode(format:)
-    elsif match = HEXFLOAT_REGEXP.match(string)
-      p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-
-      numerator, denominator = [p, q].join.to_i(16), 16 ** q.length
-      exponent = e.to_i(10)
-      scale = 2 ** exponent.abs
-      if exponent.negative?
-        denominator *= scale
-      else
-        numerator *= scale
-      end
-
-      Wasminna::Float::Finite.new(numerator:, denominator:, negated:).encode(format:)
-    elsif match = FLOAT_REGEXP.match(string)
-      p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-
-      numerator, denominator = [p, q].join.to_i(10), 10 ** q.length
-      exponent = e.to_i(10)
-      scale = 10 ** exponent.abs
-      if exponent.negative?
-        denominator *= scale
-      else
-        numerator *= scale
-      end
-
-      Wasminna::Float::Finite.new(numerator:, denominator:, negated:).encode(format:)
-    else
-      raise "can’t parse float: #{string.inspect}"
-    end
   end
 
   def mask(value, bits:)

@@ -102,6 +102,101 @@ module Wasminna
       Finite.new(numerator:, denominator:, negated:)
     end
 
+    NAN_REGEXP =
+      %r{
+        \A
+        nan
+        (
+          :0x
+          (?<payload>
+            \h+
+          )
+        )?
+        \z
+      }x
+    HEXFLOAT_REGEXP =
+      %r{
+        \A
+        0x
+        (?<p>
+          \h+
+        )
+        (
+          \.
+          (?<q>
+            \h*
+          )
+        )?
+        (
+          [Pp]
+          (?<e>
+            [+-]?
+            \d+
+          )
+        )?
+        \z
+      }x
+    FLOAT_REGEXP =
+      %r{
+        \A
+        (?<p>
+          \d+
+        )
+        (
+          \.
+          (?<q>
+            \d*
+          )
+        )?
+        (
+          [Ee]
+          (?<e>
+            [+-]?
+            \d+
+          )
+        )?
+        \z
+      }x
+
+    def parse(string, format:)
+      negated = string.start_with?('-')
+      string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
+
+      if match = NAN_REGEXP.match(string)
+        Nan.new(payload: match[:payload].to_s.to_i(16), negated:).encode(format:)
+      elsif string == 'inf'
+        Infinite.new(negated:).encode(format:)
+      elsif match = HEXFLOAT_REGEXP.match(string)
+        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
+
+        numerator, denominator = [p, q].join.to_i(16), 16 ** q.length
+        exponent = e.to_i(10)
+        scale = 2 ** exponent.abs
+        if exponent.negative?
+          denominator *= scale
+        else
+          numerator *= scale
+        end
+
+        Finite.new(numerator:, denominator:, negated:).encode(format:)
+      elsif match = FLOAT_REGEXP.match(string)
+        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
+
+        numerator, denominator = [p, q].join.to_i(10), 10 ** q.length
+        exponent = e.to_i(10)
+        scale = 10 ** exponent.abs
+        if exponent.negative?
+          denominator *= scale
+        else
+          numerator *= scale
+        end
+
+        Finite.new(numerator:, denominator:, negated:).encode(format:)
+      else
+        raise "can’t parse float: #{string.inspect}"
+      end
+    end
+
     Infinite = Struct.new(:negated, keyword_init: true) do
       def encode(format:)
         format.pack \
