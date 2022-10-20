@@ -107,35 +107,30 @@ module Wasminna
         format = Format.for(bits:)
         self => { numerator:, denominator: }
 
-        if numerator.zero?
-          exponent = 0
-          significand = 0
-        else
-          # initialise the exponent to account for normalised significand format
-          exponent = format.fraction_bits
+        # initialise the exponent to account for normalised significand format
+        exponent = format.fraction_bits
 
+        numerator, denominator, exponent =
+          scale_quotient(numerator, denominator, exponent, format.significands, format.exponents)
+
+        # round the significand if necessary
+        significand, remainder = numerator.divmod(denominator)
+        if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
+          significand += 1
           numerator, denominator, exponent =
-            scale_quotient(numerator, denominator, exponent, format.significands, format.exponents)
-
-          # round the significand if necessary
-          significand, remainder = numerator.divmod(denominator)
-          if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
-            significand += 1
-            numerator, denominator, exponent =
-              scale_quotient(significand, 1, exponent, format.significands, format.exponents)
-            significand = numerator / denominator
-          end
-
-          if significand < format.significands.min
-            exponent -= 1
-          elsif significand > format.significands.max
-            significand = 0
-            exponent += 1
-          end
-
-          # add bias to exponent
-          exponent += format.exponent_bias
+            scale_quotient(significand, 1, exponent, format.significands, format.exponents)
+          significand = numerator / denominator
         end
+
+        if significand < format.significands.min
+          exponent -= 1
+        elsif significand > format.significands.max
+          significand = 0
+          exponent += 1
+        end
+
+        # add bias to exponent
+        exponent += format.exponent_bias
 
         # assemble bits into float
         sign = negated ? 1 : 0
