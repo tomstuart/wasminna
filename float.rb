@@ -113,15 +113,10 @@ module Wasminna
         numerator, denominator, exponent =
           scale_quotient(numerator, denominator, exponent, format.significands, format.exponents)
 
-        # round the significand if necessary
-        significand, remainder = numerator.divmod(denominator)
-        if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
-          significand += 1
-          numerator, denominator, exponent =
-            scale_quotient(significand, 1, exponent, format.significands, format.exponents)
-          significand = numerator / denominator
-        end
+        numerator, denominator, exponent =
+          round_quotient(numerator, denominator, exponent, format.significands, format.exponents)
 
+        significand = numerator / denominator
         if significand < format.significands.min
           exponent -= 1
         elsif significand > format.significands.max
@@ -155,6 +150,17 @@ module Wasminna
           else
             break
           end
+        end
+
+        [numerator, denominator, exponent]
+      end
+
+      def round_quotient(numerator, denominator, exponent, quotients, exponents)
+        quotient, remainder = numerator.divmod(denominator)
+        if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
+          quotient += 1
+          numerator, denominator, exponent =
+            scale_quotient(quotient, 1, exponent, quotients, exponents)
         end
 
         [numerator, denominator, exponent]
