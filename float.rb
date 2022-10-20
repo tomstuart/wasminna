@@ -15,10 +15,6 @@ module Wasminna
         exponent_bits + significand_bits
       end
 
-      def exponent_bias
-        (1 << (exponent_bits - 1)) - 1
-      end
-
       def fraction_bits
         significand_bits - 1
       end
@@ -56,6 +52,12 @@ module Wasminna
         exponent = biased_exponent - exponent_bias
 
         { negated:, exponent:, fraction: }
+      end
+
+      private
+
+      def exponent_bias
+        (1 << (exponent_bits - 1)) - 1
       end
     end
 
