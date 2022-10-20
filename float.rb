@@ -69,22 +69,19 @@ module Wasminna
       format = Format.for(bits:)
 
       format.unpack(encoded) => { negated:, exponent:, fraction: }
-      exponent += format.exponent_bias
 
-      if exponent == (1 << format.exponent_bits) - 1
+      if exponent == format.exponents.max
         return fraction.zero? ?
           Infinite.new(negated:) :
           Nan.new(payload: fraction, negated:)
       end
 
-      if exponent.zero?
+      if exponent == format.exponents.min
         significand = fraction
         exponent -= format.fraction_bits - 1
-        exponent -= format.exponent_bias
       else
         significand = fraction | (1 << format.fraction_bits)
         exponent -= format.fraction_bits
-        exponent -= format.exponent_bias
       end
 
       numerator, denominator =
