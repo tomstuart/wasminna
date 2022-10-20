@@ -1,6 +1,15 @@
 module Wasminna
   module Float
+    module MaskHelper
+      def mask(value, bits:)
+        size = 1 << bits
+        value & (size - 1)
+      end
+    end
+
     class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
+      include MaskHelper
+
       ALL = [
         Single = new(exponent_bits: 8, significand_bits: 24),
         Double = new(exponent_bits: 11, significand_bits: 53)
@@ -42,11 +51,11 @@ module Wasminna
       end
 
       def unpack(encoded)
-        fraction = encoded & ((1 << fraction_bits) - 1)
+        fraction = mask(encoded, bits: fraction_bits)
         encoded >>= fraction_bits
-        biased_exponent = encoded & ((1 << exponent_bits) - 1)
+        biased_exponent = mask(encoded, bits: exponent_bits)
         encoded >>= exponent_bits
-        sign = encoded & 1
+        sign = mask(encoded, bits: 1)
 
         negated = sign == 1
         exponent = biased_exponent - exponent_bias
@@ -107,10 +116,12 @@ module Wasminna
     end
 
     Nan = Struct.new(:payload, :negated, keyword_init: true) do
+      include MaskHelper
+
       def encode(bits:)
         format = Format.for(bits:)
 
-        fraction = payload & ((1 << format.fraction_bits) - 1)
+        fraction = mask(payload, bits: format.fraction_bits)
         fraction |= 1 << (format.fraction_bits - 1) if fraction.zero?
 
         format.pack \
@@ -121,6 +132,8 @@ module Wasminna
     end
 
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
+      include MaskHelper
+
       def encode(bits:)
         format = Format.for(bits:)
         significand, exponent = approximate_within(format:)
@@ -134,7 +147,7 @@ module Wasminna
         format.pack \
           negated:,
           exponent:,
-          fraction: significand & ((1 << format.fraction_bits) - 1)
+          fraction: mask(significand, bits: format.fraction_bits)
       end
 
       private
