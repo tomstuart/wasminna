@@ -1,5 +1,29 @@
 module Wasminna
   module Float
+    class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
+      ALL = [
+        Single = new(exponent_bits: 8, significand_bits: 24),
+        Double = new(exponent_bits: 11, significand_bits: 53)
+      ]
+
+      def self.for(bits:)
+        ALL.detect { |format| format.bits == bits } ||
+          raise("unsupported float width: #{bits}")
+      end
+
+      def bits
+        exponent_bits + significand_bits
+      end
+
+      def exponent_bias
+        (1 << (exponent_bits - 1)) - 1
+      end
+
+      def fraction_bits
+        significand_bits - 1
+      end
+    end
+
     module_function
 
     def from_integer(integer)
@@ -7,24 +31,16 @@ module Wasminna
     end
 
     def decode(encoded, bits:)
-      exponent_bits, significand_bits =
-        case bits
-        in 32
-          [8, 24]
-        in 64
-          [11, 53]
-        end
-      exponent_bias = (1 << (exponent_bits - 1)) - 1
-      fraction_bits = significand_bits - 1
+      format = Format.for(bits:)
 
-      fraction = encoded & ((1 << fraction_bits) - 1)
-      encoded >>= fraction_bits
-      exponent = encoded & ((1 << exponent_bits) - 1)
-      encoded >>= exponent_bits
+      fraction = encoded & ((1 << format.fraction_bits) - 1)
+      encoded >>= format.fraction_bits
+      exponent = encoded & ((1 << format.exponent_bits) - 1)
+      encoded >>= format.exponent_bits
       sign = encoded & 1
       negated = sign == 1
 
-      if exponent == (1 << exponent_bits) - 1
+      if exponent == (1 << format.exponent_bits) - 1
         return fraction.zero? ?
           Infinite.new(negated:) :
           Nan.new(payload: fraction, negated:)
@@ -36,13 +52,13 @@ module Wasminna
 
         if significand.nonzero?
           # subnormal
-          exponent -= fraction_bits - 1
-          exponent -= exponent_bias
+          exponent -= format.fraction_bits - 1
+          exponent -= format.exponent_bias
         end
       else
-        significand = fraction | (1 << fraction_bits)
-        exponent -= fraction_bits
-        exponent -= exponent_bias
+        significand = fraction | (1 << format.fraction_bits)
+        exponent -= format.fraction_bits
+        exponent -= format.exponent_bias
       end
 
       numerator, denominator =
@@ -57,58 +73,36 @@ module Wasminna
 
     Infinite = Struct.new(:negated, keyword_init: true) do
       def encode(bits:)
-        exponent_bits, significand_bits =
-          case bits
-          in 32
-            [8, 24]
-          in 64
-            [11, 53]
-          end
-        fraction_bits = significand_bits - 1
+        format = Format.for(bits:)
 
         sign = negated ? 1 : 0
-        exponent = (1 << exponent_bits) - 1
-        (sign << exponent_bits | exponent) << fraction_bits
+        exponent = (1 << format.exponent_bits) - 1
+        (sign << format.exponent_bits | exponent) << format.fraction_bits
       end
     end
 
     Nan = Struct.new(:payload, :negated, keyword_init: true) do
       def encode(bits:)
-        exponent_bits, significand_bits =
-          case bits
-          in 32
-            [8, 24]
-          in 64
-            [11, 53]
-          end
-        fraction_bits = significand_bits - 1
+        format = Format.for(bits:)
 
         sign = negated ? 1 : 0
-        exponent = (1 << exponent_bits) - 1
-        fraction = payload & ((1 << fraction_bits) - 1)
-        fraction |= 1 << (fraction_bits - 1) if fraction.zero?
+        exponent = (1 << format.exponent_bits) - 1
+        fraction = payload & ((1 << format.fraction_bits) - 1)
+        fraction |= 1 << (format.fraction_bits - 1) if fraction.zero?
 
-        (sign << exponent_bits | exponent) << fraction_bits | fraction
+        (sign << format.exponent_bits | exponent) << format.fraction_bits | fraction
       end
     end
 
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
       def encode(bits:)
-        exponent_bits, significand_bits =
-          case bits
-          in 32
-            [8, 24]
-          in 64
-            [11, 53]
-          end
-        exponent_bias = (1 << (exponent_bits - 1)) - 1
-        fraction_bits = significand_bits - 1
+        format = Format.for(bits:)
 
         # calculate the range of valid significands and exponents
-        min_significand = 1 << (significand_bits - 1)
-        max_significand = (1 << significand_bits) - 1
-        min_exponent = -exponent_bias + 1
-        max_exponent = exponent_bias
+        min_significand = 1 << (format.significand_bits - 1)
+        max_significand = (1 << format.significand_bits) - 1
+        min_exponent = -format.exponent_bias + 1
+        max_exponent = format.exponent_bias
 
         self => { numerator:, denominator: }
 
@@ -117,7 +111,7 @@ module Wasminna
           significand = 0
         else
           # initialise the exponent to account for normalised significand format
-          exponent = fraction_bits
+          exponent = format.fraction_bits
 
           numerator, denominator, exponent =
             scale_significand(numerator, denominator, min_significand, max_significand, exponent, min_exponent, max_exponent)
@@ -139,13 +133,13 @@ module Wasminna
           end
 
           # add bias to exponent
-          exponent += exponent_bias
+          exponent += format.exponent_bias
         end
 
         # assemble bits into float
         sign = negated ? 1 : 0
-        fraction = significand & ((1 << fraction_bits) - 1)
-        (sign << exponent_bits | exponent) << fraction_bits | fraction
+        fraction = significand & ((1 << format.fraction_bits) - 1)
+        (sign << format.exponent_bits | exponent) << format.fraction_bits | fraction
       end
 
       private
