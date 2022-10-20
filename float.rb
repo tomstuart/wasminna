@@ -158,8 +158,10 @@ module Wasminna
         )?
         (
           [Pp]
+          (?<exponent_sign>
+            [+-]
+          )?
           (?<e>
-            [+-]?
             \d+
           )
         )?
@@ -182,8 +184,10 @@ module Wasminna
         )?
         (
           [Ee]
+          (?<exponent_sign>
+            [+-]
+          )?
           (?<e>
-            [+-]?
             \d+
           )
         )?
@@ -200,15 +204,14 @@ module Wasminna
       elsif INFINITE_REGEXP.match(string) in { sign: }
         Infinite.new(negated: sign == '-')
       elsif finite_regexp_match(string) in [
-        { sign:, p:, q:, e: },
+        { sign:, exponent_sign:, p:, q:, e: },
         { radix:, base:, exponent_radix: }
       ]
         p, q, e = [p, q, e].map(&:to_s)
 
         numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
-        exponent = e.to_i(exponent_radix)
-        scale = base ** exponent.abs
-        if exponent.negative?
+        scale = base ** e.to_i(exponent_radix)
+        if exponent_sign == '-'
           denominator *= scale
         else
           numerator *= scale
