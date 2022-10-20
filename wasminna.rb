@@ -82,7 +82,8 @@ class Interpreter
       interpret_integer(value, bits:)
     in ['f32.const' | 'f64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
-      interpret_float(value, bits:)
+      format = Wasminna::Float::Format.for(bits:)
+      interpret_float(value, format:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
@@ -392,9 +393,7 @@ class Interpreter
       \z
     }x
 
-  def interpret_float(string, bits:)
-    format = Wasminna::Float::Format.for(bits:)
-
+  def interpret_float(string, format:)
     negated = string.start_with?('-')
     string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
 
