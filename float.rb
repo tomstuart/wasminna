@@ -22,6 +22,14 @@ module Wasminna
       def fraction_bits
         significand_bits - 1
       end
+
+      def significands
+        1 << (significand_bits - 1) .. (1 << significand_bits) - 1
+      end
+
+      def exponents
+        -exponent_bias + 1 .. exponent_bias
+      end
     end
 
     module_function
@@ -97,13 +105,6 @@ module Wasminna
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
       def encode(bits:)
         format = Format.for(bits:)
-
-        # calculate the range of valid significands and exponents
-        significands =
-          1 << (format.significand_bits - 1) .. (1 << format.significand_bits) - 1
-        exponents =
-          -format.exponent_bias + 1 .. format.exponent_bias
-
         self => { numerator:, denominator: }
 
         if numerator.zero?
@@ -114,20 +115,20 @@ module Wasminna
           exponent = format.fraction_bits
 
           numerator, denominator, exponent =
-            scale_quotient(numerator, denominator, exponent, significands, exponents)
+            scale_quotient(numerator, denominator, exponent, format.significands, format.exponents)
 
           # round the significand if necessary
           significand, remainder = numerator.divmod(denominator)
           if remainder > denominator / 2 || (remainder == denominator / 2 && significand.odd?)
             significand += 1
             numerator, denominator, exponent =
-              scale_quotient(significand, 1, exponent, significands, exponents)
+              scale_quotient(significand, 1, exponent, format.significands, format.exponents)
             significand = numerator / denominator
           end
 
-          if significand < significands.min
+          if significand < format.significands.min
             exponent -= 1
-          elsif significand > significands.max
+          elsif significand > format.significands.max
             significand = 0
             exponent += 1
           end
