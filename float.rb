@@ -108,10 +108,10 @@ module Wasminna
         significand, exponent = approximate_within(format:)
 
         if significand < format.significands.min
-          exponent -= 1
+          exponent = format.exponents.min - 1
         elsif significand > format.significands.max
           significand = 0
-          exponent += 1
+          exponent = format.exponents.max + 1
         end
 
         # add bias to exponent
