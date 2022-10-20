@@ -7,6 +7,20 @@ module Wasminna
       end
     end
 
+    module MatchPattern
+      refine MatchData do
+        def deconstruct_keys(keys)
+          named_captures.transform_keys(&:to_sym).then do |captures|
+            if keys
+              captures.slice(*keys)
+            else
+              captures
+            end
+          end
+        end
+      end
+    end
+
     class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
       include MaskHelper
 
@@ -176,18 +190,20 @@ module Wasminna
         \z
       }x
 
+    using MatchPattern
+
     def parse(string)
       string = string.tr('_', '')
 
-      if match = NAN_REGEXP.match(string)
-        Nan.new(payload: match[:payload].to_s.to_i(16), negated: match[:sign] == '-')
-      elsif match = INFINITE_REGEXP.match(string)
-        Infinite.new(negated: match[:sign] == '-')
+      if NAN_REGEXP.match(string) in { sign:, payload: }
+        Nan.new(payload: payload.to_s.to_i(16), negated: sign == '-')
+      elsif INFINITE_REGEXP.match(string) in { sign: }
+        Infinite.new(negated: sign == '-')
       elsif finite_regexp_match(string) in [
-        match,
+        { sign:, p:, q:, e: },
         { radix:, base:, exponent_radix: }
       ]
-        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
+        p, q, e = [p, q, e].map(&:to_s)
 
         numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
         exponent = e.to_i(exponent_radix)
@@ -198,7 +214,7 @@ module Wasminna
           numerator *= scale
         end
 
-        Finite.new(numerator:, denominator:, negated: match[:sign] == '-')
+        Finite.new(numerator:, denominator:, negated: sign == '-')
       else
         raise "can’t parse float: #{string.inspect}"
       end
