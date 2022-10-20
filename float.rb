@@ -200,17 +200,15 @@ module Wasminna
       string = string.tr('_', '')
 
       if NAN_REGEXP.match(string) in { sign:, payload: }
-        Nan.new(payload: payload.to_s.to_i(16), negated: sign == '-')
+        Nan.new(payload: payload&.to_i(16) || 0, negated: sign == '-')
       elsif INFINITE_REGEXP.match(string) in { sign: }
         Infinite.new(negated: sign == '-')
       elsif finite_regexp_match(string) in [
         { sign:, exponent_sign:, p:, q:, e: },
         { radix:, base:, exponent_radix: }
       ]
-        p, q, e = [p, q, e].map(&:to_s)
-
-        numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
-        scale = base ** e.to_i(exponent_radix)
+        numerator, denominator = [p, q].join.to_i(radix), radix ** (q&.length || 0)
+        scale = base ** (e&.to_i(exponent_radix) || 0)
         if exponent_sign == '-'
           denominator *= scale
         else
