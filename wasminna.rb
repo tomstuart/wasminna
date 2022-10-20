@@ -83,7 +83,7 @@ class Interpreter
     in ['f32.const' | 'f64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       format = Wasminna::Float::Format.for(bits:)
-      Wasminna::Float.parse(value, format:)
+      Wasminna::Float.parse(value).encode(format:)
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)

@@ -158,14 +158,14 @@ module Wasminna
         \z
       }x
 
-    def parse(string, format:)
+    def parse(string)
       negated = string.start_with?('-')
       string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
 
       if match = NAN_REGEXP.match(string)
-        Nan.new(payload: match[:payload].to_s.to_i(16), negated:).encode(format:)
+        Nan.new(payload: match[:payload].to_s.to_i(16), negated:)
       elsif string == 'inf'
-        Infinite.new(negated:).encode(format:)
+        Infinite.new(negated:)
       elsif match = HEXFLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
@@ -178,7 +178,7 @@ module Wasminna
           numerator *= scale
         end
 
-        Finite.new(numerator:, denominator:, negated:).encode(format:)
+        Finite.new(numerator:, denominator:, negated:)
       elsif match = FLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
@@ -191,7 +191,7 @@ module Wasminna
           numerator *= scale
         end
 
-        Finite.new(numerator:, denominator:, negated:).encode(format:)
+        Finite.new(numerator:, denominator:, negated:)
       else
         raise "can’t parse float: #{string.inspect}"
       end
