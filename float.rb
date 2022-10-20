@@ -31,7 +31,9 @@ module Wasminna
         -exponent_bias .. exponent_bias + 1
       end
 
-      def pack(sign:, exponent:, fraction:)
+      def pack(negated:, exponent:, fraction:)
+        sign = negated ? 1 : 0
+
         encoded = 0
         encoded |= sign
         encoded <<= exponent_bits
@@ -49,7 +51,9 @@ module Wasminna
         encoded >>= exponent_bits
         sign = encoded & 1
 
-        { sign:, exponent:, fraction: }
+        negated = sign == 1
+
+        { negated:, exponent:, fraction: }
       end
     end
 
@@ -62,8 +66,7 @@ module Wasminna
     def decode(encoded, bits:)
       format = Format.for(bits:)
 
-      format.unpack(encoded) => { sign:, exponent:, fraction: }
-      negated = sign == 1
+      format.unpack(encoded) => { negated:, exponent:, fraction: }
 
       if exponent == (1 << format.exponent_bits) - 1
         return fraction.zero? ?
@@ -101,7 +104,7 @@ module Wasminna
         format = Format.for(bits:)
 
         format.pack \
-          sign: negated ? 1 : 0,
+          negated:,
           exponent: (1 << format.exponent_bits) - 1,
           fraction: 0
       end
@@ -115,7 +118,7 @@ module Wasminna
         fraction |= 1 << (format.fraction_bits - 1) if fraction.zero?
 
         format.pack \
-          sign: negated ? 1 : 0,
+          negated:,
           exponent: (1 << format.exponent_bits) - 1,
           fraction:
       end
@@ -136,7 +139,7 @@ module Wasminna
         exponent += format.exponent_bias
 
         format.pack \
-          sign: negated ? 1 : 0,
+          negated:,
           exponent:,
           fraction: significand & ((1 << format.fraction_bits) - 1)
       end
