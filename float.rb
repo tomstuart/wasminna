@@ -70,13 +70,12 @@ module Wasminna
 
       format.unpack(encoded) => { negated:, exponent:, fraction: }
 
-      if exponent == format.exponents.max
+      case exponent
+      when format.exponents.max
         return fraction.zero? ?
           Infinite.new(negated:) :
           Nan.new(payload: fraction, negated:)
-      end
-
-      if exponent == format.exponents.min
+      when format.exponents.min
         significand = fraction
         exponent -= format.fraction_bits - 1
       else
