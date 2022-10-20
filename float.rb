@@ -28,7 +28,7 @@ module Wasminna
       end
 
       def exponents
-        -exponent_bias + 1 .. exponent_bias
+        -exponent_bias .. exponent_bias + 1
       end
     end
 
@@ -108,7 +108,7 @@ module Wasminna
         significand, exponent = approximate_within(format:)
 
         if significand < format.significands.min
-          exponent = format.exponents.min - 1
+          exponent = format.exponents.min
         elsif significand > format.significands.max
           return Infinite.new(negated:).encode(bits:)
         end
@@ -128,7 +128,7 @@ module Wasminna
         approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
         approximation.fit_within \
           quotients: format.significands,
-          exponents: format.exponents
+          exponents: (format.exponents.min + 1)..(format.exponents.max - 1)
 
         [
           approximation.numerator / approximation.denominator,
