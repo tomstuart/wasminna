@@ -105,6 +105,9 @@ module Wasminna
     NAN_REGEXP =
       %r{
         \A
+        (?<sign>
+          [+-]
+        )?
         nan
         (
           :0x
@@ -117,12 +120,18 @@ module Wasminna
     INFINITE_REGEXP =
       %r{
         \A
+        (?<sign>
+          [+-]
+        )?
         inf
         \z
       }x
     HEXFLOAT_REGEXP =
       %r{
         \A
+        (?<sign>
+          [+-]
+        )?
         0x
         (?<p>
           \h+
@@ -145,6 +154,9 @@ module Wasminna
     FLOAT_REGEXP =
       %r{
         \A
+        (?<sign>
+          [+-]
+        )?
         (?<p>
           \d+
         )
@@ -165,13 +177,12 @@ module Wasminna
       }x
 
     def parse(string)
-      negated = string.start_with?('-')
-      string = string.delete_prefix('+').delete_prefix('-').tr('_', '')
+      string = string.tr('_', '')
 
       if match = NAN_REGEXP.match(string)
-        Nan.new(payload: match[:payload].to_s.to_i(16), negated:)
+        Nan.new(payload: match[:payload].to_s.to_i(16), negated: match[:sign] == '-')
       elsif match = INFINITE_REGEXP.match(string)
-        Infinite.new(negated:)
+        Infinite.new(negated: match[:sign] == '-')
       elsif match = HEXFLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
@@ -184,7 +195,7 @@ module Wasminna
           numerator *= scale
         end
 
-        Finite.new(numerator:, denominator:, negated:)
+        Finite.new(numerator:, denominator:, negated: match[:sign] == '-')
       elsif match = FLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
@@ -197,7 +208,7 @@ module Wasminna
           numerator *= scale
         end
 
-        Finite.new(numerator:, denominator:, negated:)
+        Finite.new(numerator:, denominator:, negated: match[:sign] == '-')
       else
         raise "can’t parse float: #{string.inspect}"
       end
