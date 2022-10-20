@@ -183,29 +183,11 @@ module Wasminna
         Nan.new(payload: match[:payload].to_s.to_i(16), negated: match[:sign] == '-')
       elsif match = INFINITE_REGEXP.match(string)
         Infinite.new(negated: match[:sign] == '-')
-      elsif match = HEXFLOAT_REGEXP.match(string)
+      elsif finite_regexp_match(string) in [
+        match,
+        { radix:, base:, exponent_radix: }
+      ]
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-
-        radix = 16
-        base = 2
-        exponent_radix = 10
-
-        numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
-        exponent = e.to_i(exponent_radix)
-        scale = base ** exponent.abs
-        if exponent.negative?
-          denominator *= scale
-        else
-          numerator *= scale
-        end
-
-        Finite.new(numerator:, denominator:, negated: match[:sign] == '-')
-      elsif match = FLOAT_REGEXP.match(string)
-        p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
-
-        radix = 10
-        base = 10
-        exponent_radix = 10
 
         numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
         exponent = e.to_i(exponent_radix)
@@ -219,6 +201,14 @@ module Wasminna
         Finite.new(numerator:, denominator:, negated: match[:sign] == '-')
       else
         raise "can’t parse float: #{string.inspect}"
+      end
+    end
+
+    def finite_regexp_match(string)
+      if match = HEXFLOAT_REGEXP.match(string)
+        [match, { radix: 16, base: 2, exponent_radix: 10 }]
+      elsif match = FLOAT_REGEXP.match(string)
+        [match, { radix: 10, base: 10, exponent_radix: 10 }]
       end
     end
 
