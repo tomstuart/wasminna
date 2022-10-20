@@ -32,7 +32,14 @@ module Wasminna
       end
 
       def pack(sign:, exponent:, fraction:)
-        (sign << exponent_bits | exponent) << fraction_bits | fraction
+        encoded = 0
+        encoded |= sign
+        encoded <<= exponent_bits
+        encoded |= exponent
+        encoded <<= fraction_bits
+        encoded |= fraction
+
+        encoded
       end
 
       def unpack(encoded)
