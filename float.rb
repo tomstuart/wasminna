@@ -111,10 +111,7 @@ module Wasminna
         exponent = format.fraction_bits
 
         numerator, denominator, exponent =
-          scale_quotient(numerator, denominator, exponent, format.significands, format.exponents)
-
-        numerator, denominator, exponent =
-          round_quotient(numerator, denominator, exponent, format.significands, format.exponents)
+          scale_and_round_quotient(numerator, denominator, exponent, format.significands, format.exponents)
 
         significand = numerator / denominator
         if significand < format.significands.min
@@ -134,6 +131,13 @@ module Wasminna
       end
 
       private
+
+      def scale_and_round_quotient(numerator, denominator, exponent, quotients, exponents)
+        numerator, denominator, exponent =
+          scale_quotient(numerator, denominator, exponent, quotients, exponents)
+
+        round_quotient(numerator, denominator, exponent, quotients, exponents)
+      end
 
       def scale_quotient(numerator, denominator, exponent, quotients, exponents)
         # scale the quotient up/down until it’s in range
