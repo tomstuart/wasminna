@@ -78,14 +78,9 @@ module Wasminna
       end
 
       if exponent.zero?
-        # either zero or subnormal
         significand = fraction
-
-        if significand.nonzero?
-          # subnormal
-          exponent -= format.fraction_bits - 1
-          exponent -= format.exponent_bias
-        end
+        exponent -= format.fraction_bits - 1
+        exponent -= format.exponent_bias
       else
         significand = fraction | (1 << format.fraction_bits)
         exponent -= format.fraction_bits
