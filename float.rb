@@ -150,10 +150,10 @@ module Wasminna
         loop do
           significand = numerator / denominator
 
-          if significand < significands.min && exponent > exponents.min
+          if significand < significands.min && exponents.include?(exponent - 1)
             numerator <<= 1
             exponent -= 1
-          elsif significand > significands.max && exponent < exponents.max
+          elsif significand > significands.max && exponents.include?(exponent + 1)
             denominator <<= 1
             exponent += 1
           else
