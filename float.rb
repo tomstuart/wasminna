@@ -107,11 +107,8 @@ module Wasminna
         format = Format.for(bits:)
         self => { numerator:, denominator: }
 
-        # initialise the exponent to account for normalised significand format
-        exponent = format.fraction_bits
-
         numerator, denominator, exponent =
-          scale_and_round_quotient(numerator, denominator, exponent, format.significands, format.exponents)
+          scale_and_round_quotient(numerator, denominator, format.fraction_bits, format.significands, format.exponents)
 
         significand = numerator / denominator
         if significand < format.significands.min
