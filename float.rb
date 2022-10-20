@@ -107,10 +107,11 @@ module Wasminna
         format = Format.for(bits:)
         self => { numerator:, denominator: }
 
-        numerator, denominator, exponent =
-          scale_and_round_quotient(numerator, denominator, format.fraction_bits, format.significands, format.exponents)
+        approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
+        approximation.scale_and_round_quotient(quotients: format.significands, exponents: format.exponents)
+        significand = approximation.numerator / approximation.denominator
+        exponent = approximation.exponent
 
-        significand = numerator / denominator
         if significand < format.significands.min
           exponent -= 1
         elsif significand > format.significands.max
@@ -126,43 +127,39 @@ module Wasminna
         fraction = significand & ((1 << format.fraction_bits) - 1)
         (sign << format.exponent_bits | exponent) << format.fraction_bits | fraction
       end
+    end
 
-      private
-
-      def scale_and_round_quotient(numerator, denominator, exponent, quotients, exponents)
-        numerator, denominator, exponent =
-          scale_quotient(numerator, denominator, exponent, quotients, exponents)
-
-        round_quotient(numerator, denominator, exponent, quotients, exponents)
+    Approximation = Struct.new(:numerator, :denominator, :exponent, keyword_init: true) do
+      def scale_and_round_quotient(quotients:, exponents:)
+        scale_quotient(quotients:, exponents:)
+        round_quotient(quotients:, exponents:)
       end
 
-      def scale_quotient(numerator, denominator, exponent, quotients, exponents)
+      def scale_quotient(quotients:, exponents:)
         # scale the quotient up/down until it’s in range
         # and adjust the exponent to account for scaling
         loop do
           quotient = numerator / denominator
 
           if quotient < quotients.min && exponents.include?(exponent - 1)
-            numerator <<= 1
-            exponent -= 1
+            self.numerator <<= 1
+            self.exponent -= 1
           elsif quotient > quotients.max && exponents.include?(exponent + 1)
-            denominator <<= 1
-            exponent += 1
+            self.denominator <<= 1
+            self.exponent += 1
           else
             break
           end
         end
-
-        [numerator, denominator, exponent]
       end
 
-      def round_quotient(numerator, denominator, exponent, quotients, exponents)
+      def round_quotient(quotients:, exponents:)
         quotient, remainder = numerator.divmod(denominator)
 
         if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
-          scale_quotient(quotient + 1, 1, exponent, quotients, exponents)
-        else
-          [numerator, denominator, exponent]
+          self.numerator = quotient + 1
+          self.denominator = 1
+          scale_quotient(quotients:, exponents:)
         end
       end
     end
