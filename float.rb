@@ -114,6 +114,12 @@ module Wasminna
         )?
         \z
       }x
+    INFINITE_REGEXP =
+      %r{
+        \A
+        inf
+        \z
+      }x
     HEXFLOAT_REGEXP =
       %r{
         \A
@@ -164,7 +170,7 @@ module Wasminna
 
       if match = NAN_REGEXP.match(string)
         Nan.new(payload: match[:payload].to_s.to_i(16), negated:)
-      elsif string == 'inf'
+      elsif match = INFINITE_REGEXP.match(string)
         Infinite.new(negated:)
       elsif match = HEXFLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
