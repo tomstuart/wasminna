@@ -105,8 +105,6 @@ module Wasminna
     Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
       def encode(bits:)
         format = Format.for(bits:)
-        self => { numerator:, denominator: }
-
         significand, exponent = approximate_within(format:)
 
         if significand < format.significands.min
