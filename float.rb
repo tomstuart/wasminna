@@ -107,10 +107,7 @@ module Wasminna
         format = Format.for(bits:)
         self => { numerator:, denominator: }
 
-        approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
-        approximation.scale_and_round_quotient(quotients: format.significands, exponents: format.exponents)
-        significand = approximation.numerator / approximation.denominator
-        exponent = approximation.exponent
+        significand, exponent = approximate_within(format:)
 
         if significand < format.significands.min
           exponent -= 1
@@ -126,6 +123,20 @@ module Wasminna
         sign = negated ? 1 : 0
         fraction = significand & ((1 << format.fraction_bits) - 1)
         (sign << format.exponent_bits | exponent) << format.fraction_bits | fraction
+      end
+
+      private
+
+      def approximate_within(format:)
+        approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
+        approximation.scale_and_round_quotient \
+          quotients: format.significands,
+          exponents: format.exponents
+
+        [
+          approximation.numerator / approximation.denominator,
+          approximation.exponent
+        ]
       end
     end
 
