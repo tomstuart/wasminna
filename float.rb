@@ -199,11 +199,7 @@ module Wasminna
     def parse(string)
       string = string.tr('_', '')
 
-      if NAN_REGEXP.match(string) in { sign:, payload: }
-        Nan.new(payload: payload&.to_i(16) || 0, negated: sign == '-')
-      elsif INFINITE_REGEXP.match(string) in { sign: }
-        Infinite.new(negated: sign == '-')
-      elsif finite_regexp_match(string) in [
+      if finite_regexp_match(string) in [
         { sign:, exponent_sign:, p:, q:, e: },
         { radix:, base:, exponent_radix: }
       ]
@@ -216,16 +212,20 @@ module Wasminna
         end
 
         Finite.new(numerator:, denominator:, negated: sign == '-')
+      elsif NAN_REGEXP.match(string) in { sign:, payload: }
+        Nan.new(payload: payload&.to_i(16) || 0, negated: sign == '-')
+      elsif INFINITE_REGEXP.match(string) in { sign: }
+        Infinite.new(negated: sign == '-')
       else
         raise "can’t parse float: #{string.inspect}"
       end
     end
 
     def finite_regexp_match(string)
-      if match = HEXFLOAT_REGEXP.match(string)
-        [match, { radix: 16, base: 2, exponent_radix: 10 }]
-      elsif match = FLOAT_REGEXP.match(string)
+      if match = FLOAT_REGEXP.match(string)
         [match, { radix: 10, base: 10, exponent_radix: 10 }]
+      elsif match = HEXFLOAT_REGEXP.match(string)
+        [match, { radix: 16, base: 2, exponent_radix: 10 }]
       end
     end
 
