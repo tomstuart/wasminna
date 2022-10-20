@@ -186,9 +186,13 @@ module Wasminna
       elsif match = HEXFLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
-        numerator, denominator = [p, q].join.to_i(16), 16 ** q.length
-        exponent = e.to_i(10)
-        scale = 2 ** exponent.abs
+        radix = 16
+        base = 2
+        exponent_radix = 10
+
+        numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
+        exponent = e.to_i(exponent_radix)
+        scale = base ** exponent.abs
         if exponent.negative?
           denominator *= scale
         else
@@ -199,9 +203,13 @@ module Wasminna
       elsif match = FLOAT_REGEXP.match(string)
         p, q, e = match.values_at(:p, :q, :e).map(&:to_s)
 
-        numerator, denominator = [p, q].join.to_i(10), 10 ** q.length
-        exponent = e.to_i(10)
-        scale = 10 ** exponent.abs
+        radix = 10
+        base = 10
+        exponent_radix = 10
+
+        numerator, denominator = [p, q].join.to_i(radix), radix ** q.length
+        exponent = e.to_i(exponent_radix)
+        scale = base ** exponent.abs
         if exponent.negative?
           denominator *= scale
         else
