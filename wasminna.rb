@@ -271,6 +271,10 @@ class Interpreter
         with_float(left, right, format:) do |left, right|
           left + right
         end
+      in ['sub', left, right]
+        with_float(left, right, format:) do |left, right|
+          left - right
+        end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
