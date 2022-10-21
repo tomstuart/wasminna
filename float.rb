@@ -93,7 +93,7 @@ module Wasminna
     module_function
 
     def from_integer(integer)
-      Finite.new(numerator: integer.abs, denominator: 1, negated: integer.negative?)
+      Finite.new(rational: Rational(integer.abs), negated: integer.negative?)
     end
 
     def decode(encoded, format:)
@@ -112,14 +112,16 @@ module Wasminna
         exponent -= format.fraction_bits
       end
 
-      numerator, denominator =
+      rational = Rational(significand)
+      scale = 2 ** exponent.abs
+      rational =
         if exponent.negative?
-          [significand, 2 ** exponent.abs]
+          rational / scale
         else
-          [significand * (2 ** exponent), 1]
+          rational * scale
         end
 
-      Finite.new(numerator:, denominator:, negated:)
+      Finite.new(rational:, negated:)
     end
 
     NAN_REGEXP =
@@ -170,7 +172,7 @@ module Wasminna
             rational * scale
           end
 
-        Finite.new(numerator: rational.numerator, denominator: rational.denominator, negated: sign == '-')
+        Finite.new(rational:, negated: sign == '-')
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
         Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: sign == '-')
       elsif INFINITE_REGEXP.match(string) in { sign: }
@@ -223,7 +225,7 @@ module Wasminna
       end
     end
 
-    Finite = Struct.new(:numerator, :denominator, :negated, keyword_init: true) do
+    Finite = Struct.new(:rational, :negated, keyword_init: true) do
       include MaskHelper
       include ToFloat
 
@@ -245,7 +247,7 @@ module Wasminna
       private
 
       def approximate_within(format:)
-        approximation = Approximation.new(numerator:, denominator:, exponent: format.fraction_bits)
+        approximation = Approximation.new(numerator: rational.numerator, denominator: rational.denominator, exponent: format.fraction_bits)
         approximation.fit_within \
           quotients: format.significands,
           exponents: (format.exponents.min + 1)..(format.exponents.max - 1)
