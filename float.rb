@@ -155,12 +155,12 @@ module Wasminna
     using MatchPattern
 
     def parse(string)
-      string = string.tr('_', '')
-
       if finite_regexp_match(string) in [
         { sign:, whole:, fractional:, exponent_sign:, exponent: },
         { radix:, base:, exponent_radix: }
       ]
+        whole, fractional, exponent =
+          [whole, fractional, exponent].map { _1&.tr('_', '') }
         numerator, denominator = [whole, fractional].join.to_i(radix), radix ** (fractional&.length || 0)
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         if exponent_sign == '-'
@@ -171,7 +171,7 @@ module Wasminna
 
         Finite.new(numerator:, denominator:, negated: sign == '-')
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
-        Nan.new(payload: payload&.to_i(16) || 0, negated: sign == '-')
+        Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: sign == '-')
       elsif INFINITE_REGEXP.match(string) in { sign: }
         Infinite.new(negated: sign == '-')
       else
