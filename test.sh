@@ -14,7 +14,7 @@ do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$script.wast
 done
 
-for pending in
+for pending in f32_bitwise
 do
   if ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$pending.wast; then
     echo "error: pending test passed"
