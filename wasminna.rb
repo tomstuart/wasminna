@@ -308,6 +308,16 @@ class Interpreter
             args.detect(&:nan?)
           end || args.max
         end
+      in ['sqrt', value]
+        with_float(value, format:) do |value|
+          if value.zero? && value.angle.positive?
+            value
+          elsif value.negative?
+            ::Float::NAN
+          else
+            Math.sqrt(value)
+          end
+        end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
