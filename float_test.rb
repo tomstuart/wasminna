@@ -8,8 +8,8 @@ def main
 
   assert_float_encoding 0x3ff0_0000_0000_0000, 1r, bits: 64
 
-  assert_float_decoding 0r, false, 0x0000_0000, bits: 32
-  assert_float_decoding 1r / 2 ** 149, false, 0x0000_0001, bits: 32
+  assert_float_decoding Wasminna::Float::Zero.new(negated: false), 0x0000_0000, bits: 32
+  assert_float_decoding Wasminna::Float::Finite.new(rational: 1r / 2 ** 149, negated: false), 0x0000_0001, bits: 32
 end
 
 def assert_float_encoding(expected, rational, negated: false, bits:)
@@ -18,10 +18,10 @@ def assert_float_encoding(expected, rational, negated: false, bits:)
   raise "expected #{expected}, got #{actual}" unless actual == expected
 end
 
-def assert_float_decoding(expected_rational, expected_negated, encoded, bits:)
+def assert_float_decoding(expected, encoded, bits:)
   format = Wasminna::Float::Format.for(bits:)
   actual = Wasminna::Float.decode(encoded, format:)
-  raise actual.inspect unless [actual.rational, actual.negated] == [expected_rational, expected_negated]
+  raise "expected #{expected}, got #{actual}" unless actual == expected
 end
 
 main
