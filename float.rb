@@ -138,17 +138,17 @@ module Wasminna
     HEXFLOAT_REGEXP =
       %r{
         \A
-        (?<sign> [+-])? 0x (?<p> \h+)
-        (\. (?<q> \h*))?
-        ([Pp] (?<exponent_sign> [+-])? (?<e> \d+))?
+        (?<sign> [+-])? 0x (?<whole> \h+)
+        (\. (?<fractional> \h*))?
+        ([Pp] (?<exponent_sign> [+-])? (?<exponent> \d+))?
         \z
       }x
     FLOAT_REGEXP =
       %r{
         \A
-        (?<sign> [+-])? (?<p> \d+)
-        (\. (?<q> \d*))?
-        ([Ee] (?<exponent_sign> [+-])? (?<e> \d+))?
+        (?<sign> [+-])? (?<whole> \d+)
+        (\. (?<fractional> \d*))?
+        ([Ee] (?<exponent_sign> [+-])? (?<exponent> \d+))?
         \z
       }x
 
@@ -158,11 +158,11 @@ module Wasminna
       string = string.tr('_', '')
 
       if finite_regexp_match(string) in [
-        { sign:, exponent_sign:, p:, q:, e: },
+        { sign:, whole:, fractional:, exponent_sign:, exponent: },
         { radix:, base:, exponent_radix: }
       ]
-        numerator, denominator = [p, q].join.to_i(radix), radix ** (q&.length || 0)
-        scale = base ** (e&.to_i(exponent_radix) || 0)
+        numerator, denominator = [whole, fractional].join.to_i(radix), radix ** (fractional&.length || 0)
+        scale = base ** (exponent&.to_i(exponent_radix) || 0)
         if exponent_sign == '-'
           denominator *= scale
         else
