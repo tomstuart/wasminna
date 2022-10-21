@@ -61,11 +61,11 @@ module Wasminna
         biased_exponent = exponent + exponent_bias
 
         encoded = 0
-        encoded |= sign
+        encoded |= mask(sign, bits: 1)
         encoded <<= exponent_bits
-        encoded |= biased_exponent
+        encoded |= mask(biased_exponent, bits: exponent_bits)
         encoded <<= fraction_bits
-        encoded |= fraction
+        encoded |= mask(fraction, bits: fraction_bits)
 
         encoded
       end
