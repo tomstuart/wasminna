@@ -7,12 +7,6 @@ module Wasminna
       end
     end
 
-    module ToFloat
-      def to_f
-        [encode(format: Format::Double)].pack('Q').unpack1('D')
-      end
-    end
-
     module MatchPattern
       refine MatchData do
         def deconstruct_keys(keys)
@@ -207,7 +201,13 @@ module Wasminna
     end
 
     Infinite = Struct.new(:negated, keyword_init: true) do
-      include ToFloat
+      def to_f
+        if negated
+          -::Float::INFINITY
+        else
+          ::Float::INFINITY
+        end
+      end
 
       def encode(format:)
         format.pack \
@@ -219,7 +219,10 @@ module Wasminna
 
     Nan = Struct.new(:payload, :negated, keyword_init: true) do
       include MaskHelper
-      include ToFloat
+
+      def to_f
+        ::Float::NAN
+      end
 
       def encode(format:)
         fraction = mask(payload, bits: format.fraction_bits)
@@ -233,7 +236,13 @@ module Wasminna
     end
 
     Zero = Struct.new(:negated, keyword_init: true) do
-      include ToFloat
+      def to_f
+        if negated
+          -0.0
+        else
+          0.0
+        end
+      end
 
       def encode(format:)
         format.pack \
@@ -245,7 +254,10 @@ module Wasminna
 
     Finite = Struct.new(:rational, keyword_init: true) do
       include MaskHelper
-      include ToFloat
+
+      def to_f
+        rational.to_f
+      end
 
       def encode(format:)
         significand, exponent = approximate_within(format:)
