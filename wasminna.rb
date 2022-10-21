@@ -60,7 +60,7 @@ class Interpreter
         if success
           puts "#{name.tr('"', '')}: #{actual_value.inspect} == #{expected_value.inspect}"
         else
-          raise "#{name.tr('"', '')}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
+          raise "failure during #{command}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
         end
       in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
         # TODO
