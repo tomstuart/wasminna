@@ -295,6 +295,12 @@ class Interpreter
     unsigned(signed_result, bits:)
   end
 
+  def with_float(*integer_args, format:)
+    float_args = integer_args.map { |arg| Wasminna::Float.decode(arg, format:).to_f }
+    float_result = yield *float_args
+    Wasminna::Float.from_float(float_result).encode(format:)
+  end
+
   def divide(dividend, divisor)
     quotient = dividend / divisor
 
