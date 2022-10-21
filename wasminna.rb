@@ -79,6 +79,14 @@ class Interpreter
 
   private
 
+  module FloatSign
+    refine ::Float do
+      def sign = angle.zero? ? 1 : -1
+    end
+  end
+
+  using FloatSign
+
   def evaluate(expression, locals:)
     case expression
     in ['return', return_expression]
@@ -295,7 +303,7 @@ class Interpreter
       in ['min', left, right]
         with_float(left, right, format:) do |*args|
           if args.all?(&:zero?)
-            args.detect { _1.angle.positive? }
+            args.detect { _1.sign.negative? }
           else
             args.detect(&:nan?)
           end || args.min
@@ -303,14 +311,14 @@ class Interpreter
       in ['max', left, right]
         with_float(left, right, format:) do |*args|
           if args.all?(&:zero?)
-            args.detect { _1.angle.zero? }
+            args.detect { _1.sign.positive? }
           else
             args.detect(&:nan?)
           end || args.max
         end
       in ['sqrt', value]
         with_float(value, format:) do |value|
-          if value.zero? && value.angle.positive?
+          if value.zero? && value.sign.negative?
             value
           elsif value.negative?
             ::Float::NAN

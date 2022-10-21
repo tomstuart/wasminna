@@ -90,9 +90,17 @@ module Wasminna
       Finite.new(rational: Rational(integer))
     end
 
+    module FloatSign
+      refine ::Float do
+        def sign = angle.zero? ? 1 : -1
+      end
+    end
+
+    using FloatSign
+
     def from_float(float)
       float = Float(float)
-      negated = float.angle.positive?
+      negated = float.sign.negative?
 
       if float.zero?
         Zero.new(negated:)
