@@ -318,6 +318,14 @@ class Interpreter
             Math.sqrt(value)
           end
         end
+      in ['floor', value]
+        with_float(value, format:) do |value|
+          if value.zero? || value.infinite? || value.nan?
+            value
+          else
+            value.floor
+          end
+        end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
