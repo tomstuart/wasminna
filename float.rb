@@ -161,15 +161,16 @@ module Wasminna
       ]
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
-        numerator, denominator = parse_rational(whole, fractional, radix)
+        rational = parse_rational(whole, fractional, radix)
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
-        if exponent_sign == '-'
-          denominator *= scale
-        else
-          numerator *= scale
-        end
+        rational =
+          if exponent_sign == '-'
+            rational / scale
+          else
+            rational * scale
+          end
 
-        Finite.new(numerator:, denominator:, negated: sign == '-')
+        Finite.new(numerator: rational.numerator, denominator: rational.denominator, negated: sign == '-')
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
         Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: sign == '-')
       elsif INFINITE_REGEXP.match(string) in { sign: }
@@ -185,7 +186,7 @@ module Wasminna
       denominator = radix ** fractional_digits
       numerator = (whole * denominator) + fractional
 
-      [numerator, denominator]
+      Rational(numerator, denominator)
     end
 
     def finite_regexp_match(string)
