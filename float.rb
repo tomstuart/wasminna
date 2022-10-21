@@ -90,6 +90,20 @@ module Wasminna
       Finite.new(rational: Rational(integer))
     end
 
+    def from_float(float)
+      negated = float.angle.positive?
+
+      if float.zero?
+        Zero.new(negated:)
+      elsif float.infinite?
+        Infinite.new(negated:)
+      elsif float.nan?
+        Nan.new(payload: 0, negated:)
+      else
+        Finite.new(rational: Rational(float))
+      end
+    end
+
     def decode(encoded, format:)
       format.unpack(encoded) => { negated:, exponent:, fraction: }
 
