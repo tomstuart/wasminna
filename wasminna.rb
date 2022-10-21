@@ -344,6 +344,16 @@ class Interpreter
             value.ceil
           end
         end
+      in ['trunc', value]
+        with_float(value, format:) do |value|
+          if value.zero? || value.infinite? || value.nan?
+            value
+          elsif value.negative? && value.truncate.zero?
+            -0.0
+          else
+            value.truncate
+          end
+        end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
