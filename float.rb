@@ -126,7 +126,7 @@ module Wasminna
       %r{
         \A
         (?<sign> [+-])? nan
-        (:0x (?<payload> \h+))?
+        (:0x (?<payload> \h (_? \h)*))?
         \z
       }x
     INFINITE_REGEXP =
@@ -138,17 +138,17 @@ module Wasminna
     HEXFLOAT_REGEXP =
       %r{
         \A
-        (?<sign> [+-])? 0x (?<whole> \h+)
-        (\. (?<fractional> \h*))?
-        ([Pp] (?<exponent_sign> [+-])? (?<exponent> \d+))?
+        (?<sign> [+-])? 0x (?<whole> \h (_? \h)*)
+        (\. (?<fractional> \h (_? \h)*)?)?
+        ([Pp] (?<exponent_sign> [+-])? (?<exponent> \d (_? \d)*))?
         \z
       }x
     FLOAT_REGEXP =
       %r{
         \A
-        (?<sign> [+-])? (?<whole> \d+)
-        (\. (?<fractional> \d*))?
-        ([Ee] (?<exponent_sign> [+-])? (?<exponent> \d+))?
+        (?<sign> [+-])? (?<whole> \d (_? \d)*)
+        (\. (?<fractional> \d (_? \d)*)?)?
+        ([Ee] (?<exponent_sign> [+-])? (?<exponent> \d (_? \d)*))?
         \z
       }x
 
