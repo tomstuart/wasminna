@@ -9,12 +9,12 @@ do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/$test.rb
 done
 
-for script in int_literals i32 i64 int_exprs float_literals conversions
+for script in int_literals i32 i64 int_exprs float_literals conversions f32
 do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$script.wast
 done
 
-for pending in f32
+for pending in
 do
   if ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$pending.wast; then
     echo "error: pending test passed"
