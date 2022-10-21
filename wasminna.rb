@@ -300,6 +300,14 @@ class Interpreter
             args.detect(&:nan?)
           end || args.min
         end
+      in ['max', left, right]
+        with_float(left, right, format:) do |*args|
+          if args.all?(&:zero?)
+            args.detect { _1.angle.zero? }
+          else
+            args.detect(&:nan?)
+          end || args.max
+        end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
