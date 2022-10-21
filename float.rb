@@ -93,7 +93,7 @@ module Wasminna
     module_function
 
     def from_integer(integer)
-      Finite.new(rational: Rational(integer.abs), negated: integer.negative?)
+      Finite.new(rational: Rational(integer))
     end
 
     def decode(encoded, format:)
@@ -114,6 +114,8 @@ module Wasminna
       end
 
       rational = Rational(significand)
+      rational = -rational if negated
+
       scale = 2 ** exponent.abs
       rational =
         if exponent.negative?
@@ -122,7 +124,7 @@ module Wasminna
           rational * scale
         end
 
-      Finite.new(rational:, negated:)
+      Finite.new(rational:)
     end
 
     NAN_REGEXP =
@@ -168,6 +170,7 @@ module Wasminna
         rational = parse_rational(whole, fractional, radix)
         return Zero.new(negated:) if rational.zero?
 
+        rational = -rational if sign == '-'
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         rational =
           if exponent_sign == '-'
@@ -176,7 +179,7 @@ module Wasminna
             rational * scale
           end
 
-        Finite.new(rational:, negated:)
+        Finite.new(rational:)
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
         Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: sign == '-')
       elsif INFINITE_REGEXP.match(string) in { sign: }
@@ -240,12 +243,13 @@ module Wasminna
       end
     end
 
-    Finite = Struct.new(:rational, :negated, keyword_init: true) do
+    Finite = Struct.new(:rational, keyword_init: true) do
       include MaskHelper
       include ToFloat
 
       def encode(format:)
         significand, exponent = approximate_within(format:)
+        negated = rational.negative?
 
         if significand.zero?
           return Zero.new(negated:).encode(format:)
@@ -264,7 +268,7 @@ module Wasminna
       private
 
       def approximate_within(format:)
-        approximation = Approximation.new(numerator: rational.numerator, denominator: rational.denominator, exponent: format.fraction_bits)
+        approximation = Approximation.new(numerator: rational.numerator.abs, denominator: rational.denominator.abs, exponent: format.fraction_bits)
         approximation.fit_within \
           quotients: format.significands,
           exponents: (format.exponents.min + 1)..(format.exponents.max - 1)
