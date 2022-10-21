@@ -161,7 +161,7 @@ module Wasminna
       ]
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
-        numerator, denominator = [whole, fractional].join.to_i(radix), radix ** (fractional&.length || 0)
+        numerator, denominator = parse_rational(whole, fractional, radix)
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         if exponent_sign == '-'
           denominator *= scale
@@ -177,6 +177,15 @@ module Wasminna
       else
         raise "can’t parse float: #{string.inspect}"
       end
+    end
+
+    def parse_rational(whole, fractional, radix)
+      fractional_digits = fractional&.length || 0
+      whole, fractional = [whole, fractional].map { _1&.to_i(radix) || 0 }
+      denominator = radix ** fractional_digits
+      numerator = (whole * denominator) + fractional
+
+      [numerator, denominator]
     end
 
     def finite_regexp_match(string)
