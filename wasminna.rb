@@ -43,7 +43,11 @@ class Interpreter
         argument_values =
           arguments.map { |argument| evaluate(argument, locals: {}) }
         locals = parameter_names.zip(argument_values).to_h
-        actual_value = evaluate(function.body, locals:)
+        begin
+          actual_value = evaluate(function.body, locals:)
+        rescue
+          raise "failure during #{command}"
+        end
 
         case expected
         in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
@@ -53,7 +57,12 @@ class Interpreter
           float = Wasminna::Float.decode(actual_value, format:).to_f
           success = float.nan? # TODO check whether canonical or arithmetic
         else
-          expected_value = evaluate(expected, locals: {})
+          begin
+            expected_value = evaluate(expected, locals: {})
+          rescue
+            raise "failure during #{command}"
+          end
+
           success = actual_value == expected_value
         end
 
@@ -282,6 +291,14 @@ class Interpreter
       in ['div', left, right]
         with_float(left, right, format:) do |left, right|
           left / right
+        end
+      in ['min', left, right]
+        with_float(left, right, format:) do |*args|
+          if args.all?(&:zero?)
+            args.detect { _1.angle.positive? }
+          else
+            args.detect(&:nan?)
+          end || args.min
         end
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
