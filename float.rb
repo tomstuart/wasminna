@@ -91,6 +91,7 @@ module Wasminna
     end
 
     def from_float(float)
+      float = Float(float)
       negated = float.angle.positive?
 
       if float.zero?
