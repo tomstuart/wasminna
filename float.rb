@@ -125,78 +125,30 @@ module Wasminna
     NAN_REGEXP =
       %r{
         \A
-        (?<sign>
-          [+-]
-        )?
-        nan
-        (
-          :0x
-          (?<payload>
-            \h+
-          )
-        )?
+        (?<sign> [+-])? nan
+        (:0x (?<payload> \h+))?
         \z
       }x
     INFINITE_REGEXP =
       %r{
         \A
-        (?<sign>
-          [+-]
-        )?
-        inf
+        (?<sign> [+-])? inf
         \z
       }x
     HEXFLOAT_REGEXP =
       %r{
         \A
-        (?<sign>
-          [+-]
-        )?
-        0x
-        (?<p>
-          \h+
-        )
-        (
-          \.
-          (?<q>
-            \h*
-          )
-        )?
-        (
-          [Pp]
-          (?<exponent_sign>
-            [+-]
-          )?
-          (?<e>
-            \d+
-          )
-        )?
+        (?<sign> [+-])? 0x (?<p> \h+)
+        (\. (?<q> \h*))?
+        ([Pp] (?<exponent_sign> [+-])? (?<e> \d+))?
         \z
       }x
     FLOAT_REGEXP =
       %r{
         \A
-        (?<sign>
-          [+-]
-        )?
-        (?<p>
-          \d+
-        )
-        (
-          \.
-          (?<q>
-            \d*
-          )
-        )?
-        (
-          [Ee]
-          (?<exponent_sign>
-            [+-]
-          )?
-          (?<e>
-            \d+
-          )
-        )?
+        (?<sign> [+-])? (?<p> \d+)
+        (\. (?<q> \d*))?
+        ([Ee] (?<exponent_sign> [+-])? (?<e> \d+))?
         \z
       }x
 
