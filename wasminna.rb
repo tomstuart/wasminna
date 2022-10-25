@@ -68,7 +68,7 @@ class Interpreter
         end
 
         if success
-          print '.'
+          print "\e[32m.\e[0m"
         else
           raise "failure during #{command}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
         end
