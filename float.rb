@@ -282,7 +282,7 @@ module Wasminna
 
       def encode(format:)
         significand, exponent = approximate_within(format:)
-        sign = rational.negative? ? Sign::MINUS : Sign::PLUS
+        sign = rational.sign
 
         if significand.zero?
           return Zero.new(sign:).encode(format:)

@@ -13,5 +13,9 @@ class Sign
     refine ::Float do
       def sign = angle.zero? ? PLUS : MINUS
     end
+
+    refine ::Rational do
+      def sign = negative? ? MINUS : PLUS
+    end
   end
 end
