@@ -54,12 +54,12 @@ module Wasminna
 
       def pack(sign:, exponent:, fraction:)
         sign = sign.negative? ? 1 : 0
-        biased_exponent = exponent + exponent_bias
+        exponent += exponent_bias
 
         encoded = 0
         encoded |= mask(sign, bits: 1)
         encoded <<= exponent_bits
-        encoded |= mask(biased_exponent, bits: exponent_bits)
+        encoded |= mask(exponent, bits: exponent_bits)
         encoded <<= fraction_bits
         encoded |= mask(fraction, bits: fraction_bits)
 
@@ -69,12 +69,12 @@ module Wasminna
       def unpack(encoded)
         fraction = mask(encoded, bits: fraction_bits)
         encoded >>= fraction_bits
-        biased_exponent = mask(encoded, bits: exponent_bits)
+        exponent = mask(encoded, bits: exponent_bits)
         encoded >>= exponent_bits
         sign = mask(encoded, bits: 1)
 
         sign = sign == 1 ? Sign::MINUS : Sign::PLUS
-        exponent = biased_exponent - exponent_bias
+        exponent -= exponent_bias
 
         { sign:, exponent:, fraction: }
       end
