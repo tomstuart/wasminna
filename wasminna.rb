@@ -19,71 +19,64 @@ class Interpreter
     functions = []
 
     script.each do |command|
-      case command
-      in ['module', 'binary', *]
-        # TODO
-      in ['module', *expressions]
-        expressions.each do |expression|
-          case expression
-          in ['func', ['export', name], *parameters, ['result', _], body]
-            parameters =
-              parameters.map do |parameter; name|
-                parameter => ['param', name, _]
-                Parameter.new(name:)
-              end
-            functions << Function.new(name:, parameters:, body:)
+      begin
+        case command
+        in ['module', 'binary', *]
+          # TODO
+        in ['module', *expressions]
+          expressions.each do |expression|
+            case expression
+            in ['func', ['export', name], *parameters, ['result', _], body]
+              parameters =
+                parameters.map do |parameter; name|
+                  parameter => ['param', name, _]
+                  Parameter.new(name:)
+                end
+              functions << Function.new(name:, parameters:, body:)
+            end
           end
-        end
-      in ['assert_return', ['invoke', name, *arguments], expected]
-        function = functions.detect { |function| function.name == name }
-        if function.nil?
-          puts
-          puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
-          next
-        end
-
-        parameter_names = function.parameters.map(&:name)
-        argument_values =
-          arguments.map { |argument| evaluate(argument, locals: {}) }
-        locals = parameter_names.zip(argument_values).to_h
-        begin
-          actual_value = evaluate(function.body, locals:)
-        rescue
-          puts
-          puts "\e[31mERROR\e[0m: \e[33m#{pretty_print(command)}\e[0m"
-          raise
-        end
-
-        case expected
-        in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
-          expected_value = nan
-          bits = instruction.slice(%r{\d+}).to_i(10)
-          format = Wasminna::Float::Format.for(bits:)
-          float = Wasminna::Float.decode(actual_value, format:).to_f
-          success = float.nan? # TODO check whether canonical or arithmetic
-        else
-          begin
-            expected_value = evaluate(expected, locals: {})
-          rescue
+        in ['assert_return', ['invoke', name, *arguments], expected]
+          function = functions.detect { |function| function.name == name }
+          if function.nil?
             puts
-            puts "\e[31mERROR\e[0m: \e[33m#{pretty_print(command)}\e[0m"
-            raise
+            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
+            next
           end
 
-          success = actual_value == expected_value
-        end
+          parameter_names = function.parameters.map(&:name)
+          argument_values =
+            arguments.map { |argument| evaluate(argument, locals: {}) }
+          locals = parameter_names.zip(argument_values).to_h
+          actual_value = evaluate(function.body, locals:)
 
-        if success
-          print "\e[32m.\e[0m"
-        else
-          puts
-          puts "\e[31mFAILED\e[0m: \e[33m#{pretty_print(command)}\e[0m"
-          puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
-          exit 1
+          case expected
+          in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+            expected_value = nan
+            bits = instruction.slice(%r{\d+}).to_i(10)
+            format = Wasminna::Float::Format.for(bits:)
+            float = Wasminna::Float.decode(actual_value, format:).to_f
+            success = float.nan? # TODO check whether canonical or arithmetic
+          else
+            expected_value = evaluate(expected, locals: {})
+            success = actual_value == expected_value
+          end
+
+          if success
+            print "\e[32m.\e[0m"
+          else
+            puts
+            puts "\e[31mFAILED\e[0m: \e[33m#{pretty_print(command)}\e[0m"
+            puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
+            exit 1
+          end
+        in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
+          # TODO
+          print "\e[33m.\e[0m"
         end
-      in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
-        # TODO
-        print "\e[33m.\e[0m"
+      rescue
+        puts
+        puts "\e[31mERROR\e[0m: \e[33m#{pretty_print(command)}\e[0m"
+        raise
       end
     end
   end
