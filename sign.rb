@@ -11,7 +11,7 @@ class Sign
 
   module Conversion
     refine ::Float do
-      def sign = angle.zero? ? PLUS : MINUS
+      def sign = angle.positive? ? MINUS : PLUS
     end
 
     refine ::Rational do
