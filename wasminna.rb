@@ -50,7 +50,7 @@ class Interpreter
           actual_value = evaluate(function.body, locals:)
         rescue
           puts
-          puts "\e[31mERROR\e[0m: \e[33m#{command}\e[0m"
+          puts "\e[31mERROR\e[0m: \e[33m#{pretty_print(command)}\e[0m"
           raise
         end
 
@@ -66,7 +66,7 @@ class Interpreter
             expected_value = evaluate(expected, locals: {})
           rescue
             puts
-            puts "\e[31mERROR\e[0m: \e[33m#{command}\e[0m"
+            puts "\e[31mERROR\e[0m: \e[33m#{pretty_print(command)}\e[0m"
             raise
           end
 
@@ -77,7 +77,7 @@ class Interpreter
           print "\e[32m.\e[0m"
         else
           puts
-          puts "\e[31mFAILED\e[0m: \e[33m#{command}\e[0m"
+          puts "\e[31mFAILED\e[0m: \e[33m#{pretty_print(command)}\e[0m"
           puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
           exit 1
         end
@@ -91,6 +91,15 @@ class Interpreter
   private
 
   using Sign::Conversion
+
+  def pretty_print(expression)
+    case expression
+    in [*expressions]
+      "(#{expressions.map { pretty_print(_1) }.join(' ')})"
+    else
+      expression
+    end
+  end
 
   def evaluate(expression, locals:)
     case expression
