@@ -128,7 +128,7 @@ module Wasminna
         exponent -= format.fraction_bits
       end
 
-      rational = Rational(significand) * sign.to_i
+      rational = Rational(significand) * sign
       scale = 2 ** exponent.abs
       rational =
         if exponent.negative?
@@ -180,7 +180,7 @@ module Wasminna
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
         sign = Sign.for(name: sign)
-        rational = parse_rational(whole, fractional, radix) * sign.to_i
+        rational = parse_rational(whole, fractional, radix) * sign
         return Zero.new(sign:) if rational.zero?
 
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
@@ -220,7 +220,7 @@ module Wasminna
 
     Infinite = Struct.new(:sign, keyword_init: true) do
       def to_f
-        ::Float::INFINITY * sign.to_i
+        ::Float::INFINITY * sign
       end
 
       def encode(format:)
@@ -251,7 +251,7 @@ module Wasminna
 
     Zero = Struct.new(:sign, keyword_init: true) do
       def to_f
-        0.0 * sign.to_i
+        0.0 * sign
       end
 
       def encode(format:)

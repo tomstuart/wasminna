@@ -8,6 +8,7 @@ class Sign
   def positive? = to_i.positive?
   def negative? = to_i.negative?
   def <=>(other) = to_i <=> other.to_i
+  def coerce(other) = [other, to_i]
 
   module Conversion
     refine ::Float do
