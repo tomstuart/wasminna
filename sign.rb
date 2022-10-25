@@ -2,7 +2,9 @@ class Sign
   private_class_method :new
   PLUS, MINUS = 2.times.map { new }
   def PLUS.to_i = +1
+  def PLUS.!@ = MINUS
   def MINUS.to_i = -1
+  def MINUS.!@ = PLUS
 
   def self.for(name:) = name == '-' ? MINUS : PLUS
   def positive? = to_i.positive?
