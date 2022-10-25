@@ -342,6 +342,10 @@ class Interpreter
         value = Wasminna::Float.decode(value, format:)
         value.sign = !value.sign
         value.encode(format:)
+      in ['eq', left, right]
+        left, right =
+          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
+        bool(left == right)
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
