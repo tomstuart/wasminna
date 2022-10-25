@@ -1,3 +1,5 @@
+require 'sign'
+
 module Wasminna
   module Float
     module MaskHelper
@@ -92,7 +94,7 @@ module Wasminna
 
     module FloatSign
       refine ::Float do
-        def sign = angle.zero? ? 1 : -1
+        def sign = angle.zero? ? Sign::PLUS : Sign::MINUS
       end
     end
 

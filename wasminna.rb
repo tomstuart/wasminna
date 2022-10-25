@@ -1,6 +1,7 @@
 require 'bigdecimal'
 require 'float'
 require 's_expression_parser'
+require 'sign'
 
 def main
   unless ARGV.empty?
@@ -81,7 +82,7 @@ class Interpreter
 
   module FloatSign
     refine ::Float do
-      def sign = angle.zero? ? 1 : -1
+      def sign = angle.zero? ? Sign::PLUS : Sign::MINUS
     end
   end
 
