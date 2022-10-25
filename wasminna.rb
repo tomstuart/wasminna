@@ -68,7 +68,7 @@ class Interpreter
         end
 
         if success
-          puts "#{name.tr('"', '')}: #{actual_value.inspect} == #{expected_value.inspect}"
+          print '.'
         else
           raise "failure during #{command}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
         end

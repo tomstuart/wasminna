@@ -16,13 +16,21 @@ end
 def assert_float_encoding(expected, rational, bits:)
   format = Wasminna::Float::Format.for(bits:)
   actual = Wasminna::Float::Finite.new(rational:).encode(format:)
-  raise "expected #{expected}, got #{actual}" unless actual == expected
+  if actual == expected
+    print '.'
+  else
+    raise "expected #{expected}, got #{actual}"
+  end
 end
 
 def assert_float_decoding(expected, encoded, bits:)
   format = Wasminna::Float::Format.for(bits:)
   actual = Wasminna::Float.decode(encoded, format:)
-  raise "expected #{expected}, got #{actual}" unless actual == expected
+  if actual == expected
+    print '.'
+  else
+    raise "expected #{expected}, got #{actual}"
+  end
 end
 
 main
