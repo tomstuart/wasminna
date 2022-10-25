@@ -11,6 +11,8 @@ def main
 
   assert_float_decoding Wasminna::Float::Zero.new(sign: Sign::PLUS), 0x0000_0000, bits: 32
   assert_float_decoding Wasminna::Float::Finite.new(rational: 1r / 2 ** 149), 0x0000_0001, bits: 32
+
+  puts
 end
 
 def assert_float_encoding(expected, rational, bits:)
