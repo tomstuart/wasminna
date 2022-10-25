@@ -183,7 +183,7 @@ module Wasminna
         rational = parse_rational(whole, fractional, radix)
         return Zero.new(negated:) if rational.zero?
 
-        rational = -rational if sign == '-'
+        rational = -rational if negated
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         rational =
           if exponent_sign == '-'
