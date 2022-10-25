@@ -318,7 +318,7 @@ class Interpreter
         end
       in ['sqrt', value]
         with_float(value, format:) do |value|
-          if value.zero? && value.sign.negative?
+          if value.zero?
             value
           elsif value.negative?
             ::Float::NAN
