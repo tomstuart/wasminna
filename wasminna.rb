@@ -298,16 +298,16 @@ class Interpreter
           in ['min', _, _]
             if arguments.any?(&:nan?)
               ::Float::NAN
-            elsif zero = arguments.all?(&:zero?) && arguments.detect { _1.sign.negative? }
-              zero
+            elsif arguments.all?(&:zero?)
+              arguments.min_by(&:sign)
             else
               arguments.min
             end
           in ['max', _, _]
             if arguments.any?(&:nan?)
               ::Float::NAN
-            elsif zero = arguments.all?(&:zero?) && arguments.detect { _1.sign.positive? }
-              zero
+            elsif arguments.all?(&:zero?)
+              arguments.max_by(&:sign)
             else
               arguments.max
             end
