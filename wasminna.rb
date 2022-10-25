@@ -37,7 +37,8 @@ class Interpreter
       in ['assert_return', ['invoke', name, *arguments], expected]
         function = functions.detect { |function| function.name == name }
         if function.nil?
-          warn "couldn’t find function #{name} (could be binary?), skipping"
+          puts
+          puts "WARNING: couldn’t find function #{name} (could be binary?), skipping"
           next
         end
 
@@ -48,7 +49,9 @@ class Interpreter
         begin
           actual_value = evaluate(function.body, locals:)
         rescue
-          raise "failure during #{command}"
+          puts
+          puts "ERROR: #{command}"
+          raise
         end
 
         case expected
@@ -62,7 +65,9 @@ class Interpreter
           begin
             expected_value = evaluate(expected, locals: {})
           rescue
-            raise "failure during #{command}"
+            puts
+            puts "ERROR: #{command}"
+            raise
           end
 
           success = actual_value == expected_value
@@ -71,7 +76,10 @@ class Interpreter
         if success
           print "\e[32m.\e[0m"
         else
-          raise "failure during #{command}: expected #{expected_value.inspect}, got #{actual_value.inspect}"
+          puts
+          puts "FAILED: #{command}"
+          puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
+          exit 1
         end
       in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
         # TODO
