@@ -338,30 +338,42 @@ class Interpreter
         with_float(value, format:) do |value|
           if value.zero? || value.infinite? || value.nan?
             value
-          elsif value.negative? && value.ceil.zero?
-            -0.0
           else
-            value.ceil
+            value.ceil.then do |result|
+              if result.zero? && value.negative?
+                -0.0
+              else
+                result
+              end
+            end
           end
         end
       in ['trunc', value]
         with_float(value, format:) do |value|
           if value.zero? || value.infinite? || value.nan?
             value
-          elsif value.negative? && value.truncate.zero?
-            -0.0
           else
-            value.truncate
+            value.truncate.then do |result|
+              if result.zero? && value.negative?
+                -0.0
+              else
+                result
+              end
+            end
           end
         end
       in ['nearest', value]
         with_float(value, format:) do |value|
           if value.zero? || value.infinite? || value.nan?
             value
-          elsif value.negative? && value.round(half: :even).zero?
-            -0.0
           else
-            value.round(half: :even)
+            value.round(half: :even).then do |result|
+              if result.zero? && value.negative?
+                -0.0
+              else
+                result
+              end
+            end
           end
         end
       in ['convert_i32_s' | 'convert_i64_s', value]
