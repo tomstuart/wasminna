@@ -269,6 +269,14 @@ module Wasminna
         rational.to_f
       end
 
+      def sign
+        rational.sign
+      end
+
+      def sign=(sign)
+        self.rational = rational.abs * sign
+      end
+
       def encode(format:)
         significand, exponent = approximate_within(format:)
         sign = rational.sign
