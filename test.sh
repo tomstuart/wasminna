@@ -17,9 +17,9 @@ done
 for pending in float_exprs
 do
   if ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$pending.wast; then
-    echo "error: pending test passed"
+    printf "\e[31merror: pending test passed\e[0m\n"
     exit 1
   else
-    echo "pending test failed successfully"
+    printf "\e[32mpending test failed successfully\e[0m\n"
   fi
 done
