@@ -334,6 +334,10 @@ class Interpreter
           [left, right].map { Wasminna::Float.decode(_1, format:) }
         left.sign = right.sign
         left.encode(format:)
+      in ['abs', value]
+        value = Wasminna::Float.decode(value, format:)
+        value.sign = Sign::PLUS
+        value.encode(format:)
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
