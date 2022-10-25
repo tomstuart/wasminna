@@ -52,8 +52,10 @@ module Wasminna
         -exponent_bias .. exponent_bias + 1
       end
 
+      SIGN_BIT = { Sign::PLUS => 0, Sign::MINUS => 1 }
+
       def pack(sign:, exponent:, fraction:)
-        sign = sign.negative? ? 1 : 0
+        sign = SIGN_BIT.fetch(sign)
         exponent += exponent_bias
 
         encoded = 0
@@ -73,7 +75,7 @@ module Wasminna
         encoded >>= exponent_bits
         sign = mask(encoded, bits: 1)
 
-        sign = sign == 1 ? Sign::MINUS : Sign::PLUS
+        sign = SIGN_BIT.invert.fetch(sign)
         exponent -= exponent_bias
 
         { sign:, exponent:, fraction: }
