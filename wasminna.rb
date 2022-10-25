@@ -29,8 +29,12 @@ class Interpreter
             in ['func', ['export', name], *parameters, ['result', _], body]
               parameters =
                 parameters.map do |parameter; name|
-                  parameter => ['param', name, _]
-                  Parameter.new(name:)
+                  case parameter
+                  in ['param', name, _]
+                    Parameter.new(name:)
+                  in ['param', _]
+                    Parameter.new
+                  end
                 end
               functions << Function.new(name:, parameters:, body:)
             end
@@ -99,7 +103,11 @@ class Interpreter
     in ['return', return_expression]
       evaluate(return_expression, locals:)
     in ['local.get', name]
-      locals.fetch(name)
+      if name.start_with?('$')
+        locals.fetch(name)
+      else
+        locals.values.slice(name.to_i(10))
+      end
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
