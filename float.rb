@@ -179,14 +179,14 @@ module Wasminna
       ]
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
-        negated = sign == '-'
+        negated = Sign.for(name: sign).negative?
         rational = parse_rational(whole, fractional, radix)
         return Zero.new(negated:) if rational.zero?
 
         rational = -rational if negated
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         rational =
-          if exponent_sign == '-'
+          if Sign.for(name: exponent_sign).negative?
             rational / scale
           else
             rational * scale
@@ -194,9 +194,9 @@ module Wasminna
 
         Finite.new(rational:)
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
-        Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: sign == '-')
+        Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: Sign.for(name: sign).negative?)
       elsif INFINITE_REGEXP.match(string) in { sign: }
-        Infinite.new(negated: sign == '-')
+        Infinite.new(negated: Sign.for(name: sign).negative?)
       else
         raise "can’t parse float: #{string.inspect}"
       end
