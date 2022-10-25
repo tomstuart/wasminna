@@ -295,21 +295,13 @@ class Interpreter
             left * right
           in ['div', left, right]
             left / right
-          in ['min', _, _]
+          in ['min' | 'max', _, _]
             if arguments.any?(&:nan?)
               ::Float::NAN
             elsif arguments.all?(&:zero?)
-              arguments.min_by(&:sign)
+              arguments.send(:"#{operation}_by", &:sign)
             else
-              arguments.min
-            end
-          in ['max', _, _]
-            if arguments.any?(&:nan?)
-              ::Float::NAN
-            elsif arguments.all?(&:zero?)
-              arguments.max_by(&:sign)
-            else
-              arguments.max
+              arguments.send(operation)
             end
           in ['sqrt', value]
             if value.zero?
