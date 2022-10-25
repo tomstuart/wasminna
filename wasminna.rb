@@ -342,30 +342,16 @@ class Interpreter
         value = Wasminna::Float.decode(value, format:)
         value.sign = !value.sign
         value.encode(format:)
-      in ['eq', left, right]
+      in ['eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge', left, right]
         left, right =
           [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left == right)
-      in ['ne', left, right]
-        left, right =
-          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left != right)
-      in ['lt', left, right]
-        left, right =
-          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left < right)
-      in ['le', left, right]
-        left, right =
-          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left <= right)
-      in ['gt', left, right]
-        left, right =
-          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left > right)
-      in ['ge', left, right]
-        left, right =
-          [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-        bool(left >= right)
+        operation =
+          {
+            'eq' => '==', 'ne' => '!=',
+            'lt' => '<', 'le' => '<=',
+            'gt' => '>', 'ge' => '>='
+          }.fetch(operation).to_sym.to_proc
+        bool(operation.call(left, right))
       in ['convert_i32_s' | 'convert_i64_s', value]
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
