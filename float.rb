@@ -334,6 +334,7 @@ module Wasminna
 
       def round_within(quotients:, exponents:)
         quotient, remainder = numerator.divmod(denominator)
+        return if remainder.zero?
 
         if remainder > denominator / 2 || (remainder == denominator / 2 && quotient.odd?)
           self.numerator = quotient + 1
