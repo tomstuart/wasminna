@@ -296,17 +296,21 @@ class Interpreter
           in ['div', left, right]
             left / right
           in ['min', _, _]
-            if arguments.all?(&:zero?)
-              arguments.detect { _1.sign.negative? }
+            if arguments.any?(&:nan?)
+              ::Float::NAN
             else
-              arguments.detect(&:nan?)
-            end || arguments.min
+              if arguments.all?(&:zero?)
+                arguments.detect { _1.sign.negative? }
+              end || arguments.min
+            end
           in ['max', _, _]
-            if arguments.all?(&:zero?)
-              arguments.detect { _1.sign.positive? }
+            if arguments.any?(&:nan?)
+              ::Float::NAN
             else
-              arguments.detect(&:nan?)
-            end || arguments.max
+              if arguments.all?(&:zero?)
+                arguments.detect { _1.sign.positive? }
+              end || arguments.max
+            end
           in ['sqrt', value]
             if value.zero?
               value
