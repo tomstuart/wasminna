@@ -1,7 +1,7 @@
 class SExpressionParser
   def parse(string)
     self.string = string
-    expressions = parse_expressions terminated_by: %r{\z}
+    expressions = parse_expressions(terminated_by: %r{\z}).entries
     read %r{\z}
     expressions
   end
@@ -11,13 +11,13 @@ class SExpressionParser
   attr_accessor :string
 
   def parse_expressions(terminated_by:)
-    expressions = []
+    return to_enum(__method__, terminated_by:) unless block_given?
+
     loop do
       skip_whitespace_and_comments
       break if can_read? terminated_by
-      expressions << parse_expression
+      yield parse_expression
     end
-    expressions
   end
 
   def parse_expression
@@ -44,7 +44,7 @@ class SExpressionParser
 
   def parse_list
     read %r{\(}
-    expressions = parse_expressions terminated_by: %r{\)}
+    expressions = parse_expressions(terminated_by: %r{\)}).entries
     read %r{\)}
     expressions
   end
