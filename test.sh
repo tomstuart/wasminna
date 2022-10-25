@@ -9,7 +9,7 @@ do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/$test.rb
 done
 
-for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp
+for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp f64 f64_bitwise f64_cmp
 do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$script.wast
 done
