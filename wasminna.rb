@@ -38,7 +38,7 @@ class Interpreter
         function = functions.detect { |function| function.name == name }
         if function.nil?
           puts
-          puts "WARNING: couldn’t find function #{name} (could be binary?), skipping"
+          puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
           next
         end
 
@@ -50,7 +50,7 @@ class Interpreter
           actual_value = evaluate(function.body, locals:)
         rescue
           puts
-          puts "ERROR: #{command}"
+          puts "\e[31mERROR\e[0m: \e[33m#{command}\e[0m"
           raise
         end
 
@@ -66,7 +66,7 @@ class Interpreter
             expected_value = evaluate(expected, locals: {})
           rescue
             puts
-            puts "ERROR: #{command}"
+            puts "\e[31mERROR\e[0m: \e[33m#{command}\e[0m"
             raise
           end
 
@@ -77,7 +77,7 @@ class Interpreter
           print "\e[32m.\e[0m"
         else
           puts
-          puts "FAILED: #{command}"
+          puts "\e[31mFAILED\e[0m: \e[33m#{command}\e[0m"
           puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
           exit 1
         end
