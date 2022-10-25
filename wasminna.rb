@@ -298,18 +298,18 @@ class Interpreter
           in ['min', _, _]
             if arguments.any?(&:nan?)
               ::Float::NAN
+            elsif zero = arguments.all?(&:zero?) && arguments.detect { _1.sign.negative? }
+              zero
             else
-              if arguments.all?(&:zero?)
-                arguments.detect { _1.sign.negative? }
-              end || arguments.min
+              arguments.min
             end
           in ['max', _, _]
             if arguments.any?(&:nan?)
               ::Float::NAN
+            elsif zero = arguments.all?(&:zero?) && arguments.detect { _1.sign.positive? }
+              zero
             else
-              if arguments.all?(&:zero?)
-                arguments.detect { _1.sign.positive? }
-              end || arguments.max
+              arguments.max
             end
           in ['sqrt', value]
             if value.zero?
