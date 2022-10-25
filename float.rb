@@ -52,8 +52,8 @@ module Wasminna
         -exponent_bias .. exponent_bias + 1
       end
 
-      def pack(negated:, exponent:, fraction:)
-        sign = negated ? 1 : 0
+      def pack(sign:, exponent:, fraction:)
+        sign = sign.negative? ? 1 : 0
         biased_exponent = exponent + exponent_bias
 
         encoded = 0
@@ -73,10 +73,10 @@ module Wasminna
         encoded >>= exponent_bits
         sign = mask(encoded, bits: 1)
 
-        negated = sign == 1
+        sign = sign == 1 ? Sign::MINUS : Sign::PLUS
         exponent = biased_exponent - exponent_bias
 
-        { negated:, exponent:, fraction: }
+        { sign:, exponent:, fraction: }
       end
 
       private
@@ -96,29 +96,29 @@ module Wasminna
 
     def from_float(float)
       float = Float(float)
-      negated = float.sign.negative?
+      sign = float.sign
 
       if float.zero?
-        Zero.new(negated:)
+        Zero.new(sign:)
       elsif float.infinite?
-        Infinite.new(negated:)
+        Infinite.new(sign:)
       elsif float.nan?
-        Nan.new(payload: 0, negated:)
+        Nan.new(payload: 0, sign:)
       else
         Finite.new(rational: Rational(float))
       end
     end
 
     def decode(encoded, format:)
-      format.unpack(encoded) => { negated:, exponent:, fraction: }
+      format.unpack(encoded) => { sign:, exponent:, fraction: }
 
       case exponent
       when format.exponents.max
         return fraction.zero? ?
-          Infinite.new(negated:) :
-          Nan.new(payload: fraction, negated:)
+          Infinite.new(sign:) :
+          Nan.new(payload: fraction, sign:)
       when format.exponents.min
-        return Zero.new(negated:) if fraction.zero?
+        return Zero.new(sign:) if fraction.zero?
         significand = fraction
         exponent -= format.fraction_bits - 1
       else
@@ -127,7 +127,7 @@ module Wasminna
       end
 
       rational = Rational(significand)
-      rational = -rational if negated
+      rational = -rational if sign.negative?
 
       scale = 2 ** exponent.abs
       rational =
@@ -179,11 +179,11 @@ module Wasminna
       ]
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
-        negated = Sign.for(name: sign).negative?
+        sign = Sign.for(name: sign)
         rational = parse_rational(whole, fractional, radix)
-        return Zero.new(negated:) if rational.zero?
+        return Zero.new(sign:) if rational.zero?
 
-        rational = -rational if negated
+        rational = -rational if sign.negative?
         scale = base ** (exponent&.to_i(exponent_radix) || 0)
         rational =
           if Sign.for(name: exponent_sign).negative?
@@ -194,9 +194,9 @@ module Wasminna
 
         Finite.new(rational:)
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
-        Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, negated: Sign.for(name: sign).negative?)
+        Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, sign: Sign.for(name: sign))
       elsif INFINITE_REGEXP.match(string) in { sign: }
-        Infinite.new(negated: Sign.for(name: sign).negative?)
+        Infinite.new(sign: Sign.for(name: sign))
       else
         raise "can’t parse float: #{string.inspect}"
       end
@@ -219,9 +219,9 @@ module Wasminna
       end
     end
 
-    Infinite = Struct.new(:negated, keyword_init: true) do
+    Infinite = Struct.new(:sign, keyword_init: true) do
       def to_f
-        if negated
+        if sign.negative?
           -::Float::INFINITY
         else
           ::Float::INFINITY
@@ -230,13 +230,13 @@ module Wasminna
 
       def encode(format:)
         format.pack \
-          negated:,
+          sign:,
           exponent: format.exponents.max,
           fraction: 0
       end
     end
 
-    Nan = Struct.new(:payload, :negated, keyword_init: true) do
+    Nan = Struct.new(:payload, :sign, keyword_init: true) do
       include MaskHelper
 
       def to_f
@@ -248,15 +248,15 @@ module Wasminna
         fraction |= 1 << (format.fraction_bits - 1) if fraction.zero?
 
         format.pack \
-          negated:,
+          sign:,
           exponent: format.exponents.max,
           fraction:
       end
     end
 
-    Zero = Struct.new(:negated, keyword_init: true) do
+    Zero = Struct.new(:sign, keyword_init: true) do
       def to_f
-        if negated
+        if sign.negative?
           -0.0
         else
           0.0
@@ -265,7 +265,7 @@ module Wasminna
 
       def encode(format:)
         format.pack \
-          negated:,
+          sign:,
           exponent: format.exponents.min,
           fraction: 0
       end
@@ -280,18 +280,18 @@ module Wasminna
 
       def encode(format:)
         significand, exponent = approximate_within(format:)
-        negated = rational.negative?
+        sign = rational.negative? ? Sign::MINUS : Sign::PLUS
 
         if significand.zero?
-          return Zero.new(negated:).encode(format:)
+          return Zero.new(sign:).encode(format:)
         elsif significand < format.significands.min
           exponent = format.exponents.min
         elsif significand > format.significands.max
-          return Infinite.new(negated:).encode(format:)
+          return Infinite.new(sign:).encode(format:)
         end
 
         format.pack \
-          negated:,
+          sign:,
           exponent:,
           fraction: mask(significand, bits: format.fraction_bits)
       end
