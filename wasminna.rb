@@ -83,6 +83,7 @@ class Interpreter
         end
       in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
         # TODO
+        print "\e[33m.\e[0m"
       end
     end
   end
