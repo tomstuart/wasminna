@@ -80,13 +80,7 @@ class Interpreter
 
   private
 
-  module FloatSign
-    refine ::Float do
-      def sign = angle.zero? ? Sign::PLUS : Sign::MINUS
-    end
-  end
-
-  using FloatSign
+  using Sign::Conversion
 
   def evaluate(expression, locals:)
     case expression

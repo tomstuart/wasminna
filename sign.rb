@@ -7,4 +7,10 @@ class Sign
   def positive? = to_i.positive?
   def negative? = to_i.negative?
   def <=>(other) = to_i <=> other.to_i
+
+  module Conversion
+    refine ::Float do
+      def sign = angle.zero? ? PLUS : MINUS
+    end
+  end
 end
