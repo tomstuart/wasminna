@@ -284,94 +284,77 @@ class Interpreter
       arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
       case [operation, *arguments]
-      in ['add', left, right]
-        with_float(left, right, format:) do |left, right|
-          left + right
-        end
-      in ['sub', left, right]
-        with_float(left, right, format:) do |left, right|
-          left - right
-        end
-      in ['mul', left, right]
-        with_float(left, right, format:) do |left, right|
-          left * right
-        end
-      in ['div', left, right]
-        with_float(left, right, format:) do |left, right|
-          left / right
-        end
-      in ['min', left, right]
-        with_float(left, right, format:) do |*args|
-          if args.all?(&:zero?)
-            args.detect { _1.sign.negative? }
-          else
-            args.detect(&:nan?)
-          end || args.min
-        end
-      in ['max', left, right]
-        with_float(left, right, format:) do |*args|
-          if args.all?(&:zero?)
-            args.detect { _1.sign.positive? }
-          else
-            args.detect(&:nan?)
-          end || args.max
-        end
-      in ['sqrt', value]
-        with_float(value, format:) do |value|
-          if value.zero?
-            value
-          elsif value.negative?
-            ::Float::NAN
-          else
-            Math.sqrt(value)
-          end
-        end
-      in ['floor', value]
-        with_float(value, format:) do |value|
-          if value.zero? || value.infinite? || value.nan?
-            value
-          else
-            value.floor
-          end
-        end
-      in ['ceil', value]
-        with_float(value, format:) do |value|
-          if value.zero? || value.infinite? || value.nan?
-            value
-          else
-            value.ceil.then do |result|
-              if result.zero? && value.negative?
-                -0.0
-              else
-                result
+      in ['add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest', *]
+        with_float(*arguments, format:) do |*arguments|
+          case [operation, *arguments]
+          in ['add', left, right]
+            left + right
+          in ['sub', left, right]
+            left - right
+          in ['mul', left, right]
+            left * right
+          in ['div', left, right]
+            left / right
+          in ['min', _, _]
+            if arguments.all?(&:zero?)
+              arguments.detect { _1.sign.negative? }
+            else
+              arguments.detect(&:nan?)
+            end || arguments.min
+          in ['max', _, _]
+            if arguments.all?(&:zero?)
+              arguments.detect { _1.sign.positive? }
+            else
+              arguments.detect(&:nan?)
+            end || arguments.max
+          in ['sqrt', value]
+            if value.zero?
+              value
+            elsif value.negative?
+              ::Float::NAN
+            else
+              Math.sqrt(value)
+            end
+          in ['floor', value]
+            if value.zero? || value.infinite? || value.nan?
+              value
+            else
+              value.floor
+            end
+          in ['ceil', value]
+            if value.zero? || value.infinite? || value.nan?
+              value
+            else
+              value.ceil.then do |result|
+                if result.zero? && value.negative?
+                  -0.0
+                else
+                  result
+                end
               end
             end
-          end
-        end
-      in ['trunc', value]
-        with_float(value, format:) do |value|
-          if value.zero? || value.infinite? || value.nan?
-            value
-          else
-            value.truncate.then do |result|
-              if result.zero? && value.negative?
-                -0.0
-              else
-                result
+          in ['trunc', value]
+            if value.zero? || value.infinite? || value.nan?
+              value
+            else
+              value.truncate.then do |result|
+                if result.zero? && value.negative?
+                  -0.0
+                else
+                  result
+                end
               end
             end
-          end
-        end
-      in ['nearest', value]
-        with_float(value, format:) do |value|
-          if value.zero? || value.infinite? || value.nan?
-            value
-          else
-            value.round(half: :even).then do |result|
-              if result.zero? && value.negative?
-                -0.0
-              else
-                result
+          in ['nearest', value]
+            if value.zero? || value.infinite? || value.nan?
+              value
+            else
+              value.round(half: :even).then do |result|
+                if result.zero? && value.negative?
+                  -0.0
+                else
+                  result
+                end
               end
             end
           end
