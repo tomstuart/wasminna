@@ -315,41 +315,20 @@ class Interpreter
             else
               Math.sqrt(value)
             end
-          in ['floor', value]
+          in ['floor' | 'ceil' | 'trunc' | 'nearest', value]
             if value.zero? || value.infinite? || value.nan?
               value
             else
-              value.floor
-            end
-          in ['ceil', value]
-            if value.zero? || value.infinite? || value.nan?
-              value
-            else
-              value.ceil.then do |result|
-                if result.zero? && value.negative?
-                  -0.0
-                else
-                  result
-                end
-              end
-            end
-          in ['trunc', value]
-            if value.zero? || value.infinite? || value.nan?
-              value
-            else
-              value.truncate.then do |result|
-                if result.zero? && value.negative?
-                  -0.0
-                else
-                  result
-                end
-              end
-            end
-          in ['nearest', value]
-            if value.zero? || value.infinite? || value.nan?
-              value
-            else
-              value.round(half: :even).then do |result|
+              case operation
+              in 'floor'
+                value.floor
+              in 'ceil'
+                value.ceil
+              in 'trunc'
+                value.truncate
+              in 'nearest'
+                value.round(half: :even)
+              end.then do |result|
                 if result.zero? && value.negative?
                   -0.0
                 else
