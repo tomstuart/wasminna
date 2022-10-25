@@ -1,9 +1,10 @@
 class SExpressionParser
-  def parse(string)
+  def parse(string, &)
+    return to_enum(__method__, string) unless block_given?
+
     self.string = string
-    expressions = parse_expressions(terminated_by: %r{\z}).entries
+    parse_expressions(terminated_by: %r{\z}, &)
     read %r{\z}
-    expressions
   end
 
   private
