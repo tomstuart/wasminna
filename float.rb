@@ -128,16 +128,7 @@ module Wasminna
         exponent -= format.fraction_bits
       end
 
-      rational = Rational(significand) * sign
-      scale = 2 ** exponent.abs
-      rational =
-        if exponent.negative?
-          rational / scale
-        else
-          rational * scale
-        end
-
-      Finite.new(rational:)
+      Finite.new(rational: Rational(significand) * (2 ** exponent) * sign)
     end
 
     NAN_REGEXP =
@@ -179,19 +170,16 @@ module Wasminna
       ]
         whole, fractional, exponent =
           [whole, fractional, exponent].map { _1&.tr('_', '') }
-        sign = Sign.for(name: sign)
-        rational = parse_rational(whole, fractional, radix) * sign
-        return Zero.new(sign:) if rational.zero?
-
-        scale = base ** (exponent&.to_i(exponent_radix) || 0)
+        sign, exponent_sign = [sign, exponent_sign].map { Sign.for(name: _1) }
+        exponent = (exponent&.to_i(exponent_radix) || 0) * exponent_sign
         rational =
-          if Sign.for(name: exponent_sign).negative?
-            rational / scale
-          else
-            rational * scale
-          end
+          parse_rational(whole, fractional, radix) * (base ** exponent) * sign
 
-        Finite.new(rational:)
+        if rational.zero?
+          Zero.new(sign:)
+        else
+          Finite.new(rational:)
+        end
       elsif NAN_REGEXP.match(string) in { sign:, payload: }
         Nan.new(payload: payload&.tr('_', '')&.to_i(16) || 0, sign: Sign.for(name: sign))
       elsif INFINITE_REGEXP.match(string) in { sign: }
