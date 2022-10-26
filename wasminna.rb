@@ -27,13 +27,16 @@ class Interpreter
           expressions.each do |expression|
             case expression
             in ['func', ['export', name], *parameters, ['result', _], body]
-              parameters =
-                parameters.map do |parameter; name|
-                  case parameter
-                  in ['param', name, _]
-                    Parameter.new(name:)
-                  in ['param', _]
-                    Parameter.new
+              functions << Function.new.tap do |function|
+                function.name = name
+                function.parameters =
+                  parameters.map do |parameter; name|
+                    case parameter
+                    in ['param', name, _]
+                      Parameter.new(name:)
+                    in ['param', _]
+                      Parameter.new
+                    end
                   end
                 end
               functions << Function.new(name:, parameters:, body:)
