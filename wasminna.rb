@@ -26,20 +26,20 @@ class Interpreter
         in ['module', *expressions]
           expressions.each do |expression|
             case expression
-            in ['func', ['export', name], *parameters, ['result', _], body]
-              functions << Function.new.tap do |function|
-                function.name = name
-                function.parameters =
-                  parameters.map do |parameter; name|
-                    case parameter
-                    in ['param', name, _]
-                      Parameter.new(name:)
-                    in ['param', _]
-                      Parameter.new
-                    end
+            in ['func', *expressions, body]
+              functions << Function.new(parameters: [], body:).tap do |function|
+                expressions.each do |expression|
+                  case expression
+                  in ['export', name]
+                    function.name = name
+                  in ['param', name, _]
+                    function.parameters << Parameter.new(name:)
+                  in ['param', _]
+                    function.parameters << Parameter.new
+                  in ['result', _]
                   end
                 end
-              functions << Function.new(name:, parameters:, body:)
+              end
             end
           end
         in ['assert_return', ['invoke', name, *arguments], expected]
