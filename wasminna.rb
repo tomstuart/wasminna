@@ -438,6 +438,12 @@ class Interpreter
       in ['load', value]
         raise unless bits == 32
         @memory.bytes.unpack1('L<', offset: value)
+      in ['store', offset, value]
+        raise unless bits == 32
+        @memory.bytes.force_encoding(Encoding::ASCII_8BIT)
+        @memory.bytes[offset, 4] = [value].pack('L<')
+        @memory.bytes.force_encoding(Encoding::UTF_8)
+        0
       end
     end
   end
