@@ -19,7 +19,7 @@ class Interpreter
   Memory = Struct.new(:bytes, keyword_init: true)
 
   def interpret(script)
-    functions = []
+    functions = nil
     @memory = nil
 
     script.each do |command|
@@ -28,6 +28,8 @@ class Interpreter
         in ['module', 'binary', *]
           # TODO
         in ['module', *expressions]
+          functions = []
+
           expressions.each do |expression|
             case expression
             in ['func', *expressions, body]
