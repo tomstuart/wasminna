@@ -314,6 +314,9 @@ class Interpreter
         result = result.clamp(min, max)
 
         result
+      in ['load', value]
+        raise unless bits == 32
+        @memory.bytes.unpack1('L<', offset: value)
       end.then { |value| mask(value, bits:) }
     in [%r{\Af(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
