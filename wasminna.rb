@@ -52,6 +52,19 @@ class Interpreter
               @memory = Memory.new(bytes:)
             end
           end
+        in ['invoke', name, *arguments]
+          function = functions.detect { |function| function.name == name }
+          if function.nil?
+            puts
+            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
+            next
+          end
+
+          parameter_names = function.parameters.map(&:name)
+          argument_values =
+            arguments.map { |argument| evaluate(argument, locals: {}) }
+          locals = parameter_names.zip(argument_values).to_h
+          evaluate(function.body, locals:)
         in ['assert_return', ['invoke', name, *arguments], expected]
           function = functions.detect { |function| function.name == name }
           if function.nil?
