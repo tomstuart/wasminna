@@ -442,8 +442,14 @@ class Interpreter
         raise unless bits == integer_bits
         value
       in ['load', value]
-        raise unless bits == 32
-        @memory.bytes.unpack1('L<', offset: value)
+        format =
+          case bits
+          in 32
+            'L<'
+          in 64
+            'Q<'
+          end
+        @memory.bytes.unpack1(format, offset: value)
       in ['store', offset, value]
         raise unless bits == 32
         @memory.bytes.force_encoding(Encoding::ASCII_8BIT)
