@@ -459,9 +459,15 @@ class Interpreter
           end
         @memory.bytes.unpack1(format, offset: value)
       in ['store', offset, value]
-        raise unless bits == 32
+        format =
+          case bits
+          in 32
+            'L<'
+          in 64
+            'Q<'
+          end
         @memory.bytes.force_encoding(Encoding::ASCII_8BIT)
-        @memory.bytes[offset, 4] = [value].pack('L<')
+        @memory.bytes[offset, bits / 8] = [value].pack(format)
         @memory.bytes.force_encoding(Encoding::UTF_8)
         0
       end
