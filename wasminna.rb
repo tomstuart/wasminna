@@ -416,6 +416,9 @@ class Interpreter
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == integer_bits
         value
+      in ['load', value]
+        raise unless bits == 32
+        @memory.bytes.unpack1('L<', offset: value)
       end
     end
   end
