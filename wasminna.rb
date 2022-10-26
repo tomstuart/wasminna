@@ -12,11 +12,15 @@ def main
 end
 
 class Interpreter
+  PAGE_SIZE = 0xffff
+
   Parameter = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
+  Memory = Struct.new(:bytes, keyword_init: true)
 
   def interpret(script)
     functions = []
+    @memory = nil
 
     script.each do |command|
       begin
@@ -40,6 +44,12 @@ class Interpreter
                   end
                 end
               end
+            in ['memory', ['data', string]]
+              string = parse_string(string)
+              size_in_pages = ((string.bytesize - 1) / PAGE_SIZE) + 1
+              bytes = "\0" * (size_in_pages * PAGE_SIZE)
+              bytes[0, string.length] = string
+              @memory = Memory.new(bytes:)
             end
           end
         in ['assert_return', ['invoke', name, *arguments], expected]
