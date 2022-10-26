@@ -267,7 +267,6 @@ module Wasminna
 
       def encode(format:)
         significand, exponent = approximate_within(format:)
-        sign = rational.sign
 
         if significand.zero?
           return Zero.new(sign:).encode(format:)
