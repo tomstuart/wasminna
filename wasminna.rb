@@ -260,10 +260,23 @@ class Interpreter
       bits = instruction.slice(%r{\d+}).to_i(10)
       offset = evaluate(offset, locals:)
       @memory.load(offset:, bits:)
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' => instruction, %r{\Aoffset=\d+\z} => static_offset, offset]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      _, static_offset = static_offset.split('=')
+      static_offset = static_offset.to_i(10)
+      offset = evaluate(offset, locals:)
+      @memory.load(offset: offset + static_offset, bits:)
     in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, offset, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       offset, value = [offset, value].map { evaluate(_1, locals:) }
       @memory.store(value:, offset:, bits:)
+      0
+    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, offset, value]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      _, static_offset = static_offset.split('=')
+      static_offset = static_offset.to_i(10)
+      offset, value = [offset, value].map { evaluate(_1, locals:) }
+      @memory.store(value:, offset: offset + static_offset, bits:)
       0
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
