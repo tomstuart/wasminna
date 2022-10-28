@@ -32,6 +32,11 @@ class Interpreter
       new(bytes:)
     end
 
+    def self.from_limits(minimum_size:, maximum_size:)
+      bytes = "\0" * (minimum_size * BYTES_PER_PAGE)
+      new(bytes:)
+    end
+
     def load(offset:, bits:)
       size_of(bits, in: BITS_PER_BYTE).times
         .map { |index| bytes.getbyte(offset + index) }
@@ -77,6 +82,10 @@ class Interpreter
               end
             in ['memory', ['data', string]]
               @memory = Memory.from_string(string: parse_string(string))
+            in ['memory', minimum_size, maximum_size]
+              minimum_size, maximum_size =
+                [minimum_size, maximum_size].map { interpret_integer(_1, bits: 32) }
+              @memory = Memory.from_limits(minimum_size:, maximum_size:)
             end
           end
         in ['invoke', name, *arguments]
