@@ -186,6 +186,11 @@ class Interpreter
       end
     in ['block', label, body]
       evaluate(body, locals:)
+    in ['loop', label, *instructions]
+      instructions.each do |instruction|
+        evaluate(instruction, locals:)
+      end
+      0
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
