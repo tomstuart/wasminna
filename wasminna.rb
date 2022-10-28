@@ -18,6 +18,13 @@ class Interpreter
   class Memory < Struct.new(:bytes, keyword_init: true)
     PAGE_SIZE = 0xffff
 
+    def self.for(string:)
+      size_in_pages = ((string.bytesize - 1) / PAGE_SIZE) + 1
+      bytes = "\0" * (size_in_pages * PAGE_SIZE)
+      bytes[0, string.length] = string
+      new(bytes:)
+    end
+
     def load(offset:, bits:)
       format =
         case bits
@@ -72,11 +79,7 @@ class Interpreter
                 end
               end
             in ['memory', ['data', string]]
-              string = parse_string(string)
-              size_in_pages = ((string.bytesize - 1) / Memory::PAGE_SIZE) + 1
-              bytes = "\0" * (size_in_pages * Memory::PAGE_SIZE)
-              bytes[0, string.length] = string
-              @memory = Memory.new(bytes:)
+              @memory = Memory.for(string: parse_string(string))
             end
           end
         in ['invoke', name, *arguments]
