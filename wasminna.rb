@@ -40,8 +40,11 @@ class Interpreter
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
 
   class Memory < Struct.new(:bytes, keyword_init: true)
+    include MaskHelper
+    include SizeOfHelper
     extend SizeOfHelper
 
+    BITS_PER_BYTE = 8
     PAGE_SIZE = 0xffff
 
     def self.for(string:)
@@ -63,16 +66,10 @@ class Interpreter
     end
 
     def store(value:, offset:, bits:)
-      format =
-        case bits
-        in 32
-          'L<'
-        in 64
-          'Q<'
-        end
-      bytes.force_encoding(Encoding::ASCII_8BIT)
-      bytes[offset, bits / 8] = [value].pack(format)
-      bytes.force_encoding(Encoding::UTF_8)
+      size_of(bits, in: BITS_PER_BYTE).times do |index|
+        byte = mask(value >> index * BITS_PER_BYTE, bits: BITS_PER_BYTE)
+        bytes.setbyte(offset + index, byte)
+      end
     end
   end
 
