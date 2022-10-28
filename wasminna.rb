@@ -17,6 +17,30 @@ class Interpreter
 
   class Memory < Struct.new(:bytes, keyword_init: true)
     PAGE_SIZE = 0xffff
+
+    def load(offset:, bits:)
+      format =
+        case bits
+        in 32
+          'L<'
+        in 64
+          'Q<'
+        end
+      bytes.unpack1(format, offset:)
+    end
+
+    def store(value:, offset:, bits:)
+      format =
+        case bits
+        in 32
+          'L<'
+        in 64
+          'Q<'
+        end
+      bytes.force_encoding(Encoding::ASCII_8BIT)
+      bytes[offset, bits / 8] = [value].pack(format)
+      bytes.force_encoding(Encoding::UTF_8)
+    end
   end
 
   def interpret(script)
@@ -330,26 +354,10 @@ class Interpreter
         result = result.clamp(min, max)
 
         result
-      in ['load', value]
-        format =
-          case bits
-          in 32
-            'L<'
-          in 64
-            'Q<'
-          end
-        @memory.bytes.unpack1(format, offset: value)
+      in ['load', offset]
+        @memory.load(offset:, bits:)
       in ['store', offset, value]
-        format =
-          case bits
-          in 32
-            'L<'
-          in 64
-            'Q<'
-          end
-        @memory.bytes.force_encoding(Encoding::ASCII_8BIT)
-        @memory.bytes[offset, bits / 8] = [value].pack(format)
-        @memory.bytes.force_encoding(Encoding::UTF_8)
+        @memory.store(value:, offset:, bits:)
         0
       end.then { |value| mask(value, bits:) }
     in [%r{\Af(32|64)\.} => instruction, *arguments]
@@ -450,26 +458,10 @@ class Interpreter
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == integer_bits
         value
-      in ['load', value]
-        format =
-          case bits
-          in 32
-            'L<'
-          in 64
-            'Q<'
-          end
-        @memory.bytes.unpack1(format, offset: value)
+      in ['load', offset]
+        @memory.load(offset:, bits:)
       in ['store', offset, value]
-        format =
-          case bits
-          in 32
-            'L<'
-          in 64
-            'Q<'
-          end
-        @memory.bytes.force_encoding(Encoding::ASCII_8BIT)
-        @memory.bytes[offset, bits / 8] = [value].pack(format)
-        @memory.bytes.force_encoding(Encoding::UTF_8)
+        @memory.store(value:, offset:, bits:)
         0
       end
     end
