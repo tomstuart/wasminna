@@ -19,10 +19,14 @@ class Interpreter
     PAGE_SIZE = 0xffff
 
     def self.for(string:)
-      size_in_pages = ((string.bytesize - 1) / PAGE_SIZE) + 1
+      size_in_pages = size_of(string.bytesize, in: PAGE_SIZE)
       bytes = "\0" * (size_in_pages * PAGE_SIZE)
       bytes[0, string.length] = string
       new(bytes:)
+    end
+
+    def self.size_of(value, **kwargs)
+      ((value - 1) / kwargs.fetch(:in)) + 1
     end
 
     def load(offset:, bits:)
