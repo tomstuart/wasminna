@@ -195,7 +195,7 @@ class Interpreter
       else
         locals.values.slice(name.to_i(10))
       end
-    in ['local.set', name, value]
+    in ['local.set' | 'local.tee', name, value]
       value = evaluate(value, locals:)
 
       if name.start_with?('$')
