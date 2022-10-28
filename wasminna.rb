@@ -211,6 +211,15 @@ class Interpreter
     in ['br_if', label, condition]
       throw(label.to_sym, :branch) unless evaluate(condition, locals:).zero?
       0
+    in ['select', value_1, value_2, condition]
+      value_1, value_2, condition =
+        [value_1, value_2, condition].map { evaluate(_1, locals:) }
+
+      if condition.zero?
+        value_2
+      else
+        value_1
+      end
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
