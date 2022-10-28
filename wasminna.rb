@@ -1,5 +1,6 @@
 require 'bigdecimal'
 require 'float'
+require 'helpers'
 require 's_expression_parser'
 require 'sign'
 
@@ -11,38 +12,16 @@ def main
   end
 end
 
-module MaskHelper
-  private
-
-  def mask(value, bits:)
-    size = 1 << bits
-    value & (size - 1)
-  end
-end
-
-module SizeOfHelper
-  private
-
-  def size_of(value, **kwargs)
-    quotient, remainder = value.divmod(kwargs.fetch(:in))
-    if remainder.zero?
-      quotient
-    else
-      quotient + 1
-    end
-  end
-end
-
 class Interpreter
-  include MaskHelper
+  include Helpers::Mask
 
   Parameter = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
 
   class Memory < Struct.new(:bytes, keyword_init: true)
-    include MaskHelper
-    include SizeOfHelper
-    extend SizeOfHelper
+    include Helpers::Mask
+    include Helpers::SizeOf
+    extend Helpers::SizeOf
 
     BITS_PER_BYTE = 8
     BYTES_PER_PAGE = 0xffff

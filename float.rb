@@ -1,14 +1,8 @@
+require 'helpers'
 require 'sign'
 
 module Wasminna
   module Float
-    module MaskHelper
-      def mask(value, bits:)
-        size = 1 << bits
-        value & (size - 1)
-      end
-    end
-
     module MatchPattern
       refine MatchData do
         def deconstruct_keys(keys)
@@ -24,7 +18,7 @@ module Wasminna
     end
 
     class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
-      include MaskHelper
+      include Helpers::Mask
 
       ALL = [
         Single = new(exponent_bits: 8, significand_bits: 24),
@@ -220,7 +214,7 @@ module Wasminna
     end
 
     Nan = Struct.new(:payload, :sign, keyword_init: true) do
-      include MaskHelper
+      include Helpers::Mask
 
       def to_f
         ::Float::NAN
@@ -251,7 +245,7 @@ module Wasminna
     end
 
     Finite = Struct.new(:rational, keyword_init: true) do
-      include MaskHelper
+      include Helpers::Mask
 
       def to_f
         rational.to_f
