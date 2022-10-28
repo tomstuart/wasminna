@@ -15,7 +15,8 @@ class Interpreter
   include Helpers::Mask
 
   Parameter = Struct.new(:name, keyword_init: true)
-  Function = Struct.new(:name, :parameters, :body, keyword_init: true)
+  Local = Struct.new(:name, keyword_init: true)
+  Function = Struct.new(:name, :parameters, :locals, :body, keyword_init: true)
 
   class Memory < Struct.new(:bytes, keyword_init: true)
     include Helpers::Mask
@@ -67,7 +68,7 @@ class Interpreter
           expressions.each do |expression|
             case expression
             in ['func', *expressions, body]
-              functions << Function.new(parameters: [], body:).tap do |function|
+              functions << Function.new(parameters: [], locals: [], body:).tap do |function|
                 expressions.each do |expression|
                   case expression
                   in ['export', name]
@@ -77,6 +78,8 @@ class Interpreter
                   in ['param', _]
                     function.parameters << Parameter.new
                   in ['result', _]
+                  in ['local', name, _]
+                    function.locals << Local.new(name:)
                   end
                 end
               end
