@@ -85,8 +85,8 @@ class Interpreter
                   end
                 end
               end
-            in ['memory', ['data', string]]
-              @memory = Memory.from_string(string: parse_string(string))
+            in ['memory', ['data', *strings]]
+              @memory = Memory.from_string(string: strings.map { parse_string(_1) }.join)
             in ['memory', minimum_size, maximum_size]
               minimum_size, maximum_size =
                 [minimum_size, maximum_size].map { interpret_integer(_1, bits: 32) }
