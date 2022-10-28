@@ -99,11 +99,7 @@ class Interpreter
             next
           end
 
-          parameter_names = function.parameters.map(&:name)
-          argument_values =
-            arguments.map { |argument| evaluate(argument, locals: {}) }
-          locals = parameter_names.zip(argument_values).to_h
-          evaluate(function.body, locals:)
+          invoke_function(function:, arguments:)
         in ['assert_return', ['invoke', name, *arguments], expected]
           function = functions.detect { |function| function.name == name }
           if function.nil?
@@ -112,11 +108,7 @@ class Interpreter
             next
           end
 
-          parameter_names = function.parameters.map(&:name)
-          argument_values =
-            arguments.map { |argument| evaluate(argument, locals: {}) }
-          locals = parameter_names.zip(argument_values).to_h
-          actual_value = evaluate(function.body, locals:)
+          actual_value = invoke_function(function:, arguments:)
 
           case expected
           in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
@@ -172,6 +164,14 @@ class Interpreter
         digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
       end.
       force_encoding(encoding)
+  end
+
+  def invoke_function(function:, arguments:)
+    parameter_names = function.parameters.map(&:name)
+    argument_values =
+      arguments.map { |argument| evaluate(argument, locals: {}) }
+    locals = parameter_names.zip(argument_values).to_h
+    evaluate(function.body, locals:)
   end
 
   def evaluate(expression, locals:)
