@@ -68,7 +68,7 @@ class Interpreter
           expressions.each do |expression|
             case expression
             in ['func', *expressions, body]
-              functions << Function.new(parameters: [], locals: [], body:).tap do |function|
+              functions << Function.new(parameters: [], locals: [], body: [body]).tap do |function|
                 expressions.each do |expression|
                   case expression
                   in ['export', name]
@@ -172,7 +172,13 @@ class Interpreter
       arguments.map { |argument| evaluate(argument, locals: {}) }
     parameters = parameter_names.zip(argument_values).to_h
     locals = function.locals.map(&:name).map { [_1, 0] }.to_h
-    evaluate(function.body, locals: parameters.merge(locals))
+    locals = parameters.merge(locals)
+
+    result = nil
+    function.body.each do |instruction|
+      result = evaluate(instruction, locals:)
+    end
+    result
   end
 
   def evaluate(expression, locals:)
