@@ -256,6 +256,15 @@ class Interpreter
       bits = instruction.slice(%r{\d+}).to_i(10)
       format = Wasminna::Float::Format.for(bits:)
       Wasminna::Float.parse(value).encode(format:)
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' => instruction, offset]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      offset = evaluate(offset, locals:)
+      @memory.load(offset:, bits:)
+    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, offset, value]
+      bits = instruction.slice(%r{\d+}).to_i(10)
+      offset, value = [offset, value].map { evaluate(_1, locals:) }
+      @memory.store(value:, offset:, bits:)
+      0
     in [%r{\Ai(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
       bits = type.slice(%r{\d+}).to_i(10)
@@ -432,11 +441,6 @@ class Interpreter
         result = result.clamp(min, max)
 
         result
-      in ['load', offset]
-        @memory.load(offset:, bits:)
-      in ['store', offset, value]
-        @memory.store(value:, offset:, bits:)
-        0
       end.then { |value| mask(value, bits:) }
     in [%r{\Af(32|64)\.} => instruction, *arguments]
       type, operation = instruction.split('.')
@@ -536,11 +540,6 @@ class Interpreter
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == integer_bits
         value
-      in ['load', offset]
-        @memory.load(offset:, bits:)
-      in ['store', offset, value]
-        @memory.store(value:, offset:, bits:)
-        0
       end
     end
   end
