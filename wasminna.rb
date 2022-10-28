@@ -198,9 +198,18 @@ class Interpreter
     in ['block', label, body]
       evaluate(body, locals:)
     in ['loop', label, *instructions]
-      instructions.each do |instruction|
-        evaluate(instruction, locals:)
+      loop do
+        result =
+          catch(label.to_sym) do
+            instructions.each do |instruction|
+              evaluate(instruction, locals:)
+            end
+          end
+        break unless result == :branch
       end
+      0
+    in ['br_if', label, condition]
+      throw(label.to_sym, :branch) unless evaluate(condition, locals:).zero?
       0
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
