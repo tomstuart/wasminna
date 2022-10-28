@@ -203,8 +203,15 @@ class Interpreter
         key = locals.keys.slice(index)
         locals.store(key, value)
       end
-    in ['block', label, body]
+    in ['block', %r{\A\$} => label, body]
       evaluate(body, locals:)
+    in ['block', *instructions]
+      catch(0) do
+        instructions.each do |instruction|
+          evaluate(instruction, locals:)
+        end
+      end
+      0
     in ['loop', label, *instructions]
       loop do
         result =
@@ -217,7 +224,13 @@ class Interpreter
       end
       0
     in ['br_if', label, condition]
-      throw(label.to_sym, :branch) unless evaluate(condition, locals:).zero?
+      unless evaluate(condition, locals:).zero?
+        if label.start_with?('$')
+          throw(label.to_sym, :branch)
+        else
+          throw(label.to_i(10), :branch)
+        end
+      end
       0
     in ['select', value_1, value_2, condition]
       value_1, value_2, condition =
