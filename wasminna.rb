@@ -170,8 +170,9 @@ class Interpreter
     parameter_names = function.parameters.map(&:name)
     argument_values =
       arguments.map { |argument| evaluate(argument, locals: {}) }
-    locals = parameter_names.zip(argument_values).to_h
-    evaluate(function.body, locals:)
+    parameters = parameter_names.zip(argument_values).to_h
+    locals = function.locals.map(&:name).map { [_1, 0] }.to_h
+    evaluate(function.body, locals: parameters.merge(locals))
   end
 
   def evaluate(expression, locals:)
