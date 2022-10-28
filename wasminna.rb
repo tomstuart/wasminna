@@ -26,7 +26,12 @@ class Interpreter
     end
 
     def self.size_of(value, **kwargs)
-      ((value - 1) / kwargs.fetch(:in)) + 1
+      quotient, remainder = value.divmod(kwargs.fetch(:in))
+      if remainder.zero?
+        quotient
+      else
+        quotient + 1
+      end
     end
 
     def load(offset:, bits:)
