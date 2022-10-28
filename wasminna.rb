@@ -184,6 +184,8 @@ class Interpreter
       else
         locals.values.slice(name.to_i(10))
       end
+    in ['block', label, body]
+      evaluate(body, locals:)
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
