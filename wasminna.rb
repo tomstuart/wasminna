@@ -1,4 +1,3 @@
-require 'bigdecimal'
 require 'float'
 require 'helpers'
 require 's_expression_parser'
