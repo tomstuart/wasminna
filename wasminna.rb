@@ -67,8 +67,8 @@ class Interpreter
 
           expressions.each do |expression|
             case expression
-            in ['func', *expressions, body]
-              functions << Function.new(parameters: [], locals: [], body: [body]).tap do |function|
+            in ['func', *expressions]
+              functions << Function.new(parameters: [], locals: [], body: []).tap do |function|
                 expressions.each do |expression|
                   case expression
                   in ['export', name]
@@ -80,6 +80,8 @@ class Interpreter
                   in ['result', _]
                   in ['local', name, _]
                     function.locals << Local.new(name:)
+                  else
+                    function.body << expression
                   end
                 end
               end
