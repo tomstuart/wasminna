@@ -220,6 +220,12 @@ class Interpreter
       else
         value_1
       end
+    in ['if', ['result', _], condition, ['then', consequent], ['else', alternative]]
+      if evaluate(condition, locals:).zero?
+        evaluate(alternative, locals:)
+      else
+        evaluate(consequent, locals:)
+      end
     in ['i32.const' | 'i64.const' => instruction, value]
       bits = instruction.slice(%r{\d+}).to_i(10)
       interpret_integer(value, bits:)
