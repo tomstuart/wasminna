@@ -185,6 +185,16 @@ class Interpreter
       else
         locals.values.slice(name.to_i(10))
       end
+    in ['local.set', name, value]
+      value = evaluate(value, locals:)
+
+      if name.start_with?('$')
+        locals.store(name, value)
+      else
+        index = name.to_i(10)
+        key = locals.keys.slice(index)
+        locals.store(key, value)
+      end
     in ['block', label, body]
       evaluate(body, locals:)
     in ['loop', label, *instructions]
