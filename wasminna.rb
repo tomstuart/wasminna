@@ -25,7 +25,7 @@ class Interpreter
     BITS_PER_BYTE = 8
     BYTES_PER_PAGE = 0xffff
 
-    def self.for(string:)
+    def self.from_string(string:)
       size_in_pages = size_of(string.bytesize, in: BYTES_PER_PAGE)
       bytes = "\0" * (size_in_pages * BYTES_PER_PAGE)
       bytes[0, string.length] = string
@@ -76,7 +76,7 @@ class Interpreter
                 end
               end
             in ['memory', ['data', string]]
-              @memory = Memory.for(string: parse_string(string))
+              @memory = Memory.from_string(string: parse_string(string))
             end
           end
         in ['invoke', name, *arguments]
