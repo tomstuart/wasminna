@@ -122,7 +122,7 @@ class Interpreter
             float = Wasminna::Float.decode(actual_value, format:).to_f
             success = float.nan? # TODO check whether canonical or arithmetic
           else
-            expected_value = evaluate(expected.first, locals: {})
+            expected_value = evaluate(expected.first, locals: [])
             success = actual_value == expected_value
           end
 
@@ -173,10 +173,10 @@ class Interpreter
   def invoke_function(function:, arguments:)
     parameter_names = function.parameters.map(&:name)
     argument_values =
-      arguments.map { |argument| evaluate(argument, locals: {}) }
-    parameters = parameter_names.zip(argument_values).to_h
-    locals = function.locals.map(&:name).map { [_1, 0] }.to_h
-    locals = parameters.merge(locals)
+      arguments.map { |argument| evaluate(argument, locals: []) }
+    parameters = parameter_names.zip(argument_values)
+    locals = function.locals.map(&:name).map { [_1, 0] }
+    locals = parameters + locals
 
     result = nil
     function.body.each do |instruction|
@@ -191,19 +191,20 @@ class Interpreter
       evaluate(return_expression, locals:)
     in ['local.get', name]
       if name.start_with?('$')
-        locals.fetch(name)
+        name, value = locals.assoc(name)
+        value
       else
-        locals.values.slice(name.to_i(10))
+        name, value = locals.slice(name.to_i(10))
+        value
       end
     in ['local.set' | 'local.tee', name, value]
       value = evaluate(value, locals:)
 
       if name.start_with?('$')
-        locals.store(name, value)
+        locals.assoc(name)[1] = value
       else
         index = name.to_i(10)
-        key = locals.keys.slice(index)
-        locals.store(key, value)
+        locals.slice(index)[1] = value
       end
     in ['block', %r{\A\$} => label, body]
       evaluate(body, locals:)
