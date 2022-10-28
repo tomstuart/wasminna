@@ -55,14 +55,10 @@ class Interpreter
     end
 
     def load(offset:, bits:)
-      format =
-        case bits
-        in 32
-          'L<'
-        in 64
-          'Q<'
-        end
-      bytes.unpack1(format, offset:)
+      size_of(bits, in: BITS_PER_BYTE).times
+        .map { |index| bytes.getbyte(offset + index) }
+        .map.with_index { |byte, index| byte << index * BITS_PER_BYTE }
+        .inject(0, &:|)
     end
 
     def store(value:, offset:, bits:)
