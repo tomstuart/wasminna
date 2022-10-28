@@ -11,11 +11,26 @@ def main
   end
 end
 
+module SizeOfHelper
+  private
+
+  def size_of(value, **kwargs)
+    quotient, remainder = value.divmod(kwargs.fetch(:in))
+    if remainder.zero?
+      quotient
+    else
+      quotient + 1
+    end
+  end
+end
+
 class Interpreter
   Parameter = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
 
   class Memory < Struct.new(:bytes, keyword_init: true)
+    extend SizeOfHelper
+
     PAGE_SIZE = 0xffff
 
     def self.for(string:)
@@ -23,15 +38,6 @@ class Interpreter
       bytes = "\0" * (size_in_pages * PAGE_SIZE)
       bytes[0, string.length] = string
       new(bytes:)
-    end
-
-    def self.size_of(value, **kwargs)
-      quotient, remainder = value.divmod(kwargs.fetch(:in))
-      if remainder.zero?
-        quotient
-      else
-        quotient + 1
-      end
     end
 
     def load(offset:, bits:)
