@@ -11,6 +11,15 @@ def main
   end
 end
 
+module MaskHelper
+  private
+
+  def mask(value, bits:)
+    size = 1 << bits
+    value & (size - 1)
+  end
+end
+
 module SizeOfHelper
   private
 
@@ -25,6 +34,8 @@ module SizeOfHelper
 end
 
 class Interpreter
+  include MaskHelper
+
   Parameter = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
 
@@ -546,11 +557,6 @@ class Interpreter
       end
 
     unsigned(value, bits:)
-  end
-
-  def mask(value, bits:)
-    size = 1 << bits
-    value & (size - 1)
   end
 end
 
