@@ -45,11 +45,11 @@ class Interpreter
     extend SizeOfHelper
 
     BITS_PER_BYTE = 8
-    PAGE_SIZE = 0xffff
+    BYTES_PER_PAGE = 0xffff
 
     def self.for(string:)
-      size_in_pages = size_of(string.bytesize, in: PAGE_SIZE)
-      bytes = "\0" * (size_in_pages * PAGE_SIZE)
+      size_in_pages = size_of(string.bytesize, in: BYTES_PER_PAGE)
+      bytes = "\0" * (size_in_pages * BYTES_PER_PAGE)
       bytes[0, string.length] = string
       new(bytes:)
     end
