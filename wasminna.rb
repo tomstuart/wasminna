@@ -102,7 +102,7 @@ class Interpreter
           end
 
           invoke_function(function:, arguments:)
-        in ['assert_return', ['invoke', name, *arguments], expected]
+        in ['assert_return', ['invoke', name, *arguments], *expected]
           function = functions.detect { |function| function.name == name }
           if function.nil?
             puts
@@ -112,7 +112,9 @@ class Interpreter
 
           actual_value = invoke_function(function:, arguments:)
 
-          case expected
+          case expected.first
+          in nil
+            success = true
           in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
             expected_value = nan
             bits = instruction.slice(%r{\d+}).to_i(10)
@@ -120,7 +122,7 @@ class Interpreter
             float = Wasminna::Float.decode(actual_value, format:).to_f
             success = float.nan? # TODO check whether canonical or arithmetic
           else
-            expected_value = evaluate(expected, locals: {})
+            expected_value = evaluate(expected.first, locals: {})
             success = actual_value == expected_value
           end
 
