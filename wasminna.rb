@@ -12,11 +12,12 @@ def main
 end
 
 class Interpreter
-  PAGE_SIZE = 0xffff
-
   Parameter = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :body, keyword_init: true)
-  Memory = Struct.new(:bytes, keyword_init: true)
+
+  class Memory < Struct.new(:bytes, keyword_init: true)
+    PAGE_SIZE = 0xffff
+  end
 
   def interpret(script)
     functions = nil
@@ -48,8 +49,8 @@ class Interpreter
               end
             in ['memory', ['data', string]]
               string = parse_string(string)
-              size_in_pages = ((string.bytesize - 1) / PAGE_SIZE) + 1
-              bytes = "\0" * (size_in_pages * PAGE_SIZE)
+              size_in_pages = ((string.bytesize - 1) / Memory::PAGE_SIZE) + 1
+              bytes = "\0" * (size_in_pages * Memory::PAGE_SIZE)
               bytes[0, string.length] = string
               @memory = Memory.new(bytes:)
             end
