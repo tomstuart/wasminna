@@ -78,8 +78,12 @@ class Interpreter
                   in ['param', _]
                     function.parameters << Parameter.new
                   in ['result', _]
-                  in ['local', name, _]
+                  in ['local', %r{\A\$} => name, _]
                     function.locals << Local.new(name:)
+                  in ['local', *types]
+                    types.each do
+                      function.locals << Local.new
+                    end
                   else
                     function.body << expression
                   end
