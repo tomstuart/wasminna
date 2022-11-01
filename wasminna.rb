@@ -328,126 +328,136 @@ class Interpreter
   def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
     arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
-    case [operation, *arguments]
-    in ['add', left, right]
-      left + right
-    in ['sub', left, right]
-      left - right
-    in ['mul', left, right]
-      left * right
-    in ['div_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+    case operation
+    in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
+      arguments => [left, right]
+
+      case operation
+      in 'add'
+        left + right
+      in 'sub'
+        left - right
+      in 'mul'
+        left * right
+      in 'div_s'
+        with_signed(left, right, bits:) do |left, right|
+          divide(left, right)
+        end
+      in 'div_u'
         divide(left, right)
-      end
-    in ['div_u', left, right]
-      divide(left, right)
-    in ['rem_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+      in 'rem_s'
+        with_signed(left, right, bits:) do |left, right|
+          modulo(left, right)
+        end
+      in 'rem_u'
         modulo(left, right)
-      end
-    in ['rem_u', left, right]
-      modulo(left, right)
-    in ['and', left, right]
-      left & right
-    in ['or', left, right]
-      left | right
-    in ['xor', left, right]
-      left ^ right
-    in ['shl', left, right]
-      right %= bits
-      left << right
-    in ['shr_s', left, right]
-      right %= bits
-      with_signed(left, bits:) do |left|
+      in 'and'
+        left & right
+      in 'or'
+        left | right
+      in 'xor'
+        left ^ right
+      in 'shl'
+        right %= bits
+        left << right
+      in 'shr_s'
+        right %= bits
+        with_signed(left, bits:) do |left|
+          left >> right
+        end
+      in 'shr_u'
+        right %= bits
         left >> right
-      end
-    in ['shr_u', left, right]
-      right %= bits
-      left >> right
-    in ['rotl', left, right]
-      right %= bits
-      (left << right) | (left >> (bits - right))
-    in ['rotr', left, right]
-      right %= bits
-      (left << (bits - right)) | (left >> right)
-    in ['clz', value]
-      0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
-    in ['ctz', value]
-      0.upto(bits).take_while { |count| value[0, count].zero? }.last
-    in ['popcnt', value]
-      0.upto(bits - 1).count { |position| value[position].nonzero? }
-    in ['extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s', value]
-      extend_bits = operation.slice(%r{\d+}).to_i(10)
-      unsigned(signed(value, bits: extend_bits), bits:)
-    in ['extend_i32_u', value]
-      value
-    in ['eqz', value]
-      bool(value.zero?)
-    in ['eq', left, right]
-      bool(left == right)
-    in ['ne', left, right]
-      bool(left != right)
-    in ['lt_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+      in 'rotl'
+        right %= bits
+        (left << right) | (left >> (bits - right))
+      in 'rotr'
+        right %= bits
+        (left << (bits - right)) | (left >> right)
+      in 'eq'
+        bool(left == right)
+      in 'ne'
+        bool(left != right)
+      in 'lt_s'
+        with_signed(left, right, bits:) do |left, right|
+          bool(left < right)
+        end
+      in 'lt_u'
         bool(left < right)
-      end
-    in ['lt_u', left, right]
-      bool(left < right)
-    in ['le_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+      in 'le_s'
+        with_signed(left, right, bits:) do |left, right|
+          bool(left <= right)
+        end
+      in 'le_u'
         bool(left <= right)
-      end
-    in ['le_u', left, right]
-      bool(left <= right)
-    in ['gt_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+      in 'gt_s'
+        with_signed(left, right, bits:) do |left, right|
+          bool(left > right)
+        end
+      in 'gt_u'
         bool(left > right)
-      end
-    in ['gt_u', left, right]
-      bool(left > right)
-    in ['ge_s', left, right]
-      with_signed(left, right, bits:) do |left, right|
+      in 'ge_s'
+        with_signed(left, right, bits:) do |left, right|
+          bool(left >= right)
+        end
+      in 'ge_u'
         bool(left >= right)
       end
-    in ['ge_u', left, right]
-      bool(left >= right)
-    in ['wrap_i64', value]
-      value
-    in ['reinterpret_f32' | 'reinterpret_f64', value]
-      float_bits = operation.slice(%r{\d+}).to_i(10)
-      raise unless bits == float_bits
-      value
-    in ['trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
-      float_bits = operation.slice(%r{\d+}).to_i(10)
-      signed_input = operation.end_with?('_s')
-      saturating = operation.include?('_sat')
-      format = Wasminna::Float::Format.for(bits: float_bits)
-      result = Wasminna::Float.decode(value, format:).to_f
+    in 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+      arguments => [value]
 
-      result =
-        if saturating && result.nan?
-          0
-        elsif saturating && result.infinite?
-          result
-        else
-          result.truncate
+      case operation
+      in 'clz'
+        0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
+      in 'ctz'
+        0.upto(bits).take_while { |count| value[0, count].zero? }.last
+      in 'popcnt'
+        0.upto(bits - 1).count { |position| value[position].nonzero? }
+      in 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s'
+        extend_bits = operation.slice(%r{\d+}).to_i(10)
+        unsigned(signed(value, bits: extend_bits), bits:)
+      in 'extend_i32_u'
+        value
+      in 'eqz'
+        bool(value.zero?)
+      in 'wrap_i64'
+        value
+      in 'reinterpret_f32' | 'reinterpret_f64'
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        raise unless bits == float_bits
+        value
+      in 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        signed_input = operation.end_with?('_s')
+        saturating = operation.include?('_sat')
+        format = Wasminna::Float::Format.for(bits: float_bits)
+        result = Wasminna::Float.decode(value, format:).to_f
+
+        result =
+          if saturating && result.nan?
+            0
+          elsif saturating && result.infinite?
+            result
+          else
+            result.truncate
+          end
+
+        if saturating
+          size = 1 << bits
+          min, max =
+            if signed_input
+              [-(size / 2), (size / 2) - 1]
+            else
+              [0, size - 1]
+            end
+          result = result.clamp(min, max)
         end
 
-      if saturating
-        size = 1 << bits
-        min, max =
-          if signed_input
-            [-(size / 2), (size / 2) - 1]
-          else
-            [0, size - 1]
-          end
-        result = result.clamp(min, max)
-      end
-
-      if signed_input
-        unsigned(result, bits:)
-      else
-        result
+        if signed_input
+          unsigned(result, bits:)
+        else
+          result
+        end
       end
     end.then { |value| mask(value, bits:) }
   end
