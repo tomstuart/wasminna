@@ -306,7 +306,7 @@ class Interpreter
 
       evaluate(offset, locals:)
       stack.pop(1) => [offset]
-      @memory.load(offset: offset + static_offset, bits:)
+      @memory.load(offset: offset + static_offset, bits:).tap { stack.push(_1) }
     in ['store', *memargs, offset, value]
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
@@ -319,7 +319,6 @@ class Interpreter
       [offset, value].each { evaluate(_1, locals:) }
       stack.pop(2) => [offset, value]
       @memory.store(value:, offset: offset + static_offset, bits:)
-      0
     else
       case type
       in :integer
