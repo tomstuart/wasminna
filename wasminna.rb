@@ -97,7 +97,9 @@ class Interpreter
             next
           end
 
-          actual_value = invoke_function(function:, arguments:)
+          invoke_function(function:, arguments:)
+          actual_value = stack.pop
+          raise unless stack.empty?
 
           case expected.first
           in nil
@@ -195,10 +197,6 @@ class Interpreter
     function.body.each do |instruction|
       evaluate(instruction, locals:)
     end
-
-    result = stack.pop
-    raise unless stack.empty?
-    result
   end
 
   NUMERIC_OPERATION_REGEXP =
