@@ -513,7 +513,7 @@ class Interpreter
         bool(operation.call(left, right))
       end
     in 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest' | 'abs' | 'neg' | 'convert_i32_s' | 'convert_i64_s' | 'convert_i32_u' | 'convert_i64_u' | 'promote_f32' | 'demote_f64' | 'reinterpret_i32' | 'reinterpret_i64'
-      arguments => [value]
+      stack.pop(1) => [value]
 
       case operation
       in 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest'
