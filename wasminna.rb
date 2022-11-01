@@ -462,7 +462,7 @@ class Interpreter
           result
         end
       end
-    end.then { |value| mask(value, bits:) }
+    end.then { |value| mask(value, bits:) }.tap { stack.push(_1) }
   end
 
   def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
@@ -591,7 +591,7 @@ class Interpreter
         raise unless bits == integer_bits
         value
       end
-    end
+    end.tap { stack.push(_1) }
   end
 
   def with_signed(*unsigned_args, bits:)
