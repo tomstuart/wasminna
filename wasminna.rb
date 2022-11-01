@@ -337,6 +337,7 @@ class Interpreter
 
       case operation
       in 'add'
+        stack.pop(2) => [left, right]
         left + right
       in 'sub'
         left - right
