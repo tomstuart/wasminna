@@ -381,38 +381,32 @@ class Interpreter
         float_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == float_bits
         value
-      in ['trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u', value]
+      in ['trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
         float_bits = operation.slice(%r{\d+}).to_i(10)
         signed_input = operation.end_with?('_s')
-        format = Wasminna::Float::Format.for(bits: float_bits)
-        result = Wasminna::Float.decode(value, format:).to_f.truncate
-        if signed_input
-          unsigned(result, bits:)
-        else
-          result
-        end
-      in ['trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
-        float_bits = operation.slice(%r{\d+}).to_i(10)
-        signed_input = operation.end_with?('_s')
+        saturating = operation.include?('_sat')
         format = Wasminna::Float::Format.for(bits: float_bits)
         result = Wasminna::Float.decode(value, format:).to_f
+
         result =
-          if result.nan?
+          if saturating && result.nan?
             0
-          elsif result.infinite?
+          elsif saturating && result.infinite?
             result
           else
             result.truncate
           end
 
-        size = 1 << bits
-        min, max =
-          if signed_input
-            [-(size / 2), (size / 2) - 1]
-          else
-            [0, size - 1]
-          end
-        result = result.clamp(min, max)
+        if saturating
+          size = 1 << bits
+          min, max =
+            if signed_input
+              [-(size / 2), (size / 2) - 1]
+            else
+              [0, size - 1]
+            end
+          result = result.clamp(min, max)
+        end
 
         if signed_input
           unsigned(result, bits:)
