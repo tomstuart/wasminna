@@ -381,12 +381,14 @@ class Interpreter
         float_bits = operation.slice(%r{\d+}).to_i(10)
         raise unless bits == float_bits
         value
-      in ['trunc_f32_s', value]
-        format = Wasminna::Float::Format.for(bits: 32)
+      in ['trunc_f32_s' | 'trunc_f64_s', value]
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        format = Wasminna::Float::Format.for(bits: float_bits)
         float = Wasminna::Float.decode(value, format:).to_f
         unsigned(float.truncate, bits:)
-      in ['trunc_sat_f32_s', value]
-        format = Wasminna::Float::Format.for(bits: 32)
+      in ['trunc_sat_f32_s' | 'trunc_sat_f64_s', value]
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        format = Wasminna::Float::Format.for(bits: float_bits)
         result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
@@ -402,52 +404,13 @@ class Interpreter
         result = result.clamp(min, max)
 
         unsigned(result, bits:)
-      in ['trunc_f64_s', value]
-        format = Wasminna::Float::Format.for(bits: 64)
-        float = Wasminna::Float.decode(value, format:).to_f
-        unsigned(float.truncate, bits:)
-      in ['trunc_sat_f64_s', value]
-        format = Wasminna::Float::Format.for(bits: 64)
-        result = Wasminna::Float.decode(value, format:).to_f
-        result =
-          if result.nan?
-            0
-          elsif result.infinite?
-            result
-          else
-            result.truncate
-          end
-
-        size = 1 << bits
-        min, max = -(size / 2), (size / 2) - 1
-        result = result.clamp(min, max)
-
-        unsigned(result, bits:)
-      in ['trunc_f32_u', value]
-        format = Wasminna::Float::Format.for(bits: 32)
+      in ['trunc_f32_u' | 'trunc_f64_u', value]
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        format = Wasminna::Float::Format.for(bits: float_bits)
         Wasminna::Float.decode(value, format:).to_f.truncate
-      in ['trunc_sat_f32_u', value]
-        format = Wasminna::Float::Format.for(bits: 32)
-        result = Wasminna::Float.decode(value, format:).to_f
-        result =
-          if result.nan?
-            0
-          elsif result.infinite?
-            result
-          else
-            result.truncate
-          end
-
-        size = 1 << bits
-        min, max = 0, size - 1
-        result = result.clamp(min, max)
-
-        result
-      in ['trunc_f64_u', value]
-        format = Wasminna::Float::Format.for(bits: 64)
-        Wasminna::Float.decode(value, format:).to_f.truncate
-      in ['trunc_sat_f64_u', value]
-        format = Wasminna::Float::Format.for(bits: 64)
+      in ['trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
+        float_bits = operation.slice(%r{\d+}).to_i(10)
+        format = Wasminna::Float::Format.for(bits: float_bits)
         result = Wasminna::Float.decode(value, format:).to_f
         result =
           if result.nan?
