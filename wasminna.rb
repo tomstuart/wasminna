@@ -294,7 +294,7 @@ class Interpreter
       in :float
         format = Wasminna::Float::Format.for(bits:)
         Wasminna::Float.parse(value).encode(format:)
-      end
+      end.tap { stack.push(_1) }
     in ['load', *memargs, offset]
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
