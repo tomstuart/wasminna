@@ -467,7 +467,7 @@ class Interpreter
 
   def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
     format = Wasminna::Float::Format.for(bits:)
-    arguments = arguments.map { |arg| evaluate(arg, locals:) }
+    arguments.each { |arg| evaluate(arg, locals:) }
 
     case operation
     in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
