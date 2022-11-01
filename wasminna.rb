@@ -221,7 +221,7 @@ class Interpreter
         else
           name, value = locals.slice(name.to_i(10))
           value
-        end
+        end.tap { stack.push(_1) }
       in ['local.set' | 'local.tee', name, value]
         value = evaluate(value, locals:)
 
