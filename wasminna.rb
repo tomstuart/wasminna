@@ -53,9 +53,12 @@ class Interpreter
     end
   end
 
+  attr_accessor :stack
+
   def interpret(script)
     functions = nil
     @memory = nil
+    self.stack = []
 
     script.each do |command|
       begin
