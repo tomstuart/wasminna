@@ -111,7 +111,7 @@ class Interpreter
             float = Wasminna::Float.decode(actual_value, format:).to_f
             success = float.nan? # TODO check whether canonical or arithmetic
           else
-            evaluate(expected.first, locals: [])
+            evaluate(unfold(expected.first), locals: [])
             stack.pop(1) => [expected_value]
             raise unless stack.empty?
             success = actual_value == expected_value
@@ -187,7 +187,7 @@ class Interpreter
 
   def invoke_function(function:, arguments:)
     parameter_names = function.parameters.map(&:name)
-    arguments.each { |argument| evaluate(argument, locals: []) }
+    arguments.each { |argument| evaluate(unfold(argument), locals: []) }
     argument_values = stack.pop(arguments.length)
     raise unless stack.empty?
     parameters = parameter_names.zip(argument_values)
@@ -195,10 +195,19 @@ class Interpreter
     locals = parameters + locals
 
     function.body.each do |instruction|
-      evaluate(instruction, locals:)
+      evaluate(unfold(instruction), locals:)
     end
 
     nil
+  end
+
+  def unfold(expression)
+    case expression
+    in [*expressions]
+      expressions.map { unfold(_1) }
+    else
+      expression
+    end
   end
 
   NUMERIC_OPERATION_REGEXP =
