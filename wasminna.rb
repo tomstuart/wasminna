@@ -193,7 +193,21 @@ class Interpreter
     result
   end
 
+  NUMERIC_OPERATION_REGEXP =
+    %r{
+      \A
+      [fi] (?<bits>32|64) \. (?<operation>.+)
+      \z
+    }x
+
+  using Helpers::MatchPattern
+
   def evaluate(expression, locals:)
+    expression => [instruction, *arguments]
+    if instruction.match(NUMERIC_OPERATION_REGEXP) in { bits:, operation: }
+      bits = bits.to_i(10)
+    end
+
     case expression
     in ['return', return_expression]
       evaluate(return_expression, locals:)
@@ -258,38 +272,30 @@ class Interpreter
       else
         evaluate(consequent, locals:)
       end
-    in ['i32.const' | 'i64.const' => instruction, value]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['i32.const' | 'i64.const', value]
       interpret_integer(value, bits:)
-    in ['f32.const' | 'f64.const' => instruction, value]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['f32.const' | 'f64.const', value]
       format = Wasminna::Float::Format.for(bits:)
       Wasminna::Float.parse(value).encode(format:)
-    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' => instruction, offset]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load', offset]
       offset = evaluate(offset, locals:)
       @memory.load(offset:, bits:)
-    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' => instruction, %r{\Aoffset=\d+\z} => static_offset, offset]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load', %r{\Aoffset=\d+\z} => static_offset, offset]
       _, static_offset = static_offset.split('=')
       static_offset = static_offset.to_i(10)
       offset = evaluate(offset, locals:)
       @memory.load(offset: offset + static_offset, bits:)
-    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, offset, value]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store', offset, value]
       offset, value = [offset, value].map { evaluate(_1, locals:) }
       @memory.store(value:, offset:, bits:)
       0
-    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, offset, value]
-      bits = instruction.slice(%r{\d+}).to_i(10)
+    in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store', %r{\Aoffset=\d+\z} => static_offset, offset, value]
       _, static_offset = static_offset.split('=')
       static_offset = static_offset.to_i(10)
       offset, value = [offset, value].map { evaluate(_1, locals:) }
       @memory.store(value:, offset: offset + static_offset, bits:)
       0
-    in [%r{\Ai(32|64)\.} => instruction, *arguments]
-      type, operation = instruction.split('.')
-      bits = type.slice(%r{\d+}).to_i(10)
+    in [%r{\Ai(32|64)\.}, *arguments]
       arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
       case [operation, *arguments]
@@ -414,9 +420,7 @@ class Interpreter
           result
         end
       end.then { |value| mask(value, bits:) }
-    in [%r{\Af(32|64)\.} => instruction, *arguments]
-      type, operation = instruction.split('.')
-      bits = type.slice(%r{\d+}).to_i(10)
+    in [%r{\Af(32|64)\.}, *arguments]
       format = Wasminna::Float::Format.for(bits:)
       arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
