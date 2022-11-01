@@ -196,7 +196,7 @@ class Interpreter
   NUMERIC_OPERATION_REGEXP =
     %r{
       \A
-      [fi] (?<bits>32|64) \. (?<operation>.+)
+      (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
       \z
     }x
 
@@ -279,7 +279,8 @@ class Interpreter
   def evaluate_numeric_instruction(expression, locals:)
     expression => [instruction, *arguments]
 
-    instruction.match(NUMERIC_OPERATION_REGEXP) in { bits:, operation: }
+    instruction.match(NUMERIC_OPERATION_REGEXP) in { type:, bits:, operation: }
+    type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
     case expression
