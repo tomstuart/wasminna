@@ -329,7 +329,7 @@ class Interpreter
   end
 
   def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
-    arguments = arguments.map { |arg| evaluate(arg, locals:) }
+    arguments.each { |arg| evaluate(arg, locals:) }
 
     case operation
     in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
