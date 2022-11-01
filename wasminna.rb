@@ -333,11 +333,10 @@ class Interpreter
 
     case operation
     in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
-      arguments => [left, right]
+      stack.pop(2) => [left, right]
 
       case operation
       in 'add'
-        stack.pop(2) => [left, right]
         left + right
       in 'sub'
         left - right
