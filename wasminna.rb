@@ -316,8 +316,8 @@ class Interpreter
       @memory.store(value:, offset: offset + static_offset, bits:)
       0
     else
-      case expression
-      in [%r{\Ai(32|64)\.}, *arguments]
+      case type
+      in :integer
         arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
         case [operation, *arguments]
@@ -442,7 +442,7 @@ class Interpreter
             result
           end
         end.then { |value| mask(value, bits:) }
-      in [%r{\Af(32|64)\.}, *arguments]
+      in :float
         format = Wasminna::Float::Format.for(bits:)
         arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
