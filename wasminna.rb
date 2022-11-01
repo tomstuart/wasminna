@@ -197,6 +197,8 @@ class Interpreter
     function.body.each do |instruction|
       evaluate(instruction, locals:)
     end
+
+    nil
   end
 
   NUMERIC_OPERATION_REGEXP =
@@ -284,6 +286,8 @@ class Interpreter
         end
       end
     end
+
+    nil
   end
 
   def evaluate_numeric_instruction(expression, locals:)
@@ -334,6 +338,8 @@ class Interpreter
         evaluate_float_instruction(operation:, bits:, arguments:, locals:)
       end
     end
+
+    nil
   end
 
   def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
@@ -471,6 +477,8 @@ class Interpreter
         end
       end
     end.then { |value| mask(value, bits:) }.tap { stack.push(_1) }
+
+    nil
   end
 
   def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
@@ -600,6 +608,8 @@ class Interpreter
         value
       end
     end.tap { stack.push(_1) }
+
+    nil
   end
 
   def with_signed(*unsigned_args, bits:)
