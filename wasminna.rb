@@ -471,7 +471,7 @@ class Interpreter
 
     case operation
     in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-      arguments => [left, right]
+      stack.pop(2) => [left, right]
 
       case operation
       in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max'
