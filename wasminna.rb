@@ -223,14 +223,15 @@ class Interpreter
           value
         end.tap { stack.push(_1) }
       in ['local.set' | 'local.tee', name, value]
-        value = evaluate(value, locals:)
+        evaluate(value, locals:)
+        stack.pop(1) => [value]
 
         if name.start_with?('$')
           locals.assoc(name)[1] = value
         else
           index = name.to_i(10)
           locals.slice(index)[1] = value
-        end
+        end.tap { stack.push(_1) if instruction == 'local.tee' }
       in ['block', %r{\A\$} => label, body]
         evaluate(body, locals:)
       in ['block', *instructions]
@@ -239,7 +240,6 @@ class Interpreter
             evaluate(instruction, locals:)
           end
         end
-        0
       in ['loop', label, *instructions]
         loop do
           result =
@@ -250,27 +250,31 @@ class Interpreter
             end
           break unless result == :branch
         end
-        0
       in ['br_if', label, condition]
-        unless evaluate(condition, locals:).zero?
+        evaluate(condition, locals:)
+        stack.pop(1) => [condition]
+
+        unless condition.zero?
           if label.start_with?('$')
             throw(label.to_sym, :branch)
           else
             throw(label.to_i(10), :branch)
           end
         end
-        0
       in ['select', value_1, value_2, condition]
-        value_1, value_2, condition =
-          [value_1, value_2, condition].map { evaluate(_1, locals:) }
+        [value_1, value_2, condition].each { evaluate(_1, locals:) }
+        stack.pop(3) => [value_1, value_2, condition]
 
         if condition.zero?
           value_2
         else
           value_1
-        end
+        end.tap { stack.push(_1) }
       in ['if', ['result', _], condition, ['then', consequent], ['else', alternative]]
-        if evaluate(condition, locals:).zero?
+        evaluate(condition, locals:)
+        stack.pop(1) => [condition]
+
+        if condition.zero?
           evaluate(alternative, locals:)
         else
           evaluate(consequent, locals:)
