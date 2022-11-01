@@ -318,8 +318,147 @@ class Interpreter
     else
       case type
       in :integer
-        arguments = arguments.map { |arg| evaluate(arg, locals:) }
+        evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
+      in :float
+        evaluate_float_instruction(operation:, bits:, arguments:, locals:)
+      end
+    end
+  end
 
+  def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
+    arguments = arguments.map { |arg| evaluate(arg, locals:) }
+
+    case [operation, *arguments]
+    in ['add', left, right]
+      left + right
+    in ['sub', left, right]
+      left - right
+    in ['mul', left, right]
+      left * right
+    in ['div_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        divide(left, right)
+      end
+    in ['div_u', left, right]
+      divide(left, right)
+    in ['rem_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        modulo(left, right)
+      end
+    in ['rem_u', left, right]
+      modulo(left, right)
+    in ['and', left, right]
+      left & right
+    in ['or', left, right]
+      left | right
+    in ['xor', left, right]
+      left ^ right
+    in ['shl', left, right]
+      right %= bits
+      left << right
+    in ['shr_s', left, right]
+      right %= bits
+      with_signed(left, bits:) do |left|
+        left >> right
+      end
+    in ['shr_u', left, right]
+      right %= bits
+      left >> right
+    in ['rotl', left, right]
+      right %= bits
+      (left << right) | (left >> (bits - right))
+    in ['rotr', left, right]
+      right %= bits
+      (left << (bits - right)) | (left >> right)
+    in ['clz', value]
+      0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
+    in ['ctz', value]
+      0.upto(bits).take_while { |count| value[0, count].zero? }.last
+    in ['popcnt', value]
+      0.upto(bits - 1).count { |position| value[position].nonzero? }
+    in ['extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s', value]
+      extend_bits = operation.slice(%r{\d+}).to_i(10)
+      unsigned(signed(value, bits: extend_bits), bits:)
+    in ['extend_i32_u', value]
+      value
+    in ['eqz', value]
+      bool(value.zero?)
+    in ['eq', left, right]
+      bool(left == right)
+    in ['ne', left, right]
+      bool(left != right)
+    in ['lt_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        bool(left < right)
+      end
+    in ['lt_u', left, right]
+      bool(left < right)
+    in ['le_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        bool(left <= right)
+      end
+    in ['le_u', left, right]
+      bool(left <= right)
+    in ['gt_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        bool(left > right)
+      end
+    in ['gt_u', left, right]
+      bool(left > right)
+    in ['ge_s', left, right]
+      with_signed(left, right, bits:) do |left, right|
+        bool(left >= right)
+      end
+    in ['ge_u', left, right]
+      bool(left >= right)
+    in ['wrap_i64', value]
+      value
+    in ['reinterpret_f32' | 'reinterpret_f64', value]
+      float_bits = operation.slice(%r{\d+}).to_i(10)
+      raise unless bits == float_bits
+      value
+    in ['trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
+      float_bits = operation.slice(%r{\d+}).to_i(10)
+      signed_input = operation.end_with?('_s')
+      saturating = operation.include?('_sat')
+      format = Wasminna::Float::Format.for(bits: float_bits)
+      result = Wasminna::Float.decode(value, format:).to_f
+
+      result =
+        if saturating && result.nan?
+          0
+        elsif saturating && result.infinite?
+          result
+        else
+          result.truncate
+        end
+
+      if saturating
+        size = 1 << bits
+        min, max =
+          if signed_input
+            [-(size / 2), (size / 2) - 1]
+          else
+            [0, size - 1]
+          end
+        result = result.clamp(min, max)
+      end
+
+      if signed_input
+        unsigned(result, bits:)
+      else
+        result
+      end
+    end.then { |value| mask(value, bits:) }
+  end
+
+  def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
+    format = Wasminna::Float::Format.for(bits:)
+    arguments = arguments.map { |arg| evaluate(arg, locals:) }
+
+    case [operation, *arguments]
+    in ['add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest', *]
+      with_float(*arguments, format:) do |*arguments|
         case [operation, *arguments]
         in ['add', left, right]
           left + right
@@ -327,233 +466,102 @@ class Interpreter
           left - right
         in ['mul', left, right]
           left * right
-        in ['div_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            divide(left, right)
-          end
-        in ['div_u', left, right]
-          divide(left, right)
-        in ['rem_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            modulo(left, right)
-          end
-        in ['rem_u', left, right]
-          modulo(left, right)
-        in ['and', left, right]
-          left & right
-        in ['or', left, right]
-          left | right
-        in ['xor', left, right]
-          left ^ right
-        in ['shl', left, right]
-          right %= bits
-          left << right
-        in ['shr_s', left, right]
-          right %= bits
-          with_signed(left, bits:) do |left|
-            left >> right
-          end
-        in ['shr_u', left, right]
-          right %= bits
-          left >> right
-        in ['rotl', left, right]
-          right %= bits
-          (left << right) | (left >> (bits - right))
-        in ['rotr', left, right]
-          right %= bits
-          (left << (bits - right)) | (left >> right)
-        in ['clz', value]
-          0.upto(bits).take_while { |count| value[bits - count, count].zero? }.last
-        in ['ctz', value]
-          0.upto(bits).take_while { |count| value[0, count].zero? }.last
-        in ['popcnt', value]
-          0.upto(bits - 1).count { |position| value[position].nonzero? }
-        in ['extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s', value]
-          extend_bits = operation.slice(%r{\d+}).to_i(10)
-          unsigned(signed(value, bits: extend_bits), bits:)
-        in ['extend_i32_u', value]
-          value
-        in ['eqz', value]
-          bool(value.zero?)
-        in ['eq', left, right]
-          bool(left == right)
-        in ['ne', left, right]
-          bool(left != right)
-        in ['lt_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            bool(left < right)
-          end
-        in ['lt_u', left, right]
-          bool(left < right)
-        in ['le_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            bool(left <= right)
-          end
-        in ['le_u', left, right]
-          bool(left <= right)
-        in ['gt_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            bool(left > right)
-          end
-        in ['gt_u', left, right]
-          bool(left > right)
-        in ['ge_s', left, right]
-          with_signed(left, right, bits:) do |left, right|
-            bool(left >= right)
-          end
-        in ['ge_u', left, right]
-          bool(left >= right)
-        in ['wrap_i64', value]
-          value
-        in ['reinterpret_f32' | 'reinterpret_f64', value]
-          float_bits = operation.slice(%r{\d+}).to_i(10)
-          raise unless bits == float_bits
-          value
-        in ['trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u', value]
-          float_bits = operation.slice(%r{\d+}).to_i(10)
-          signed_input = operation.end_with?('_s')
-          saturating = operation.include?('_sat')
-          format = Wasminna::Float::Format.for(bits: float_bits)
-          result = Wasminna::Float.decode(value, format:).to_f
-
-          result =
-            if saturating && result.nan?
-              0
-            elsif saturating && result.infinite?
-              result
-            else
-              result.truncate
-            end
-
-          if saturating
-            size = 1 << bits
-            min, max =
-              if signed_input
-                [-(size / 2), (size / 2) - 1]
-              else
-                [0, size - 1]
-              end
-            result = result.clamp(min, max)
-          end
-
-          if signed_input
-            unsigned(result, bits:)
+        in ['div', left, right]
+          left / right
+        in ['min' | 'max', _, _]
+          if arguments.any?(&:nan?)
+            ::Float::NAN
+          elsif arguments.all?(&:zero?)
+            arguments.send(:"#{operation}_by", &:sign)
           else
-            result
+            arguments.send(operation)
           end
-        end.then { |value| mask(value, bits:) }
-      in :float
-        format = Wasminna::Float::Format.for(bits:)
-        arguments = arguments.map { |arg| evaluate(arg, locals:) }
-
-        case [operation, *arguments]
-        in ['add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest', *]
-          with_float(*arguments, format:) do |*arguments|
-            case [operation, *arguments]
-            in ['add', left, right]
-              left + right
-            in ['sub', left, right]
-              left - right
-            in ['mul', left, right]
-              left * right
-            in ['div', left, right]
-              left / right
-            in ['min' | 'max', _, _]
-              if arguments.any?(&:nan?)
-                ::Float::NAN
-              elsif arguments.all?(&:zero?)
-                arguments.send(:"#{operation}_by", &:sign)
+        in ['sqrt', value]
+          if value.zero?
+            value
+          elsif value.negative?
+            ::Float::NAN
+          else
+            Math.sqrt(value)
+          end
+        in ['floor' | 'ceil' | 'trunc' | 'nearest', value]
+          if value.zero? || value.infinite? || value.nan?
+            value
+          else
+            case operation
+            in 'floor'
+              value.floor
+            in 'ceil'
+              value.ceil
+            in 'trunc'
+              value.truncate
+            in 'nearest'
+              value.round(half: :even)
+            end.then do |result|
+              if result.zero? && value.negative?
+                -0.0
               else
-                arguments.send(operation)
-              end
-            in ['sqrt', value]
-              if value.zero?
-                value
-              elsif value.negative?
-                ::Float::NAN
-              else
-                Math.sqrt(value)
-              end
-            in ['floor' | 'ceil' | 'trunc' | 'nearest', value]
-              if value.zero? || value.infinite? || value.nan?
-                value
-              else
-                case operation
-                in 'floor'
-                  value.floor
-                in 'ceil'
-                  value.ceil
-                in 'trunc'
-                  value.truncate
-                in 'nearest'
-                  value.round(half: :even)
-                end.then do |result|
-                  if result.zero? && value.negative?
-                    -0.0
-                  else
-                    result
-                  end
-                end
+                result
               end
             end
           end
-        in ['copysign', left, right]
-          left, right =
-            [left, right].map { Wasminna::Float.decode(_1, format:) }
-          left.sign = right.sign
-          left.encode(format:)
-        in ['abs', value]
-          value = Wasminna::Float.decode(value, format:)
-          value.sign = Sign::PLUS
-          value.encode(format:)
-        in ['neg', value]
-          value = Wasminna::Float.decode(value, format:)
-          value.sign = !value.sign
-          value.encode(format:)
-        in ['eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge', left, right]
-          left, right =
-            [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
-          operation =
-            {
-              'eq' => '==', 'ne' => '!=',
-              'lt' => '<', 'le' => '<=',
-              'gt' => '>', 'ge' => '>='
-            }.fetch(operation).to_sym.to_proc
-          bool(operation.call(left, right))
-        in ['convert_i32_s' | 'convert_i64_s', value]
-          integer_bits = operation.slice(%r{\d+}).to_i(10)
-          integer = signed(value, bits: integer_bits)
-          Wasminna::Float.from_integer(integer).encode(format:)
-        in ['convert_i32_u' | 'convert_i64_u', value]
-          Wasminna::Float.from_integer(value).encode(format:)
-        in ['promote_f32', value]
-          raise unless bits == 64
-          input_format = Wasminna::Float::Format.for(bits: 32)
-          float = Wasminna::Float.decode(value, format: input_format)
-
-          case float
-          in Wasminna::Float::Nan
-            Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
-          else
-            float
-          end.encode(format:)
-        in ['demote_f64', value]
-          raise unless bits == 32
-          input_format = Wasminna::Float::Format.for(bits: 64)
-          float = Wasminna::Float.decode(value, format: input_format)
-
-          case float
-          in Wasminna::Float::Nan
-            Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
-          else
-            float
-          end.encode(format:)
-        in ['reinterpret_i32' | 'reinterpret_i64', value]
-          integer_bits = operation.slice(%r{\d+}).to_i(10)
-          raise unless bits == integer_bits
-          value
         end
       end
+    in ['copysign', left, right]
+      left, right =
+        [left, right].map { Wasminna::Float.decode(_1, format:) }
+      left.sign = right.sign
+      left.encode(format:)
+    in ['abs', value]
+      value = Wasminna::Float.decode(value, format:)
+      value.sign = Sign::PLUS
+      value.encode(format:)
+    in ['neg', value]
+      value = Wasminna::Float.decode(value, format:)
+      value.sign = !value.sign
+      value.encode(format:)
+    in ['eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge', left, right]
+      left, right =
+        [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
+      operation =
+        {
+          'eq' => '==', 'ne' => '!=',
+          'lt' => '<', 'le' => '<=',
+          'gt' => '>', 'ge' => '>='
+        }.fetch(operation).to_sym.to_proc
+      bool(operation.call(left, right))
+    in ['convert_i32_s' | 'convert_i64_s', value]
+      integer_bits = operation.slice(%r{\d+}).to_i(10)
+      integer = signed(value, bits: integer_bits)
+      Wasminna::Float.from_integer(integer).encode(format:)
+    in ['convert_i32_u' | 'convert_i64_u', value]
+      Wasminna::Float.from_integer(value).encode(format:)
+    in ['promote_f32', value]
+      raise unless bits == 64
+      input_format = Wasminna::Float::Format.for(bits: 32)
+      float = Wasminna::Float.decode(value, format: input_format)
+
+      case float
+      in Wasminna::Float::Nan
+        Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
+      else
+        float
+      end.encode(format:)
+    in ['demote_f64', value]
+      raise unless bits == 32
+      input_format = Wasminna::Float::Format.for(bits: 64)
+      float = Wasminna::Float.decode(value, format: input_format)
+
+      case float
+      in Wasminna::Float::Nan
+        Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
+      else
+        float
+      end.encode(format:)
+    in ['reinterpret_i32' | 'reinterpret_i64', value]
+      integer_bits = operation.slice(%r{\d+}).to_i(10)
+      raise unless bits == integer_bits
+      value
     end
   end
 
