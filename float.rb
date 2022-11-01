@@ -3,20 +3,6 @@ require 'sign'
 
 module Wasminna
   module Float
-    module MatchPattern
-      refine MatchData do
-        def deconstruct_keys(keys)
-          named_captures.transform_keys(&:to_sym).then do |captures|
-            if keys
-              captures.slice(*keys)
-            else
-              captures
-            end
-          end
-        end
-      end
-    end
-
     class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
       include Helpers::Mask
 
@@ -155,7 +141,7 @@ module Wasminna
         \z
       }x
 
-    using MatchPattern
+    using Helpers::MatchPattern
 
     def parse(string)
       if finite_regexp_match(string) in [
