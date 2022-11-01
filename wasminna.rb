@@ -304,7 +304,8 @@ class Interpreter
           0
         end
 
-      offset = evaluate(offset, locals:)
+      evaluate(offset, locals:)
+      stack.pop(1) => [offset]
       @memory.load(offset: offset + static_offset, bits:)
     in ['store', *memargs, offset, value]
       static_offset =
@@ -315,7 +316,8 @@ class Interpreter
           0
         end
 
-      offset, value = [offset, value].map { evaluate(_1, locals:) }
+      [offset, value].each { evaluate(_1, locals:) }
+      stack.pop(2) => [offset, value]
       @memory.store(value:, offset: offset + static_offset, bits:)
       0
     else
