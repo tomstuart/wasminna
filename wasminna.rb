@@ -292,21 +292,26 @@ class Interpreter
         format = Wasminna::Float::Format.for(bits:)
         Wasminna::Float.parse(value).encode(format:)
       end
-    in ['load', offset]
-      offset = evaluate(offset, locals:)
-      @memory.load(offset:, bits:)
-    in ['load', %r{\Aoffset=\d+\z} => static_offset, offset]
-      _, static_offset = static_offset.split('=')
-      static_offset = static_offset.to_i(10)
+    in ['load', *memargs, offset]
+      static_offset =
+        if memargs in [%r{\Aoffset=\d+\z} => static_offset]
+          _, static_offset = static_offset.split('=')
+          static_offset = static_offset.to_i(10)
+        else
+          0
+        end
+
       offset = evaluate(offset, locals:)
       @memory.load(offset: offset + static_offset, bits:)
-    in ['store', offset, value]
-      offset, value = [offset, value].map { evaluate(_1, locals:) }
-      @memory.store(value:, offset:, bits:)
-      0
-    in ['store', %r{\Aoffset=\d+\z} => static_offset, offset, value]
-      _, static_offset = static_offset.split('=')
-      static_offset = static_offset.to_i(10)
+    in ['store', *memargs, offset, value]
+      static_offset =
+        if memargs in [%r{\Aoffset=\d+\z} => static_offset]
+          _, static_offset = static_offset.split('=')
+          static_offset = static_offset.to_i(10)
+        else
+          0
+        end
+
       offset, value = [offset, value].map { evaluate(_1, locals:) }
       @memory.store(value:, offset: offset + static_offset, bits:)
       0
