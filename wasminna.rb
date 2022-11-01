@@ -292,26 +292,26 @@ class Interpreter
         format = Wasminna::Float::Format.for(bits:)
         Wasminna::Float.parse(value).encode(format:)
       end
+    in ['load', offset]
+      offset = evaluate(offset, locals:)
+      @memory.load(offset:, bits:)
+    in ['load', %r{\Aoffset=\d+\z} => static_offset, offset]
+      _, static_offset = static_offset.split('=')
+      static_offset = static_offset.to_i(10)
+      offset = evaluate(offset, locals:)
+      @memory.load(offset: offset + static_offset, bits:)
+    in ['store', offset, value]
+      offset, value = [offset, value].map { evaluate(_1, locals:) }
+      @memory.store(value:, offset:, bits:)
+      0
+    in ['store', %r{\Aoffset=\d+\z} => static_offset, offset, value]
+      _, static_offset = static_offset.split('=')
+      static_offset = static_offset.to_i(10)
+      offset, value = [offset, value].map { evaluate(_1, locals:) }
+      @memory.store(value:, offset: offset + static_offset, bits:)
+      0
     else
       case expression
-      in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load', offset]
-        offset = evaluate(offset, locals:)
-        @memory.load(offset:, bits:)
-      in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load', %r{\Aoffset=\d+\z} => static_offset, offset]
-        _, static_offset = static_offset.split('=')
-        static_offset = static_offset.to_i(10)
-        offset = evaluate(offset, locals:)
-        @memory.load(offset: offset + static_offset, bits:)
-      in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store', offset, value]
-        offset, value = [offset, value].map { evaluate(_1, locals:) }
-        @memory.store(value:, offset:, bits:)
-        0
-      in ['i32.store' | 'i64.store' | 'f32.store' | 'f64.store', %r{\Aoffset=\d+\z} => static_offset, offset, value]
-        _, static_offset = static_offset.split('=')
-        static_offset = static_offset.to_i(10)
-        offset, value = [offset, value].map { evaluate(_1, locals:) }
-        @memory.store(value:, offset: offset + static_offset, bits:)
-        0
       in [%r{\Ai(32|64)\.}, *arguments]
         arguments = arguments.map { |arg| evaluate(arg, locals:) }
 
