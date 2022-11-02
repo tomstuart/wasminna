@@ -194,9 +194,7 @@ class Interpreter
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
 
-    function.body.each do |instruction|
-      evaluate(unfold(instruction), locals:)
-    end
+    evaluate(function.body.flat_map { unfold(_1) }, locals:)
 
     nil
   end
