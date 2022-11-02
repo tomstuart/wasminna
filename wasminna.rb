@@ -201,7 +201,7 @@ class Interpreter
 
   def unfold(expression)
     case expression
-    in ['i32.add' | 'i64.add' => instruction, left, right]
+    in [%r{\Ai(32|64)\.} => instruction, left, right] if instruction.split('.').last in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
       [unfold(left), unfold(right), [instruction]]
     in [*expressions]
       expressions.map { unfold(_1) }
@@ -359,14 +359,12 @@ class Interpreter
 
   def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
     case operation
-    in 'add'
-      stack.pop(2) => [left, right]
-      left + right
-    in 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
-      arguments.each { |arg| evaluate(arg, locals:) }
+    in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
       stack.pop(2) => [left, right]
 
       case operation
+      in 'add'
+        left + right
       in 'sub'
         left - right
       in 'mul'
