@@ -218,6 +218,12 @@ class Interpreter
   using Helpers::MatchPattern
 
   def evaluate(expression, locals:)
+    if expression in [[*] => first, *rest]
+      evaluate(first, locals:)
+      evaluate(rest, locals:) unless rest.empty?
+      return
+    end
+
     expression => [instruction, *arguments]
 
     if instruction.match?(NUMERIC_OPERATION_REGEXP)
