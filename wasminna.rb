@@ -201,6 +201,12 @@ class Interpreter
 
   def unfold(expression)
     case expression
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const', _]
+      expression
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
+      [rest.map { unfold(_1) }, [instruction, static_offset]]
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, *rest]
+      [rest.map { unfold(_1) }, [instruction]]
     in [%r{\Ai(32|64)\.} => instruction, *rest] if instruction.split('.').last in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u' | 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
       [rest.map { unfold(_1) }, [instruction]]
     in [*expressions]
@@ -321,7 +327,7 @@ class Interpreter
         format = Wasminna::Float::Format.for(bits:)
         Wasminna::Float.parse(value).encode(format:)
       end.tap { stack.push(_1) }
-    in ['load', *memargs, offset]
+    in ['load', *memargs]
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
           _, static_offset = static_offset.split('=')
@@ -330,10 +336,9 @@ class Interpreter
           0
         end
 
-      evaluate(offset, locals:)
       stack.pop(1) => [offset]
       @memory.load(offset: offset + static_offset, bits:).tap { stack.push(_1) }
-    in ['store', *memargs, offset, value]
+    in ['store', *memargs]
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
           _, static_offset = static_offset.split('=')
@@ -342,7 +347,6 @@ class Interpreter
           0
         end
 
-      [offset, value].each { evaluate(_1, locals:) }
       stack.pop(2) => [offset, value]
       @memory.store(value:, offset: offset + static_offset, bits:)
     else
