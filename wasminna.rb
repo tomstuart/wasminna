@@ -201,6 +201,8 @@ class Interpreter
 
   def unfold(expression)
     case expression
+    in ['i32.add' | 'i64.add' => instruction, left, right]
+      [unfold(left), unfold(right), [instruction]]
     in [*expressions]
       expressions.map { unfold(_1) }
     else
@@ -356,15 +358,15 @@ class Interpreter
   end
 
   def evaluate_integer_instruction(operation:, bits:, arguments:, locals:)
-    arguments.each { |arg| evaluate(arg, locals:) }
-
     case operation
-    in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
+    in 'add'
+      stack.pop(2) => [left, right]
+      left + right
+    in 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
+      arguments.each { |arg| evaluate(arg, locals:) }
       stack.pop(2) => [left, right]
 
       case operation
-      in 'add'
-        left + right
       in 'sub'
         left - right
       in 'mul'
@@ -434,6 +436,7 @@ class Interpreter
         bool(left >= right)
       end
     in 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+      arguments.each { |arg| evaluate(arg, locals:) }
       stack.pop(1) => [value]
 
       case operation
