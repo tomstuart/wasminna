@@ -205,9 +205,7 @@ class Interpreter
       expression
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [rest.map { unfold(_1) }, [instruction, static_offset]]
-    in ['f32.load' | 'f64.load' | 'f32.store' | 'f64.store' => instruction, *rest]
-      [rest.map { unfold(_1) }, [instruction]]
-    in [%r{\Ai(32|64)\.} => instruction, *rest]
+    in [%r{\A[fi](32|64)\.} => instruction, *rest]
       [rest.map { unfold(_1) }, [instruction]]
     in [*expressions]
       expressions.map { unfold(_1) }
@@ -500,7 +498,6 @@ class Interpreter
 
   def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
     format = Wasminna::Float::Format.for(bits:)
-    arguments.each { |arg| evaluate(arg, locals:) }
 
     case operation
     in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
