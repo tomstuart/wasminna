@@ -352,7 +352,7 @@ class Interpreter
       in :integer
         evaluate_integer_instruction(operation:, bits:)
       in :float
-        evaluate_float_instruction(operation:, bits:, arguments:, locals:)
+        evaluate_float_instruction(operation:, bits:)
       end
     end
 
@@ -496,7 +496,7 @@ class Interpreter
     nil
   end
 
-  def evaluate_float_instruction(operation:, bits:, arguments:, locals:)
+  def evaluate_float_instruction(operation:, bits:)
     format = Wasminna::Float::Format.for(bits:)
 
     case operation
