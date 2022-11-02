@@ -205,9 +205,9 @@ class Interpreter
       expression
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [rest.map { unfold(_1) }, [instruction, static_offset]]
-    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, *rest]
+    in ['f32.load' | 'f64.load' | 'f32.store' | 'f64.store' => instruction, *rest]
       [rest.map { unfold(_1) }, [instruction]]
-    in [%r{\Ai(32|64)\.} => instruction, *rest] if instruction.split('.').last in 'add' | 'sub' | 'mul' | 'div_s'| 'div_u'| 'rem_s'| 'rem_u'| 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u'| 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u' | 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+    in [%r{\Ai(32|64)\.} => instruction, *rest]
       [rest.map { unfold(_1) }, [instruction]]
     in [*expressions]
       expressions.map { unfold(_1) }
