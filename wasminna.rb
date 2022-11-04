@@ -201,12 +201,18 @@ class Interpreter
 
   def unfold(expression)
     case expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const', _]
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get', _]
       expression
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [rest.map { unfold(_1) }, [instruction, static_offset]]
-    in [%r{\A[fi](32|64)\.} => instruction, *rest]
+    in [%r{\A[fi](32|64)\.} | 'return' => instruction, *rest]
       [rest.map { unfold(_1) }, [instruction]]
+    in ['local.set' | 'local.tee' => instruction, name, value]
+      [unfold(value), [instruction, name]]
+    in ['br_if' => instruction, label, condition]
+      [unfold(condition), [instruction, label]]
+    in ['select' => instruction, value_1, value_2, condition]
+      [[value_1, value_2, condition].map { unfold(_1) }, [instruction]]
     in [*expressions]
       expressions.map { unfold(_1) }
     else
@@ -236,8 +242,8 @@ class Interpreter
       evaluate_numeric_instruction(expression, locals:)
     else
       case expression
-      in ['return', return_expression]
-        evaluate(return_expression, locals:)
+      in ['return']
+        # TODO some control flow effect
       in ['local.get', name]
         if name.start_with?('$')
           name, value = locals.assoc(name)
@@ -246,8 +252,7 @@ class Interpreter
           name, value = locals.slice(name.to_i(10))
           value
         end.tap { stack.push(_1) }
-      in ['local.set' | 'local.tee', name, value]
-        evaluate(value, locals:)
+      in ['local.set' | 'local.tee', name]
         stack.pop(1) => [value]
 
         if name.start_with?('$')
@@ -274,8 +279,7 @@ class Interpreter
             end
           break unless result == :branch
         end
-      in ['br_if', label, condition]
-        evaluate(condition, locals:)
+      in ['br_if', label]
         stack.pop(1) => [condition]
 
         unless condition.zero?
@@ -285,8 +289,7 @@ class Interpreter
             throw(label.to_i(10), :branch)
           end
         end
-      in ['select', value_1, value_2, condition]
-        [value_1, value_2, condition].each { evaluate(_1, locals:) }
+      in ['select']
         stack.pop(3) => [value_1, value_2, condition]
 
         if condition.zero?
