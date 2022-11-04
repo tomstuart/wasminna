@@ -276,13 +276,11 @@ class Interpreter
         consume_structured_instruction(expression) =>
           [['block', *instructions, 'end'], rest]
 
-        if instructions in [%r{\A\$} => label, body]
+        if instructions in [%r{\A\$} => label, *body]
           evaluate(body, locals:)
         else
           catch(0) do
-            instructions.each do |instruction|
-              evaluate(instruction, locals:)
-            end
+            evaluate(instructions, locals:)
           end
         end
       in 'loop'
@@ -292,9 +290,7 @@ class Interpreter
         loop do
           result =
             catch(label.to_sym) do
-              instructions.each do |instruction|
-                evaluate(instruction, locals:)
-              end
+              evaluate(instructions, locals:)
             end
           break unless result == :branch
         end
