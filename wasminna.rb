@@ -332,6 +332,25 @@ class Interpreter
     rest
   end
 
+  def consume_structured_instruction(expression)
+    expression => ['block' | 'loop' | 'if' => instruction, *rest]
+    instructions = []
+
+    instructions << instruction
+    until rest in ['end', *rest]
+      case rest
+      in ['block' | 'loop' | 'if', *]
+        consume_structured_instruction(rest) => [expression, rest]
+        instructions.concat(expression)
+      in [instruction, *rest]
+        instructions << instruction
+      end
+    end
+    instructions << 'end'
+
+    [instructions, rest]
+  end
+
   def evaluate_numeric_instruction(expression, locals:)
     expression => [instruction, *rest]
 
