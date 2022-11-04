@@ -339,7 +339,7 @@ class Interpreter
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
           _, static_offset = static_offset.split('=')
-          static_offset = static_offset.to_i(10)
+          static_offset.to_i(10)
         else
           0
         end
@@ -350,7 +350,7 @@ class Interpreter
       static_offset =
         if memargs in [%r{\Aoffset=\d+\z} => static_offset]
           _, static_offset = static_offset.split('=')
-          static_offset = static_offset.to_i(10)
+          static_offset.to_i(10)
         else
           0
         end
