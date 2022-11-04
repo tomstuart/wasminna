@@ -244,15 +244,17 @@ class Interpreter
       return
     end
 
-    expression => [instruction, *arguments]
+    expression => [instruction, *rest]
 
     if instruction.match?(NUMERIC_OPERATION_REGEXP)
-      evaluate_numeric_instruction(expression, locals:)
+      rest = evaluate_numeric_instruction(expression, locals:)
     else
-      case expression
-      in ['return']
+      case instruction
+      in 'return'
         # TODO some control flow effect
-      in ['local.get', name]
+      in 'local.get'
+        rest => [name, *rest]
+
         if name.start_with?('$')
           name, value = locals.assoc(name)
           value
@@ -260,7 +262,8 @@ class Interpreter
           name, value = locals.slice(name.to_i(10))
           value
         end.tap { stack.push(_1) }
-      in ['local.set' | 'local.tee', name]
+      in 'local.set' | 'local.tee'
+        rest => [name, *rest]
         stack.pop(1) => [value]
 
         if name.start_with?('$')
@@ -269,25 +272,32 @@ class Interpreter
           index = name.to_i(10)
           locals.slice(index)[1] = value
         end.tap { stack.push(_1) if instruction == 'local.tee' }
-      in ['block', %r{\A\$} => label, body, 'end']
-        evaluate(body, locals:)
-      in ['block', *instructions, 'end']
-        catch(0) do
-          instructions.each do |instruction|
-            evaluate(instruction, locals:)
+      in 'block'
+        case [instruction, *rest]
+        in ['block', %r{\A\$} => label, body, 'end']
+          evaluate(body, locals:)
+        in ['block', *instructions, 'end']
+          catch(0) do
+            instructions.each do |instruction|
+              evaluate(instruction, locals:)
+            end
           end
         end
-      in ['loop', label, *instructions, 'end']
-        loop do
-          result =
-            catch(label.to_sym) do
-              instructions.each do |instruction|
-                evaluate(instruction, locals:)
+      in 'loop'
+        case [instruction, *rest]
+        in ['loop', label, *instructions, 'end']
+          loop do
+            result =
+              catch(label.to_sym) do
+                instructions.each do |instruction|
+                  evaluate(instruction, locals:)
+                end
               end
-            end
-          break unless result == :branch
+            break unless result == :branch
+          end
         end
-      in ['br_if', label]
+      in 'br_if'
+        rest => [label, *rest]
         stack.pop(1) => [condition]
 
         unless condition.zero?
@@ -297,7 +307,7 @@ class Interpreter
             throw(label.to_i(10), :branch)
           end
         end
-      in ['select']
+      in 'select'
         stack.pop(3) => [value_1, value_2, condition]
 
         if condition.zero?
@@ -305,18 +315,21 @@ class Interpreter
         else
           value_1
         end.tap { stack.push(_1) }
-      in ['if', ['result', _], consequent, 'else', alternative, 'end']
-        stack.pop(1) => [condition]
+      in 'if'
+        case [instruction, *rest]
+        in ['if', ['result', _], consequent, 'else', alternative, 'end']
+          stack.pop(1) => [condition]
 
-        if condition.zero?
-          evaluate(alternative, locals:)
-        else
-          evaluate(consequent, locals:)
+          if condition.zero?
+            evaluate(alternative, locals:)
+          else
+            evaluate(consequent, locals:)
+          end
         end
       end
     end
 
-    nil
+    rest
   end
 
   def evaluate_numeric_instruction(expression, locals:)
