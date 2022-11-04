@@ -194,7 +194,7 @@ class Interpreter
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
 
-    evaluate(function.body.map { unfold(_1) }, locals:)
+    evaluate(function.body.flat_map { unfold(_1) }, locals:)
 
     nil
   end
@@ -204,25 +204,25 @@ class Interpreter
     in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get', _]
       expression
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
-      [rest.map { unfold(_1) }, [instruction, static_offset]]
+      [*rest.flat_map { unfold(_1) }, instruction, static_offset]
     in [%r{\A[fi](32|64)\.} | 'return' => instruction, *rest]
-      [rest.map { unfold(_1) }, [instruction]]
+      [*rest.flat_map { unfold(_1) }, instruction]
     in ['local.set' | 'local.tee' => instruction, name, value]
-      [unfold(value), [instruction, name]]
+      [*unfold(value), instruction, name]
     in ['br_if' => instruction, label, condition]
-      [unfold(condition), [instruction, label]]
+      [*unfold(condition), instruction, label]
     in ['select' => instruction, value_1, value_2, condition]
-      [[value_1, value_2, condition].map { unfold(_1) }, [instruction]]
+      [*[value_1, value_2, condition].flat_map { unfold(_1) }, instruction]
     in ['block' => instruction, %r{\A\$} => label, body]
-      [instruction, label, unfold(body), 'end']
+      [instruction, label, *unfold(body), 'end']
     in ['block' => instruction, *instructions]
-      [instruction, instructions.map { unfold(_1) }, 'end']
+      [instruction, *instructions.flat_map { unfold(_1) }, 'end']
     in ['loop' => instruction, label, *instructions]
-      [instruction, label, instructions.map { unfold(_1) }, 'end']
+      [instruction, label, *instructions.flat_map { unfold(_1) }, 'end']
     in ['if' => instruction, ['result', _] => type, condition, ['then', consequent], ['else', alternative]]
-      [unfold(condition), [instruction, type, unfold(consequent), 'else', unfold(alternative), 'end']]
+      [*unfold(condition), instruction, type, *unfold(consequent), 'else', *unfold(alternative), 'end']
     in [*expressions]
-      expressions.map { unfold(_1) }
+      expressions.flat_map { unfold(_1) }
     else
       expression
     end
@@ -238,96 +238,90 @@ class Interpreter
   using Helpers::MatchPattern
 
   def evaluate(expression, locals:)
-    if expression in [[*] => first, *rest]
-      evaluate(first, locals:)
-      evaluate(rest, locals:) unless rest.empty?
-      return
-    end
+    while expression in [instruction, *rest]
+      if instruction.match?(NUMERIC_OPERATION_REGEXP)
+        rest = evaluate_numeric_instruction(expression, locals:)
+      else
+        case instruction
+        in 'return'
+          # TODO some control flow effect
+        in 'local.get'
+          rest => [name, *rest]
 
-    expression => [instruction, *rest]
+          if name.start_with?('$')
+            name, value = locals.assoc(name)
+            value
+          else
+            name, value = locals.slice(name.to_i(10))
+            value
+          end.tap { stack.push(_1) }
+        in 'local.set' | 'local.tee'
+          rest => [name, *rest]
+          stack.pop(1) => [value]
 
-    if instruction.match?(NUMERIC_OPERATION_REGEXP)
-      rest = evaluate_numeric_instruction(expression, locals:)
-    else
-      case instruction
-      in 'return'
-        # TODO some control flow effect
-      in 'local.get'
-        rest => [name, *rest]
+          if name.start_with?('$')
+            locals.assoc(name)[1] = value
+          else
+            index = name.to_i(10)
+            locals.slice(index)[1] = value
+          end.tap { stack.push(_1) if instruction == 'local.tee' }
+        in 'block'
+          consume_structured_instruction(expression) =>
+            [['block', *instructions, 'end'], rest]
 
-        if name.start_with?('$')
-          name, value = locals.assoc(name)
-          value
-        else
-          name, value = locals.slice(name.to_i(10))
-          value
-        end.tap { stack.push(_1) }
-      in 'local.set' | 'local.tee'
-        rest => [name, *rest]
-        stack.pop(1) => [value]
-
-        if name.start_with?('$')
-          locals.assoc(name)[1] = value
-        else
-          index = name.to_i(10)
-          locals.slice(index)[1] = value
-        end.tap { stack.push(_1) if instruction == 'local.tee' }
-      in 'block'
-        consume_structured_instruction(expression) =>
-          [['block', *instructions, 'end'], rest]
-
-        if instructions in [%r{\A\$} => label, *body]
-          evaluate(body, locals:)
-        else
-          catch(0) do
-            evaluate(instructions, locals:)
-          end
-        end
-      in 'loop'
-        consume_structured_instruction(expression) =>
-          [['loop', label, *instructions, 'end'], rest]
-
-        loop do
-          result =
-            catch(label.to_sym) do
+          if instructions in [%r{\A\$} => label, *body]
+            evaluate(body, locals:)
+          else
+            catch(0) do
               evaluate(instructions, locals:)
             end
-          break unless result == :branch
-        end
-      in 'br_if'
-        rest => [label, *rest]
-        stack.pop(1) => [condition]
+          end
+        in 'loop'
+          consume_structured_instruction(expression) =>
+            [['loop', label, *instructions, 'end'], rest]
 
-        unless condition.zero?
-          if label.start_with?('$')
-            throw(label.to_sym, :branch)
+          loop do
+            result =
+              catch(label.to_sym) do
+                evaluate(instructions, locals:)
+              end
+            break unless result == :branch
+          end
+        in 'br_if'
+          rest => [label, *rest]
+          stack.pop(1) => [condition]
+
+          unless condition.zero?
+            if label.start_with?('$')
+              throw(label.to_sym, :branch)
+            else
+              throw(label.to_i(10), :branch)
+            end
+          end
+        in 'select'
+          stack.pop(3) => [value_1, value_2, condition]
+
+          if condition.zero?
+            value_2
           else
-            throw(label.to_i(10), :branch)
+            value_1
+          end.tap { stack.push(_1) }
+        in 'if'
+          consume_structured_instruction(expression) =>
+            [['if', ['result', _], *instructions, 'end'], rest]
+          split_on_else(instructions) => [consequent, alternative]
+          stack.pop(1) => [condition]
+
+          if condition.zero?
+            evaluate(alternative, locals:)
+          else
+            evaluate(consequent, locals:)
           end
         end
-      in 'select'
-        stack.pop(3) => [value_1, value_2, condition]
-
-        if condition.zero?
-          value_2
-        else
-          value_1
-        end.tap { stack.push(_1) }
-      in 'if'
-        consume_structured_instruction(expression) =>
-          [['if', ['result', _], *instructions, 'end'], rest]
-        split_on_else(instructions) => [consequent, alternative]
-        stack.pop(1) => [condition]
-
-        if condition.zero?
-          evaluate(alternative, locals:)
-        else
-          evaluate(consequent, locals:)
-        end
       end
-    end
 
-    rest
+      expression = rest
+    end
   end
 
   def consume_structured_instruction(expression)
