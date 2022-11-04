@@ -315,7 +315,8 @@ class Interpreter
         end.tap { stack.push(_1) }
       in 'if'
         consume_structured_instruction(expression) =>
-          [['if', ['result', _], consequent, 'else', alternative, 'end'], rest]
+          [['if', ['result', _], *instructions, 'end'], rest]
+        split_on_else(instructions) => [consequent, alternative]
         stack.pop(1) => [condition]
 
         if condition.zero?
