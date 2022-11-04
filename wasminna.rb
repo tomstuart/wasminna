@@ -194,7 +194,7 @@ class Interpreter
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
 
-    evaluate(function.body.flat_map { unfold(_1) }, locals:)
+    evaluate(function.body.map { unfold(_1) }, locals:)
 
     nil
   end
