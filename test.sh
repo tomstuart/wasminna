@@ -11,14 +11,14 @@ do
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/$file
 done
 
-for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp f64 f64_bitwise f64_cmp float_memory
+for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp f64 f64_bitwise f64_cmp float_memory float_exprs
 do
   file=$script.wast
   printf "\e[1m%s\e[0m: " "$file"
   ruby -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$file
 done
 
-for pending in float_exprs
+for pending in
 do
   file=$pending.wast
   printf "\e[1m%s\e[0m (pending): " "$file"
