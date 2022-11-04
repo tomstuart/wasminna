@@ -213,6 +213,14 @@ class Interpreter
       [unfold(condition), [instruction, label]]
     in ['select' => instruction, value_1, value_2, condition]
       [[value_1, value_2, condition].map { unfold(_1) }, [instruction]]
+    in ['block' => instruction, %r{\A\$} => label, body]
+      [instruction, label, unfold(body), 'end']
+    in ['block' => instruction, *instructions]
+      [instruction, instructions.map { unfold(_1) }, 'end']
+    in ['loop' => instruction, label, *instructions]
+      [instruction, label, instructions.map { unfold(_1) }, 'end']
+    in ['if' => instruction, ['result', _] => type, condition, ['then', consequent], ['else', alternative]]
+      [unfold(condition), [instruction, type, unfold(consequent), 'else', unfold(alternative), 'end']]
     in [*expressions]
       expressions.map { unfold(_1) }
     else
@@ -261,15 +269,15 @@ class Interpreter
           index = name.to_i(10)
           locals.slice(index)[1] = value
         end.tap { stack.push(_1) if instruction == 'local.tee' }
-      in ['block', %r{\A\$} => label, body]
+      in ['block', %r{\A\$} => label, body, 'end']
         evaluate(body, locals:)
-      in ['block', *instructions]
+      in ['block', *instructions, 'end']
         catch(0) do
           instructions.each do |instruction|
             evaluate(instruction, locals:)
           end
         end
-      in ['loop', label, *instructions]
+      in ['loop', label, *instructions, 'end']
         loop do
           result =
             catch(label.to_sym) do
@@ -297,8 +305,7 @@ class Interpreter
         else
           value_1
         end.tap { stack.push(_1) }
-      in ['if', ['result', _], condition, ['then', consequent], ['else', alternative]]
-        evaluate(condition, locals:)
+      in ['if', ['result', _], consequent, 'else', alternative, 'end']
         stack.pop(1) => [condition]
 
         if condition.zero?
