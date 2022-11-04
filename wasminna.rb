@@ -273,10 +273,12 @@ class Interpreter
           locals.slice(index)[1] = value
         end.tap { stack.push(_1) if instruction == 'local.tee' }
       in 'block'
-        case [instruction, *rest]
-        in ['block', %r{\A\$} => label, body, 'end']
+        consume_structured_instruction(expression) =>
+          [['block', *instructions, 'end'], rest]
+
+        if instructions in [%r{\A\$} => label, body]
           evaluate(body, locals:)
-        in ['block', *instructions, 'end']
+        else
           catch(0) do
             instructions.each do |instruction|
               evaluate(instruction, locals:)
@@ -284,17 +286,17 @@ class Interpreter
           end
         end
       in 'loop'
-        case [instruction, *rest]
-        in ['loop', label, *instructions, 'end']
-          loop do
-            result =
-              catch(label.to_sym) do
-                instructions.each do |instruction|
-                  evaluate(instruction, locals:)
-                end
+        consume_structured_instruction(expression) =>
+          [['loop', label, *instructions, 'end'], rest]
+
+        loop do
+          result =
+            catch(label.to_sym) do
+              instructions.each do |instruction|
+                evaluate(instruction, locals:)
               end
-            break unless result == :branch
-          end
+            end
+          break unless result == :branch
         end
       in 'br_if'
         rest => [label, *rest]
@@ -316,15 +318,14 @@ class Interpreter
           value_1
         end.tap { stack.push(_1) }
       in 'if'
-        case [instruction, *rest]
-        in ['if', ['result', _], consequent, 'else', alternative, 'end']
-          stack.pop(1) => [condition]
+        consume_structured_instruction(expression) =>
+          [['if', ['result', _], consequent, 'else', alternative, 'end'], rest]
+        stack.pop(1) => [condition]
 
-          if condition.zero?
-            evaluate(alternative, locals:)
-          else
-            evaluate(consequent, locals:)
-          end
+        if condition.zero?
+          evaluate(alternative, locals:)
+        else
+          evaluate(consequent, locals:)
         end
       end
     end
