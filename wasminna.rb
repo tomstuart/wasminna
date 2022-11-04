@@ -320,14 +320,16 @@ class Interpreter
   end
 
   def evaluate_numeric_instruction(expression, locals:)
-    expression => [instruction, *arguments]
+    expression => [instruction, *rest]
 
     instruction.match(NUMERIC_OPERATION_REGEXP) in { type:, bits:, operation: }
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
-    case [operation, *arguments]
-    in ['const', value]
+    case operation
+    in 'const'
+      rest => [value, *rest]
+
       case type
       in :integer
         interpret_integer(value, bits:)
@@ -335,9 +337,9 @@ class Interpreter
         format = Wasminna::Float::Format.for(bits:)
         Wasminna::Float.parse(value).encode(format:)
       end.tap { stack.push(_1) }
-    in ['load', *memargs]
+    in 'load'
       static_offset =
-        if memargs in [%r{\Aoffset=\d+\z} => static_offset]
+        if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]
           _, static_offset = static_offset.split('=')
           static_offset.to_i(10)
         else
@@ -346,9 +348,9 @@ class Interpreter
 
       stack.pop(1) => [offset]
       @memory.load(offset: offset + static_offset, bits:).tap { stack.push(_1) }
-    in ['store', *memargs]
+    in 'store'
       static_offset =
-        if memargs in [%r{\Aoffset=\d+\z} => static_offset]
+        if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]
           _, static_offset = static_offset.split('=')
           static_offset.to_i(10)
         else
@@ -366,7 +368,7 @@ class Interpreter
       end
     end
 
-    nil
+    rest
   end
 
   def evaluate_integer_instruction(operation:, bits:)
