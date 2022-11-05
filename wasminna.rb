@@ -199,28 +199,16 @@ class Interpreter
 
   def unfold(expression)
     case expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get', _]
-      expression
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' => instruction, argument, *rest]
+      [*rest.flat_map { unfold(_1) }, instruction, argument]
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [*rest.flat_map { unfold(_1) }, instruction, static_offset]
-    in [%r{\A[fi](32|64)\.} | 'return' => instruction, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction]
-    in ['local.set' | 'local.tee' => instruction, name, value]
-      [*unfold(value), instruction, name]
-    in ['br_if' => instruction, label, condition]
-      [*unfold(condition), instruction, label]
-    in ['select' => instruction, value_1, value_2, condition]
-      [*[value_1, value_2, condition].flat_map { unfold(_1) }, instruction]
-    in ['block' => instruction, %r{\A\$} => label, body]
-      [instruction, label, *unfold(body), 'end']
-    in ['block' => instruction, *instructions]
+    in ['block' | 'loop' => instruction, *instructions]
       [instruction, *instructions.flat_map { unfold(_1) }, 'end']
-    in ['loop' => instruction, label, *instructions]
-      [instruction, label, *instructions.flat_map { unfold(_1) }, 'end']
     in ['if' => instruction, ['result', _] => type, condition, ['then', consequent], ['else', alternative]]
       [*unfold(condition), instruction, type, *unfold(consequent), 'else', *unfold(alternative), 'end']
-    in [*expressions]
-      expressions.flat_map { unfold(_1) }
+    in [instruction, *rest]
+      [*rest.flat_map { unfold(_1) }, instruction]
     else
       expression
     end
