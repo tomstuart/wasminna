@@ -195,8 +195,6 @@ class Interpreter
     locals = parameters + locals
 
     evaluate(function.body.flat_map { unfold(_1) }, locals:)
-
-    nil
   end
 
   def unfold(expression)
@@ -562,8 +560,6 @@ class Interpreter
         end
       end
     end.then { |value| mask(value, bits:) }.tap { stack.push(_1) }
-
-    nil
   end
 
   def evaluate_float_instruction(operation:, bits:)
@@ -692,8 +688,6 @@ class Interpreter
         value
       end
     end.tap { stack.push(_1) }
-
-    nil
   end
 
   def with_signed(*unsigned_args, bits:)
