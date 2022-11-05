@@ -251,34 +251,6 @@ class Interpreter
             index = name.to_i(10)
             locals.slice(index)[1] = value
           end.tap { stack.push(_1) if instruction == 'local.tee' }
-        in 'block'
-          consume_structured_instruction(expression) =>
-            [['block', *instructions, 'end'], rest]
-
-          if instructions in [%r{\A\$} => label, *body]
-            evaluate(body, locals:)
-          else
-            catch(0) do
-              evaluate(instructions, locals:)
-            end
-          end
-        in 'loop'
-          consume_structured_instruction(expression) =>
-            [['loop', *instructions, 'end'], rest]
-          label =
-            if instructions in [%r{\A\$} => label, *instructions]
-              label.to_sym
-            else
-              0
-            end
-
-          loop do
-            result =
-              catch(label) do
-                evaluate(instructions, locals:)
-              end
-            break unless result == :branch
-          end
         in 'br_if'
           rest => [label, *rest]
           stack.pop(1) => [condition]
@@ -298,16 +270,39 @@ class Interpreter
           else
             value_1
           end.tap { stack.push(_1) }
-        in 'if'
+        in 'block' | 'loop' | 'if' => instruction
           consume_structured_instruction(expression) =>
-            [['if', ['result', _], *instructions, 'end'], rest]
-          split_on_else(instructions) => [consequent, alternative]
-          stack.pop(1) => [condition]
+            [[^instruction, *instructions, 'end'], rest]
+          label =
+            if instructions in [%r{\A\$} => label, *instructions]
+              label.to_sym
+            else
+              0
+            end
+          instructions in [['result', _], *instructions]
 
-          if condition.zero?
-            evaluate(alternative, locals:)
-          else
-            evaluate(consequent, locals:)
+          case instruction
+          in 'block'
+            catch(label) do
+              evaluate(instructions, locals:)
+            end
+          in 'loop'
+            loop do
+              result =
+                catch(label) do
+                  evaluate(instructions, locals:)
+                end
+              break unless result == :branch
+            end
+          in 'if'
+            split_on_else(instructions) => [consequent, alternative]
+            stack.pop(1) => [condition]
+
+            if condition.zero?
+              evaluate(alternative, locals:)
+            else
+              evaluate(consequent, locals:)
+            end
           end
         end
       end
