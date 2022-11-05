@@ -78,6 +78,9 @@ class Interpreter
               minimum_size, maximum_size =
                 [minimum_size, maximum_size].map { interpret_integer(_1, bits: 32) }
               @memory = Memory.from_limits(minimum_size:, maximum_size:)
+            in ['memory', minimum_size]
+              minimum_size = interpret_integer(minimum_size, bits: 32)
+              @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
             end
           end
         in ['invoke', name, *arguments]
