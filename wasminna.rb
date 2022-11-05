@@ -204,7 +204,7 @@ class Interpreter
 
   def unfold(expression)
     case expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' => instruction, argument, *rest]
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => instruction, argument, *rest]
       [*rest.flat_map { unfold(_1) }, instruction, argument]
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [*rest.flat_map { unfold(_1) }, instruction, static_offset]
@@ -299,6 +299,9 @@ class Interpreter
           end.tap { stack.push(_1) }
         in 'nop'
           # do nothing
+        in 'call'
+          rest => [name, *rest]
+          # TODO actually call the function
         in 'block' | 'loop' | 'if' => instruction
           consume_structured_instruction(expression) =>
             [[^instruction, *instructions, 'end'], rest]
