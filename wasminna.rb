@@ -223,14 +223,16 @@ class Interpreter
           'end'
         ]
       in 'if'
-        rest => [*condition, ['then', *consequent], ['else', *alternative]]
+        rest => [*condition, ['then', *consequent], *rest]
+        rest in [['else', *alternative], *rest]
+        rest => []
         [
           *condition.flat_map { unfold(_1) },
           instruction,
           *label_and_type,
           *consequent.flat_map { unfold(_1) },
           'else',
-          *alternative.flat_map { unfold(_1) },
+          *(alternative || []).flat_map { unfold(_1) },
           'end'
         ]
       end
