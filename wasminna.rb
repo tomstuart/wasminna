@@ -302,6 +302,8 @@ class Interpreter
         in 'call'
           rest => [name, *rest]
           # TODO actually call the function
+        in 'drop'
+          stack.pop(1)
         in 'block' | 'loop' | 'if' => instruction
           consume_structured_instruction(expression) =>
             [[^instruction, *instructions, 'end'], rest]
