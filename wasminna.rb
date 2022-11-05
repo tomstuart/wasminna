@@ -81,6 +81,8 @@ class Interpreter
             in ['memory', minimum_size]
               minimum_size = interpret_integer(minimum_size, bits: 32)
               @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
+            in ['type' | 'table' | 'global', *]
+              # TODO
             end
           end
         in ['invoke', name, *arguments]
