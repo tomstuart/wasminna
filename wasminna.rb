@@ -297,6 +297,8 @@ class Interpreter
           else
             value_1
           end.tap { stack.push(_1) }
+        in 'nop'
+          # do nothing
         in 'block' | 'loop' | 'if' => instruction
           consume_structured_instruction(expression) =>
             [[^instruction, *instructions, 'end'], rest]
