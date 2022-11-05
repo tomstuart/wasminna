@@ -203,10 +203,32 @@ class Interpreter
       [*rest.flat_map { unfold(_1) }, instruction, argument]
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [*rest.flat_map { unfold(_1) }, instruction, static_offset]
-    in ['block' | 'loop' => instruction, *instructions]
-      [instruction, *instructions.flat_map { unfold(_1) }, 'end']
-    in ['if' => instruction, ['result', _] => type, condition, ['then', consequent], ['else', alternative]]
-      [*unfold(condition), instruction, type, *unfold(consequent), 'else', *unfold(alternative), 'end']
+    in ['block' | 'loop' | 'if' => instruction, *rest]
+      rest in [%r{\A\$} => label, *rest]
+      rest in [['result', _] => type, *rest]
+      label_and_type = [label, type].compact
+
+      case instruction
+      in 'block' | 'loop'
+        rest => [*instructions]
+        [
+          instruction,
+          *label_and_type,
+          *instructions.flat_map { unfold(_1) },
+          'end'
+        ]
+      in 'if'
+        rest => [*condition, ['then', *consequent], ['else', *alternative]]
+        [
+          *condition.flat_map { unfold(_1) },
+          instruction,
+          *label_and_type,
+          *consequent.flat_map { unfold(_1) },
+          'else',
+          *alternative.flat_map { unfold(_1) },
+          'end'
+        ]
+      end
     in [instruction, *rest]
       [*rest.flat_map { unfold(_1) }, instruction]
     else
