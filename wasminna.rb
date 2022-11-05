@@ -156,7 +156,7 @@ class Interpreter
           function.parameters << Parameter.new(name:)
         in ['param', _]
           function.parameters << Parameter.new
-        in ['result', _]
+        in ['result', *]
         in ['local', %r{\A\$} => name, _]
           function.locals << Local.new(name:)
         in ['local', *types]
@@ -210,7 +210,7 @@ class Interpreter
       [*rest.flat_map { unfold(_1) }, instruction, static_offset]
     in ['block' | 'loop' | 'if' => instruction, *rest]
       rest in [%r{\A\$} => label, *rest]
-      rest in [['result', _] => type, *rest]
+      rest in [['result', *] => type, *rest]
       label_and_type = [label, type].compact
 
       case instruction
@@ -308,7 +308,7 @@ class Interpreter
             else
               0
             end
-          instructions in [['result', _], *instructions]
+          instructions in [['result', *], *instructions]
 
           case instruction
           in 'block'
