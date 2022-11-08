@@ -316,15 +316,16 @@ class Interpreter
             end
           rest in [['result', *], *rest]
 
-          consume_structured_instruction(rest, terminated_by: 'end') =>
-            [instructions, ['end', *rest]]
-
           case instruction
           in 'block'
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [instructions, ['end', *rest]]
             catch(label) do
               evaluate(instructions, locals:)
             end
           in 'loop'
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [instructions, ['end', *rest]]
             loop do
               result =
                 catch(label) do
@@ -333,6 +334,8 @@ class Interpreter
               break unless result == :branch
             end
           in 'if'
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [instructions, ['end', *rest]]
             split_on_else(instructions) => [consequent, alternative]
             stack.pop(1) => [condition]
 
