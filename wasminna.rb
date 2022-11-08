@@ -192,7 +192,7 @@ class Interpreter
 
   def invoke_function(function:, arguments:)
     parameter_names = function.parameters.map(&:name)
-    arguments.each { |argument| evaluate(unfold(argument), locals: []) }
+    evaluate(arguments.flat_map { unfold(_1) }, locals: [])
     argument_values = stack.pop(arguments.length)
     raise unless stack.empty?
     parameters = parameter_names.zip(argument_values)
