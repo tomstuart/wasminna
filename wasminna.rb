@@ -251,7 +251,7 @@ class Interpreter
             end
           throw(tag, :branch)
         end
-      in 'select'
+      in Select
         stack.pop(3) => [value_1, value_2, condition]
 
         if condition.zero?

@@ -74,6 +74,8 @@ class ASTParser
             'local.tee' => LocalTee,
             'br_if' => BrIf
           }.fetch(instruction).new(index:)
+        in 'select'
+          Select.new
         else
           instruction
         end

@@ -4,4 +4,5 @@ module AST
   LocalSet = Struct.new(:index, keyword_init: true)
   LocalTee = Struct.new(:index, keyword_init: true)
   BrIf = Struct.new(:index, keyword_init: true)
+  Select = Struct.new(nil)
 end
