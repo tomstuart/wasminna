@@ -59,6 +59,16 @@ class ASTParser
         case instruction
         in 'return'
           Return.new
+        in 'local.get'
+          rest => [index, *rest]
+          index =
+            if index.start_with?('$')
+              index
+            else
+              index.to_i(10)
+            end
+
+          LocalGet.new(index:)
         else
           instruction
         end

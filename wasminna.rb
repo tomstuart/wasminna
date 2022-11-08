@@ -221,15 +221,12 @@ class Interpreter
         rest = evaluate_numeric_instruction(expression, locals:)
       in Return
         # TODO some control flow effect
-      in 'local.get'
-        rest => [name, *rest]
-
-        if name.start_with?('$')
-          name, value = locals.assoc(name)
-          value
-        else
-          name, value = locals.slice(name.to_i(10))
-          value
+      in LocalGet(index:)
+        case index
+        in String
+          locals.assoc(index)[1]
+        in Integer
+          locals.slice(index)[1]
         end.tap { stack.push(_1) }
       in 'local.set' | 'local.tee'
         rest => [name, *rest]
