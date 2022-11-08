@@ -1,4 +1,8 @@
+require 'ast'
+
 class ASTParser
+  include AST
+
   def parse(s_expression)
     parse_expression(s_expression.flat_map { unfold(_1) })
   end

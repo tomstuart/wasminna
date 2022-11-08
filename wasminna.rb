@@ -1,3 +1,4 @@
+require 'ast'
 require 'ast_parser'
 require 'float'
 require 'helpers'
@@ -13,6 +14,7 @@ def main
 end
 
 class Interpreter
+  include AST
   include Helpers::Mask
 
   Parameter = Struct.new(:name, keyword_init: true)
