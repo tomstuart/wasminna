@@ -308,8 +308,8 @@ class Interpreter
         in 'drop'
           stack.pop(1)
         in 'block' | 'loop' | 'if' => instruction
-          consume_structured_instruction(expression, terminated_by: 'end') =>
-            [[^instruction, *instructions, 'end'], rest]
+          consume_structured_instruction(rest, terminated_by: 'end') =>
+            [instructions, ['end', *rest]]
           label =
             if instructions in [%r{\A\$} => label, *instructions]
               label.to_sym
@@ -349,21 +349,19 @@ class Interpreter
   end
 
   def consume_structured_instruction(expression, terminated_by:)
-    expression => ['block' | 'loop' | 'if' => instruction, *rest]
+    rest = expression
     instructions = []
 
-    instructions << instruction
-    until rest in [^terminated_by, *rest]
+    until rest in [^terminated_by, *]
       case rest
-      in ['block' | 'loop' | 'if', *]
+      in ['block' | 'loop' | 'if' => instruction, *rest]
         consume_structured_instruction(rest, terminated_by: 'end') =>
-          [expression, rest]
-        instructions.concat(expression)
+          [expression, ['end' => terminator, *rest]]
+        instructions.concat([instruction, *expression, terminator])
       in [instruction, *rest]
         instructions << instruction
       end
     end
-    instructions << terminated_by
 
     [instructions, rest]
   end
@@ -373,10 +371,10 @@ class Interpreter
 
     until instructions in ['else', *instructions]
       case instructions
-      in ['block' | 'loop' | 'if', *]
+      in ['block' | 'loop' | 'if' => instruction, *instructions]
         consume_structured_instruction(instructions, terminated_by: 'end') =>
-          [expression, instructions]
-        consequent.concat(expression)
+          [expression, ['end' => terminator, *instructions]]
+        consequent.concat([instruction, *expression, terminator])
       in [instruction, *instructions]
         consequent << instruction
       end
@@ -384,10 +382,10 @@ class Interpreter
 
     until instructions in []
       case instructions
-      in ['block' | 'loop' | 'if', *]
+      in ['block' | 'loop' | 'if' => instruction, *instructions]
         consume_structured_instruction(instructions, terminated_by: 'end') =>
-          [expression, instructions]
-        alternative.concat(expression)
+          [expression, ['end' => terminator, *instructions]]
+        alternative.concat([instruction, *expression, terminator])
       in [instruction, *instructions]
         alternative << instruction
       end
