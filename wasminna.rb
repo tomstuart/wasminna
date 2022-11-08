@@ -371,34 +371,6 @@ class Interpreter
     [instructions, rest]
   end
 
-  def split_on_else(instructions)
-    consequent, alternative = [], []
-
-    until instructions in ['else', *instructions]
-      case instructions
-      in ['block' | 'loop' | 'if' => instruction, *instructions]
-        consume_structured_instruction(instructions, terminated_by: 'end') =>
-          [expression, ['end' => terminator, *instructions]]
-        consequent.concat([instruction, *expression, terminator])
-      in [instruction, *instructions]
-        consequent << instruction
-      end
-    end
-
-    until instructions in []
-      case instructions
-      in ['block' | 'loop' | 'if' => instruction, *instructions]
-        consume_structured_instruction(instructions, terminated_by: 'end') =>
-          [expression, ['end' => terminator, *instructions]]
-        alternative.concat([instruction, *expression, terminator])
-      in [instruction, *instructions]
-        alternative << instruction
-      end
-    end
-
-    [consequent, alternative]
-  end
-
   def evaluate_numeric_instruction(expression, locals:)
     expression => [instruction, *rest]
 
