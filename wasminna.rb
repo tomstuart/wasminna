@@ -1,3 +1,4 @@
+require 'ast_parser'
 require 'float'
 require 'helpers'
 require 's_expression_parser'
@@ -116,7 +117,7 @@ class Interpreter
             float = Wasminna::Float.decode(actual_value, format:).to_f
             success = float.nan? # TODO check whether canonical or arithmetic
           else
-            evaluate(unfold(expected.first), locals: [])
+            evaluate(ASTParser.new.parse(unfold(expected.first)), locals: [])
             stack.pop(1) => [expected_value]
             raise unless stack.empty?
             success = actual_value == expected_value
@@ -192,14 +193,14 @@ class Interpreter
 
   def invoke_function(function:, arguments:)
     parameter_names = function.parameters.map(&:name)
-    evaluate(arguments.flat_map { unfold(_1) }, locals: [])
+    evaluate(ASTParser.new.parse(arguments.flat_map { unfold(_1) }), locals: [])
     argument_values = stack.pop(arguments.length)
     raise unless stack.empty?
     parameters = parameter_names.zip(argument_values)
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
 
-    evaluate(function.body.flat_map { unfold(_1) }, locals:)
+    evaluate(ASTParser.new.parse(function.body.flat_map { unfold(_1) }), locals:)
   end
 
   def unfold(expression)
