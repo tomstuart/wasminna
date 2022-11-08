@@ -6,4 +6,5 @@ module AST
   BrIf = Struct.new(:index, keyword_init: true)
   Select = Struct.new(nil)
   Nop = Struct.new(nil)
+  Call = Struct.new(:index, keyword_init: true)
 end

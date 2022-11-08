@@ -261,8 +261,7 @@ class Interpreter
         end.tap { stack.push(_1) }
       in Nop
         # do nothing
-      in 'call'
-        rest => [name, *rest]
+      in Call(index:)
         # TODO actually call the function
       in 'drop'
         stack.pop(1)

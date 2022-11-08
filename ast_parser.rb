@@ -59,7 +59,7 @@ class ASTParser
         case instruction
         in 'return'
           Return.new
-        in 'local.get' | 'local.set' | 'local.tee' | 'br_if'
+        in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
           rest => [index, *rest]
           index =
             if index.start_with?('$')
@@ -72,7 +72,8 @@ class ASTParser
             'local.get' => LocalGet,
             'local.set' => LocalSet,
             'local.tee' => LocalTee,
-            'br_if' => BrIf
+            'br_if' => BrIf,
+            'call' => Call
           }.fetch(instruction).new(index:)
         in 'select'
           Select.new
