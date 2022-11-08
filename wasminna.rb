@@ -204,45 +204,7 @@ class Interpreter
   end
 
   def unfold(expression)
-    case expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => instruction, argument, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction, argument]
-    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction, static_offset]
-    in ['block' | 'loop' | 'if' => instruction, *rest]
-      rest in [%r{\A\$} => label, *rest]
-      rest in [['result', *] => type, *rest]
-
-      case instruction
-      in 'block' | 'loop'
-        rest => [*instructions]
-        [
-          instruction,
-          label,
-          type,
-          *instructions.flat_map { unfold(_1) },
-          'end'
-        ].compact
-      in 'if'
-        rest => [*condition, ['then', *consequent], *rest]
-        rest in [['else', *alternative], *rest]
-        rest => []
-        [
-          *condition.flat_map { unfold(_1) },
-          instruction,
-          label,
-          type,
-          *consequent.flat_map { unfold(_1) },
-          'else',
-          *alternative&.flat_map { unfold(_1) },
-          'end'
-        ].compact
-      end
-    in [instruction, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction]
-    else
-      [expression]
-    end
+    [expression]
   end
 
   NUMERIC_INSTRUCTION_REGEXP =
