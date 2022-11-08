@@ -211,17 +211,17 @@ class Interpreter
     in ['block' | 'loop' | 'if' => instruction, *rest]
       rest in [%r{\A\$} => label, *rest]
       rest in [['result', *] => type, *rest]
-      label_and_type = [label, type].compact
 
       case instruction
       in 'block' | 'loop'
         rest => [*instructions]
         [
           instruction,
-          *label_and_type,
+          label,
+          type,
           *instructions.flat_map { unfold(_1) },
           'end'
-        ]
+        ].compact
       in 'if'
         rest => [*condition, ['then', *consequent], *rest]
         rest in [['else', *alternative], *rest]
@@ -229,12 +229,13 @@ class Interpreter
         [
           *condition.flat_map { unfold(_1) },
           instruction,
-          *label_and_type,
+          label,
+          type,
           *consequent.flat_map { unfold(_1) },
           'else',
-          *(alternative || []).flat_map { unfold(_1) },
+          *alternative&.flat_map { unfold(_1) },
           'end'
-        ]
+        ].compact
       end
     in [instruction, *rest]
       [*rest.flat_map { unfold(_1) }, instruction]
