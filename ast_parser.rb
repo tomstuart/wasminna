@@ -59,7 +59,7 @@ class ASTParser
         case instruction
         in 'return'
           Return.new
-        in 'local.get'
+        in 'local.get' | 'local.set' | 'local.tee'
           rest => [index, *rest]
           index =
             if index.start_with?('$')
@@ -68,7 +68,11 @@ class ASTParser
               index.to_i(10)
             end
 
-          LocalGet.new(index:)
+          {
+            'local.get' => LocalGet,
+            'local.set' => LocalSet,
+            'local.tee' => LocalTee
+          }.fetch(instruction).new(index:)
         else
           instruction
         end

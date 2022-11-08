@@ -228,16 +228,16 @@ class Interpreter
         in Integer
           locals.slice(index)[1]
         end.tap { stack.push(_1) }
-      in 'local.set' | 'local.tee'
-        rest => [name, *rest]
+      in LocalSet | LocalTee
+        instruction => { index: }
         stack.pop(1) => [value]
 
-        if name.start_with?('$')
-          locals.assoc(name)[1] = value
-        else
-          index = name.to_i(10)
+        case index
+        in String
+          locals.assoc(index)[1] = value
+        in Integer
           locals.slice(index)[1] = value
-        end.tap { stack.push(_1) if instruction == 'local.tee' }
+        end.tap { stack.push(_1) if instruction in LocalTee }
       in 'br_if'
         rest => [label, *rest]
         stack.pop(1) => [condition]
