@@ -214,96 +214,94 @@ class Interpreter
 
   def evaluate(expression, locals:)
     while expression in [instruction, *rest]
-      if instruction.match?(NUMERIC_INSTRUCTION_REGEXP)
+      case instruction
+      in NUMERIC_INSTRUCTION_REGEXP
         rest = evaluate_numeric_instruction(expression, locals:)
-      else
+      in 'return'
+        # TODO some control flow effect
+      in 'local.get'
+        rest => [name, *rest]
+
+        if name.start_with?('$')
+          name, value = locals.assoc(name)
+          value
+        else
+          name, value = locals.slice(name.to_i(10))
+          value
+        end.tap { stack.push(_1) }
+      in 'local.set' | 'local.tee'
+        rest => [name, *rest]
+        stack.pop(1) => [value]
+
+        if name.start_with?('$')
+          locals.assoc(name)[1] = value
+        else
+          index = name.to_i(10)
+          locals.slice(index)[1] = value
+        end.tap { stack.push(_1) if instruction == 'local.tee' }
+      in 'br_if'
+        rest => [label, *rest]
+        stack.pop(1) => [condition]
+
+        unless condition.zero?
+          if label.start_with?('$')
+            throw(label.to_sym, :branch)
+          else
+            throw(label.to_i(10), :branch)
+          end
+        end
+      in 'select'
+        stack.pop(3) => [value_1, value_2, condition]
+
+        if condition.zero?
+          value_2
+        else
+          value_1
+        end.tap { stack.push(_1) }
+      in 'nop'
+        # do nothing
+      in 'call'
+        rest => [name, *rest]
+        # TODO actually call the function
+      in 'drop'
+        stack.pop(1)
+      in 'block' | 'loop' | 'if' => instruction
+        label =
+          if rest in [%r{\A\$} => label, *rest]
+            label.to_sym
+          else
+            0
+          end
+        rest in [['result', *], *rest]
+
         case instruction
-        in 'return'
-          # TODO some control flow effect
-        in 'local.get'
-          rest => [name, *rest]
-
-          if name.start_with?('$')
-            name, value = locals.assoc(name)
-            value
-          else
-            name, value = locals.slice(name.to_i(10))
-            value
-          end.tap { stack.push(_1) }
-        in 'local.set' | 'local.tee'
-          rest => [name, *rest]
-          stack.pop(1) => [value]
-
-          if name.start_with?('$')
-            locals.assoc(name)[1] = value
-          else
-            index = name.to_i(10)
-            locals.slice(index)[1] = value
-          end.tap { stack.push(_1) if instruction == 'local.tee' }
-        in 'br_if'
-          rest => [label, *rest]
+        in 'block'
+          consume_structured_instruction(rest, terminated_by: 'end') =>
+            [instructions, ['end', *rest]]
+          catch(label) do
+            evaluate(instructions, locals:)
+          end
+        in 'loop'
+          consume_structured_instruction(rest, terminated_by: 'end') =>
+            [instructions, ['end', *rest]]
+          loop do
+            result =
+              catch(label) do
+                evaluate(instructions, locals:)
+              end
+            break unless result == :branch
+          end
+        in 'if'
+          consume_structured_instruction(rest, terminated_by: 'else') =>
+            [consequent, ['else', *rest]]
+          consume_structured_instruction(rest, terminated_by: 'end') =>
+            [alternative, ['end', *rest]]
           stack.pop(1) => [condition]
 
-          unless condition.zero?
-            if label.start_with?('$')
-              throw(label.to_sym, :branch)
-            else
-              throw(label.to_i(10), :branch)
-            end
-          end
-        in 'select'
-          stack.pop(3) => [value_1, value_2, condition]
-
           if condition.zero?
-            value_2
+            evaluate(alternative, locals:)
           else
-            value_1
-          end.tap { stack.push(_1) }
-        in 'nop'
-          # do nothing
-        in 'call'
-          rest => [name, *rest]
-          # TODO actually call the function
-        in 'drop'
-          stack.pop(1)
-        in 'block' | 'loop' | 'if' => instruction
-          label =
-            if rest in [%r{\A\$} => label, *rest]
-              label.to_sym
-            else
-              0
-            end
-          rest in [['result', *], *rest]
-
-          case instruction
-          in 'block'
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [instructions, ['end', *rest]]
-            catch(label) do
-              evaluate(instructions, locals:)
-            end
-          in 'loop'
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [instructions, ['end', *rest]]
-            loop do
-              result =
-                catch(label) do
-                  evaluate(instructions, locals:)
-                end
-              break unless result == :branch
-            end
-          in 'if'
-            consume_structured_instruction(rest, terminated_by: 'else') =>
-              [consequent, ['else', *rest]]
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [alternative, ['end', *rest]]
-            stack.pop(1) => [condition]
-
-            if condition.zero?
-              evaluate(alternative, locals:)
-            else
-              evaluate(consequent, locals:)
-            end
+            evaluate(consequent, locals:)
           end
         end
       end
