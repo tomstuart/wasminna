@@ -308,7 +308,7 @@ class Interpreter
         in 'drop'
           stack.pop(1)
         in 'block' | 'loop' | 'if' => instruction
-          consume_structured_instruction(expression) =>
+          consume_structured_instruction(expression, terminated_by: 'end') =>
             [[^instruction, *instructions, 'end'], rest]
           label =
             if instructions in [%r{\A\$} => label, *instructions]
@@ -348,21 +348,22 @@ class Interpreter
     end
   end
 
-  def consume_structured_instruction(expression)
+  def consume_structured_instruction(expression, terminated_by:)
     expression => ['block' | 'loop' | 'if' => instruction, *rest]
     instructions = []
 
     instructions << instruction
-    until rest in ['end', *rest]
+    until rest in [^terminated_by, *rest]
       case rest
       in ['block' | 'loop' | 'if', *]
-        consume_structured_instruction(rest) => [expression, rest]
+        consume_structured_instruction(rest, terminated_by: 'end') =>
+          [expression, rest]
         instructions.concat(expression)
       in [instruction, *rest]
         instructions << instruction
       end
     end
-    instructions << 'end'
+    instructions << terminated_by
 
     [instructions, rest]
   end
@@ -373,7 +374,7 @@ class Interpreter
     until instructions in ['else', *instructions]
       case instructions
       in ['block' | 'loop' | 'if', *]
-        consume_structured_instruction(instructions) =>
+        consume_structured_instruction(instructions, terminated_by: 'end') =>
           [expression, instructions]
         consequent.concat(expression)
       in [instruction, *instructions]
@@ -384,7 +385,7 @@ class Interpreter
     until instructions in []
       case instructions
       in ['block' | 'loop' | 'if', *]
-        consume_structured_instruction(instructions) =>
+        consume_structured_instruction(instructions, terminated_by: 'end') =>
           [expression, instructions]
         alternative.concat(expression)
       in [instruction, *instructions]
