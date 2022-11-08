@@ -55,7 +55,14 @@ class ASTParser
     result = []
 
     while s_expression in [instruction, *rest]
-      result << instruction
+      result <<
+        case instruction
+        in 'return'
+          Return.new
+        else
+          instruction
+        end
+
       s_expression = rest
     end
 

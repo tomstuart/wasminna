@@ -219,7 +219,7 @@ class Interpreter
       case instruction
       in NUMERIC_INSTRUCTION_REGEXP
         rest = evaluate_numeric_instruction(expression, locals:)
-      in 'return'
+      in Return
         # TODO some control flow effect
       in 'local.get'
         rest => [name, *rest]
