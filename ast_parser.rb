@@ -76,6 +76,8 @@ class ASTParser
           }.fetch(instruction).new(index:)
         in 'select'
           Select.new
+        in 'nop'
+          Nop.new
         else
           instruction
         end

@@ -5,4 +5,5 @@ module AST
   LocalTee = Struct.new(:index, keyword_init: true)
   BrIf = Struct.new(:index, keyword_init: true)
   Select = Struct.new(nil)
+  Nop = Struct.new(nil)
 end

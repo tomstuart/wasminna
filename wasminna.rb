@@ -259,7 +259,7 @@ class Interpreter
         else
           value_1
         end.tap { stack.push(_1) }
-      in 'nop'
+      in Nop
         # do nothing
       in 'call'
         rest => [name, *rest]
