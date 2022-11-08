@@ -240,7 +240,7 @@ class Interpreter
     in [instruction, *rest]
       [*rest.flat_map { unfold(_1) }, instruction]
     else
-      expression
+      [expression]
     end
   end
 
