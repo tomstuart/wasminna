@@ -397,7 +397,8 @@ class Interpreter
   def evaluate_numeric_instruction(expression, locals:)
     expression => [instruction, *rest]
 
-    instruction.match(NUMERIC_INSTRUCTION_REGEXP) in { type:, bits:, operation: }
+    instruction.match(NUMERIC_INSTRUCTION_REGEXP) =>
+      { type:, bits:, operation: }
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
