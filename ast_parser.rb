@@ -79,6 +79,8 @@ class ASTParser
           Select.new
         in 'nop'
           Nop.new
+        in 'drop'
+          Drop.new
         else
           instruction
         end

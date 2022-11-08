@@ -7,4 +7,5 @@ module AST
   Select = Struct.new(nil)
   Nop = Struct.new(nil)
   Call = Struct.new(:index, keyword_init: true)
+  Drop = Struct.new(nil)
 end

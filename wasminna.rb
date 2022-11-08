@@ -263,7 +263,7 @@ class Interpreter
         # do nothing
       in Call(index:)
         # TODO actually call the function
-      in 'drop'
+      in Drop
         stack.pop(1)
       in 'block' | 'loop' | 'if' => instruction
         label =
