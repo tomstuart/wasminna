@@ -334,9 +334,10 @@ class Interpreter
               break unless result == :branch
             end
           in 'if'
+            consume_structured_instruction(rest, terminated_by: 'else') =>
+              [consequent, ['else', *rest]]
             consume_structured_instruction(rest, terminated_by: 'end') =>
-              [instructions, ['end', *rest]]
-            split_on_else(instructions) => [consequent, alternative]
+              [alternative, ['end', *rest]]
             stack.pop(1) => [condition]
 
             if condition.zero?
