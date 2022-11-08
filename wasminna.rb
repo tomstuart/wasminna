@@ -6,7 +6,7 @@ require 'sign'
 def main
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
-    Interpreter.new.interpret(s_expression)
+    Interpreter.new.interpret_script(s_expression)
     puts
   end
 end
@@ -55,7 +55,7 @@ class Interpreter
 
   attr_accessor :stack
 
-  def interpret(script)
+  def interpret_script(script)
     functions = nil
     @memory = nil
     self.stack = []
