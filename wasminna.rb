@@ -243,7 +243,7 @@ class Interpreter
     end
   end
 
-  NUMERIC_OPERATION_REGEXP =
+  NUMERIC_INSTRUCTION_REGEXP =
     %r{
       \A
       (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
@@ -254,7 +254,7 @@ class Interpreter
 
   def evaluate(expression, locals:)
     while expression in [instruction, *rest]
-      if instruction.match?(NUMERIC_OPERATION_REGEXP)
+      if instruction.match?(NUMERIC_INSTRUCTION_REGEXP)
         rest = evaluate_numeric_instruction(expression, locals:)
       else
         case instruction
@@ -397,7 +397,7 @@ class Interpreter
   def evaluate_numeric_instruction(expression, locals:)
     expression => [instruction, *rest]
 
-    instruction.match(NUMERIC_OPERATION_REGEXP) in { type:, bits:, operation: }
+    instruction.match(NUMERIC_INSTRUCTION_REGEXP) in { type:, bits:, operation: }
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
