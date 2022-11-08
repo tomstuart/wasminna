@@ -48,6 +48,13 @@ class ASTParser
   end
 
   def parse_expression(s_expression)
-    s_expression
+    result = []
+
+    while s_expression in [instruction, *rest]
+      result << instruction
+      s_expression = rest
+    end
+
+    result
   end
 end
