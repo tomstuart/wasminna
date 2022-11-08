@@ -238,16 +238,18 @@ class Interpreter
         in Integer
           locals.slice(index)[1] = value
         end.tap { stack.push(_1) if instruction in LocalTee }
-      in 'br_if'
-        rest => [label, *rest]
+      in BrIf(index:)
         stack.pop(1) => [condition]
 
         unless condition.zero?
-          if label.start_with?('$')
-            throw(label.to_sym, :branch)
-          else
-            throw(label.to_i(10), :branch)
-          end
+          tag =
+            case index
+            in String
+              index.to_sym
+            in Integer
+              index
+            end
+          throw(tag, :branch)
         end
       in 'select'
         stack.pop(3) => [value_1, value_2, condition]
