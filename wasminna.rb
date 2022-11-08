@@ -308,15 +308,16 @@ class Interpreter
         in 'drop'
           stack.pop(1)
         in 'block' | 'loop' | 'if' => instruction
-          consume_structured_instruction(rest, terminated_by: 'end') =>
-            [instructions, ['end', *rest]]
           label =
-            if instructions in [%r{\A\$} => label, *instructions]
+            if rest in [%r{\A\$} => label, *rest]
               label.to_sym
             else
               0
             end
-          instructions in [['result', *], *instructions]
+          rest in [['result', *], *rest]
+
+          consume_structured_instruction(rest, terminated_by: 'end') =>
+            [instructions, ['end', *rest]]
 
           case instruction
           in 'block'
