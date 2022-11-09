@@ -13,4 +13,5 @@ module AST
   If = Struct.new(:label, :consequent, :alternative, keyword_init: true)
   Const = Struct.new(:type, :bits, :number, keyword_init: true)
   Load = Struct.new(:type, :bits, :offset, keyword_init: true)
+  Store = Struct.new(:type, :bits, :offset, keyword_init: true)
 end

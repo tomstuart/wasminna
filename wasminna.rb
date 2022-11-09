@@ -223,6 +223,9 @@ class Interpreter
         stack.pop(1) => [offset]
         value = @memory.load(offset: offset + static_offset, bits:)
         stack.push(value)
+      in Store(type:, bits:, offset: static_offset)
+        stack.pop(2) => [offset, value]
+        @memory.store(value:, offset: offset + static_offset, bits:)
       in NUMERIC_INSTRUCTION_REGEXP
         rest = evaluate_numeric_instruction(expression, locals:)
       in Return
@@ -300,25 +303,11 @@ class Interpreter
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
-    case operation
-    in 'store'
-      static_offset =
-        if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]
-          _, static_offset = static_offset.split('=')
-          static_offset.to_i(10)
-        else
-          0
-        end
-
-      stack.pop(2) => [offset, value]
-      @memory.store(value:, offset: offset + static_offset, bits:)
-    else
-      case type
-      in :integer
-        evaluate_integer_instruction(operation:, bits:)
-      in :float
-        evaluate_float_instruction(operation:, bits:)
-      end
+    case type
+    in :integer
+      evaluate_integer_instruction(operation:, bits:)
+    in :float
+      evaluate_float_instruction(operation:, bits:)
     end
 
     rest
