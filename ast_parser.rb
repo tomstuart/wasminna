@@ -1,8 +1,10 @@
 require 'ast'
+require 'float'
 require 'helpers'
 
 class ASTParser
   include AST
+  include Helpers::Mask
 
   def parse(s_expression)
     parse_expression(s_expression.flat_map { unfold(_1) })
@@ -145,7 +147,16 @@ class ASTParser
     result =
       case operation
       in 'const'
-        rest => [number, *rest]
+        rest => [string, *rest]
+        number =
+          case type
+          in :integer
+            parse_integer(string, bits:)
+          in :float
+            format = Wasminna::Float::Format.for(bits:)
+            Wasminna::Float.parse(string).encode(format:)
+          end
+
         Const.new(type:, bits:, number:)
       end
 
@@ -168,5 +179,27 @@ class ASTParser
     end
 
     [instructions, rest]
+  end
+
+  def unsigned(signed, bits:)
+    signed = mask(signed, bits:)
+    size = 1 << bits
+
+    if signed.negative?
+      signed + size
+    else
+      signed
+    end
+  end
+
+  def parse_integer(string, bits:)
+    value =
+      if string.delete_prefix('-').start_with?('0x')
+        string.to_i(16)
+      else
+        string.to_i(10)
+      end
+
+    unsigned(value, bits:)
   end
 end
