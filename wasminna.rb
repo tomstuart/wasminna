@@ -219,6 +219,10 @@ class Interpreter
       case instruction
       in Const(type:, bits:, number:)
         stack.push(number)
+      in Load(type:, bits:, offset: static_offset)
+        stack.pop(1) => [offset]
+        value = @memory.load(offset: offset + static_offset, bits:)
+        stack.push(value)
       in NUMERIC_INSTRUCTION_REGEXP
         rest = evaluate_numeric_instruction(expression, locals:)
       in Return
@@ -297,17 +301,6 @@ class Interpreter
     bits = bits.to_i(10)
 
     case operation
-    in 'load'
-      static_offset =
-        if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]
-          _, static_offset = static_offset.split('=')
-          static_offset.to_i(10)
-        else
-          0
-        end
-
-      stack.pop(1) => [offset]
-      @memory.load(offset: offset + static_offset, bits:).tap { stack.push(_1) }
     in 'store'
       static_offset =
         if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]

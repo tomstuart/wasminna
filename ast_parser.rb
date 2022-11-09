@@ -69,7 +69,7 @@ class ASTParser
     while s_expression in [instruction, *rest]
       result <<
         case instruction
-        in %r{\A[fi](32|64)\.const\z}
+        in %r{\A[fi](32|64)\.(const|load)\z}
           parse_numeric_instruction(s_expression) =>
             [numeric_instruction, rest]
           numeric_instruction
@@ -158,6 +158,16 @@ class ASTParser
           end
 
         Const.new(type:, bits:, number:)
+      in 'load'
+        offset =
+          if rest in [%r{\Aoffset=\d+\z} => offset, *rest]
+            offset.split('=') => [_, offset]
+            offset.to_i(10)
+          else
+            0
+          end
+
+        Load.new(type:, bits:, offset:)
       end
 
     [result, rest]
