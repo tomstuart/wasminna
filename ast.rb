@@ -14,5 +14,6 @@ module AST
   Const = Struct.new(:type, :bits, :number, keyword_init: true)
   Load = Struct.new(:type, :bits, :offset, keyword_init: true)
   Store = Struct.new(:type, :bits, :offset, keyword_init: true)
-  NumericOp = Struct.new(:type, :bits, :operation, keyword_init: true)
+  UnaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
+  BinaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
 end

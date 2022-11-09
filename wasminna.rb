@@ -217,9 +217,9 @@ class Interpreter
       in Store(type:, bits:, offset: static_offset)
         stack.pop(2) => [offset, value]
         @memory.store(value:, offset: offset + static_offset, bits:)
-      in NumericOp(type: :integer, bits:, operation:)
+      in UnaryOp(type: :integer) | BinaryOp(type: :integer)
         evaluate_integer_instruction(instruction)
-      in NumericOp(type: :float, bits:, operation:)
+      in UnaryOp(type: :float) | BinaryOp(type: :float)
         evaluate_float_instruction(instruction)
       in Return
         # TODO some control flow effect
@@ -289,10 +289,8 @@ class Interpreter
   end
 
   def evaluate_integer_instruction(instruction)
-    instruction => { operation:, bits: }
-
-    case operation
-    in 'add' | 'sub' | 'mul' | 'div_s' | 'div_u' | 'rem_s' | 'rem_u' | 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u' | 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
+    case instruction
+    in BinaryOp(bits:, operation:)
       stack.pop(2) => [left, right]
 
       case operation
@@ -366,7 +364,7 @@ class Interpreter
       in 'ge_u'
         bool(left >= right)
       end
-    in 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+    in UnaryOp(bits:, operation:)
       stack.pop(1) => [value]
 
       case operation
@@ -426,11 +424,10 @@ class Interpreter
   end
 
   def evaluate_float_instruction(instruction)
-    instruction => { operation:, bits: }
-    format = Wasminna::Float::Format.for(bits:)
+    format = Wasminna::Float::Format.for(bits: instruction.bits)
 
-    case operation
-    in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
+    case instruction
+    in BinaryOp(bits:, operation:)
       stack.pop(2) => [left, right]
 
       case operation
@@ -472,7 +469,7 @@ class Interpreter
           }.fetch(operation).to_sym.to_proc
         bool(operation.call(left, right))
       end
-    in 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest' | 'abs' | 'neg' | 'convert_i32_s' | 'convert_i64_s' | 'convert_i32_u' | 'convert_i64_u' | 'promote_f32' | 'demote_f64' | 'reinterpret_i32' | 'reinterpret_i64'
+    in UnaryOp(bits:, operation:)
       stack.pop(1) => [value]
 
       case operation
