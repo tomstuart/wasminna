@@ -218,9 +218,9 @@ class Interpreter
         stack.pop(2) => [offset, value]
         @memory.store(value:, offset: offset + static_offset, bits:)
       in NumericOp(type: :integer, bits:, operation:)
-        evaluate_integer_instruction(operation:, bits:)
+        evaluate_integer_instruction(instruction)
       in NumericOp(type: :float, bits:, operation:)
-        evaluate_float_instruction(operation:, bits:)
+        evaluate_float_instruction(instruction)
       in Return
         # TODO some control flow effect
       in LocalGet(index:)
@@ -288,7 +288,9 @@ class Interpreter
     end
   end
 
-  def evaluate_integer_instruction(operation:, bits:)
+  def evaluate_integer_instruction(instruction)
+    instruction => { operation:, bits: }
+
     case operation
     in 'add' | 'sub' | 'mul' | 'div_s' | 'div_u' | 'rem_s' | 'rem_u' | 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u' | 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
       stack.pop(2) => [left, right]
@@ -423,7 +425,8 @@ class Interpreter
     end.then { |value| mask(value, bits:) }.tap { stack.push(_1) }
   end
 
-  def evaluate_float_instruction(operation:, bits:)
+  def evaluate_float_instruction(instruction)
+    instruction => { operation:, bits: }
     format = Wasminna::Float::Format.for(bits:)
 
     case operation
