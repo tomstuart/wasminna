@@ -206,7 +206,7 @@ class Interpreter
   end
 
   def evaluate(expression, locals:)
-    while expression in [instruction, *rest]
+    expression.each do |instruction|
       case instruction
       in Const(type:, bits:, number:)
         stack.push(number)
@@ -283,8 +283,6 @@ class Interpreter
         stack.pop(1) => [condition]
         evaluate(condition.zero? ? alternative : consequent, locals:)
       end
-
-      expression = rest
     end
   end
 
