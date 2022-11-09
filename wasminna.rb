@@ -265,67 +265,25 @@ class Interpreter
         # TODO actually call the function
       in Drop
         stack.pop(1)
-      in 'block' | 'loop' | 'if' => instruction
-        label =
-          if rest in [%r{\A\$} => label, *rest]
-            label.to_sym
-          else
-            0
-          end
-        rest in [['result', *], *rest]
-
-        case instruction
-        in 'block'
-          consume_structured_instruction(rest, terminated_by: 'end') =>
-            [instructions, ['end', *rest]]
-          catch(label) do
-            evaluate(instructions, locals:)
-          end
-        in 'loop'
-          consume_structured_instruction(rest, terminated_by: 'end') =>
-            [instructions, ['end', *rest]]
-          loop do
-            result =
-              catch(label) do
-                evaluate(instructions, locals:)
-              end
-            break unless result == :branch
-          end
-        in 'if'
-          consume_structured_instruction(rest, terminated_by: 'else') =>
-            [consequent, ['else', *rest]]
-          consume_structured_instruction(rest, terminated_by: 'end') =>
-            [alternative, ['end', *rest]]
-          stack.pop(1) => [condition]
-
-          if condition.zero?
-            evaluate(alternative, locals:)
-          else
-            evaluate(consequent, locals:)
-          end
+      in Block(label:, body:)
+        catch(label) do
+          evaluate(body, locals:)
         end
+      in Loop(label:, body:)
+        loop do
+          result =
+            catch(label) do
+              evaluate(body, locals:)
+            end
+          break unless result == :branch
+        end
+      in If(label:, consequent:, alternative:)
+        stack.pop(1) => [condition]
+        evaluate(condition.zero? ? alternative : consequent, locals:)
       end
 
       expression = rest
     end
-  end
-
-  def consume_structured_instruction(expression, terminated_by:)
-    rest = expression
-    instructions = []
-
-    until rest in [^terminated_by, *]
-      case rest
-      in ['block' | 'loop' | 'if' => instruction, *rest]
-        consume_structured_instruction(rest, terminated_by: 'end') =>
-          [expression, ['end' => terminator, *rest]]
-        instructions.concat([instruction, *expression, terminator])
-      in [instruction, *rest]
-        instructions << instruction
-      end
-    end
-
-    [instructions, rest]
   end
 
   def evaluate_numeric_instruction(expression, locals:)

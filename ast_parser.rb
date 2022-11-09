@@ -81,6 +81,35 @@ class ASTParser
           Nop.new
         in 'drop'
           Drop.new
+        in 'block' | 'loop' | 'if' => instruction
+          label =
+            if rest in [%r{\A\$} => label, *rest]
+              label.to_sym
+            else
+              0
+            end
+          rest in [['result', *], *rest]
+
+          case instruction
+          in 'block'
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [body, ['end', *rest]]
+            body = parse_expression(body)
+            Block.new(label:, body:)
+          in 'loop'
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [body, ['end', *rest]]
+            body = parse_expression(body)
+            Loop.new(label:, body:)
+          in 'if'
+            consume_structured_instruction(rest, terminated_by: 'else') =>
+              [consequent, ['else', *rest]]
+            consume_structured_instruction(rest, terminated_by: 'end') =>
+              [alternative, ['end', *rest]]
+            [consequent, alternative].map { parse_expression(_1) } =>
+              [consequent, alternative]
+            If.new(label:, consequent:, alternative:)
+          end
         else
           instruction
         end
@@ -89,5 +118,23 @@ class ASTParser
     end
 
     result
+  end
+
+  def consume_structured_instruction(s_expression, terminated_by:)
+    rest = s_expression
+    instructions = []
+
+    until rest in [^terminated_by, *]
+      case rest
+      in ['block' | 'loop' | 'if' => instruction, *rest]
+        consume_structured_instruction(rest, terminated_by: 'end') =>
+          [s_expression, ['end' => terminator, *rest]]
+        instructions.concat([instruction, *s_expression, terminator])
+      in [instruction, *rest]
+        instructions << instruction
+      end
+    end
+
+    [instructions, rest]
   end
 end
