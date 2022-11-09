@@ -207,82 +207,86 @@ class Interpreter
 
   def evaluate(expression, locals:)
     expression.each do |instruction|
-      case instruction
-      in Const(type:, bits:, number:)
-        stack.push(number)
-      in Load(type:, bits:, offset: static_offset)
-        stack.pop(1) => [offset]
-        value = @memory.load(offset: offset + static_offset, bits:)
-        stack.push(value)
-      in Store(type:, bits:, offset: static_offset)
-        stack.pop(2) => [offset, value]
-        @memory.store(value:, offset: offset + static_offset, bits:)
-      in UnaryOp(type: :integer) | BinaryOp(type: :integer)
-        evaluate_integer_instruction(instruction)
-      in UnaryOp(type: :float) | BinaryOp(type: :float)
-        evaluate_float_instruction(instruction)
-      in Return
-        # TODO some control flow effect
-      in LocalGet(index:)
-        case index
-        in String
-          locals.assoc(index)[1]
-        in Integer
-          locals.slice(index)[1]
-        end.tap { stack.push(_1) }
-      in LocalSet | LocalTee
-        instruction => { index: }
-        stack.pop(1) => [value]
+      evaluate_instruction(instruction, locals:)
+    end
+  end
 
-        case index
-        in String
-          locals.assoc(index)[1] = value
-        in Integer
-          locals.slice(index)[1] = value
-        end.tap { stack.push(_1) if instruction in LocalTee }
-      in BrIf(index:)
-        stack.pop(1) => [condition]
+  def evaluate_instruction(instruction, locals:)
+    case instruction
+    in Const(type:, bits:, number:)
+      stack.push(number)
+    in Load(type:, bits:, offset: static_offset)
+      stack.pop(1) => [offset]
+      value = @memory.load(offset: offset + static_offset, bits:)
+      stack.push(value)
+    in Store(type:, bits:, offset: static_offset)
+      stack.pop(2) => [offset, value]
+      @memory.store(value:, offset: offset + static_offset, bits:)
+    in UnaryOp(type: :integer) | BinaryOp(type: :integer)
+      evaluate_integer_instruction(instruction)
+    in UnaryOp(type: :float) | BinaryOp(type: :float)
+      evaluate_float_instruction(instruction)
+    in Return
+      # TODO some control flow effect
+    in LocalGet(index:)
+      case index
+      in String
+        locals.assoc(index)[1]
+      in Integer
+        locals.slice(index)[1]
+      end.tap { stack.push(_1) }
+    in LocalSet | LocalTee
+      instruction => { index: }
+      stack.pop(1) => [value]
 
-        unless condition.zero?
-          tag =
-            case index
-            in String
-              index.to_sym
-            in Integer
-              index
-            end
-          throw(tag, :branch)
-        end
-      in Select
-        stack.pop(3) => [value_1, value_2, condition]
+      case index
+      in String
+        locals.assoc(index)[1] = value
+      in Integer
+        locals.slice(index)[1] = value
+      end.tap { stack.push(_1) if instruction in LocalTee }
+    in BrIf(index:)
+      stack.pop(1) => [condition]
 
-        if condition.zero?
-          value_2
-        else
-          value_1
-        end.tap { stack.push(_1) }
-      in Nop
-        # do nothing
-      in Call(index:)
-        # TODO actually call the function
-      in Drop
-        stack.pop(1)
-      in Block(label:, body:)
-        catch(label) do
-          evaluate(body, locals:)
-        end
-      in Loop(label:, body:)
-        loop do
-          result =
-            catch(label) do
-              evaluate(body, locals:)
-            end
-          break unless result == :branch
-        end
-      in If(label:, consequent:, alternative:)
-        stack.pop(1) => [condition]
-        evaluate(condition.zero? ? alternative : consequent, locals:)
+      unless condition.zero?
+        tag =
+          case index
+          in String
+            index.to_sym
+          in Integer
+            index
+          end
+        throw(tag, :branch)
       end
+    in Select
+      stack.pop(3) => [value_1, value_2, condition]
+
+      if condition.zero?
+        value_2
+      else
+        value_1
+      end.tap { stack.push(_1) }
+    in Nop
+      # do nothing
+    in Call(index:)
+      # TODO actually call the function
+    in Drop
+      stack.pop(1)
+    in Block(label:, body:)
+      catch(label) do
+        evaluate(body, locals:)
+      end
+    in Loop(label:, body:)
+      loop do
+        result =
+          catch(label) do
+            evaluate(body, locals:)
+          end
+        break unless result == :branch
+      end
+    in If(label:, consequent:, alternative:)
+      stack.pop(1) => [condition]
+      evaluate(condition.zero? ? alternative : consequent, locals:)
     end
   end
 
