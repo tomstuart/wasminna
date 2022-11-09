@@ -1,4 +1,5 @@
 require 'ast'
+require 'helpers'
 
 class ASTParser
   include AST
@@ -51,12 +52,25 @@ class ASTParser
     end
   end
 
+  NUMERIC_INSTRUCTION_REGEXP =
+    %r{
+      \A
+      (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
+      \z
+    }x
+
+  using Helpers::MatchPattern
+
   def parse_expression(s_expression)
     result = []
 
     while s_expression in [instruction, *rest]
       result <<
         case instruction
+        in %r{\A[fi](32|64)\.const\z}
+          parse_numeric_instruction(s_expression) =>
+            [numeric_instruction, rest]
+          numeric_instruction
         in 'return'
           Return.new
         in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
@@ -118,6 +132,24 @@ class ASTParser
     end
 
     result
+  end
+
+  def parse_numeric_instruction(s_expression)
+    s_expression => [instruction, *rest]
+
+    instruction.match(NUMERIC_INSTRUCTION_REGEXP) =>
+      { type:, bits:, operation: }
+    type = { 'f' => :float, 'i' => :integer }.fetch(type)
+    bits = bits.to_i(10)
+
+    result =
+      case operation
+      in 'const'
+        rest => [number, *rest]
+        Const.new(type:, bits:, number:)
+      end
+
+    [result, rest]
   end
 
   def consume_structured_instruction(s_expression, terminated_by:)

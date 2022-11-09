@@ -11,4 +11,5 @@ module AST
   Block = Struct.new(:label, :body, keyword_init: true)
   Loop = Struct.new(:label, :body, keyword_init: true)
   If = Struct.new(:label, :consequent, :alternative, keyword_init: true)
+  Const = Struct.new(:type, :bits, :number, keyword_init: true)
 end

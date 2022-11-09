@@ -217,6 +217,14 @@ class Interpreter
   def evaluate(expression, locals:)
     while expression in [instruction, *rest]
       case instruction
+      in Const(type:, bits:, number:)
+        case type
+        in :integer
+          interpret_integer(number, bits:)
+        in :float
+          format = Wasminna::Float::Format.for(bits:)
+          Wasminna::Float.parse(number).encode(format:)
+        end.tap { stack.push(_1) }
       in NUMERIC_INSTRUCTION_REGEXP
         rest = evaluate_numeric_instruction(expression, locals:)
       in Return
@@ -295,16 +303,6 @@ class Interpreter
     bits = bits.to_i(10)
 
     case operation
-    in 'const'
-      rest => [value, *rest]
-
-      case type
-      in :integer
-        interpret_integer(value, bits:)
-      in :float
-        format = Wasminna::Float::Format.for(bits:)
-        Wasminna::Float.parse(value).encode(format:)
-      end.tap { stack.push(_1) }
     in 'load'
       static_offset =
         if rest in [%r{\Aoffset=\d+\z} => static_offset, *rest]
