@@ -205,15 +205,6 @@ class Interpreter
     evaluate(ASTParser.new.parse(function.body), locals:)
   end
 
-  NUMERIC_INSTRUCTION_REGEXP =
-    %r{
-      \A
-      (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
-      \z
-    }x
-
-  using Helpers::MatchPattern
-
   def evaluate(expression, locals:)
     while expression in [instruction, *rest]
       case instruction
@@ -226,8 +217,10 @@ class Interpreter
       in Store(type:, bits:, offset: static_offset)
         stack.pop(2) => [offset, value]
         @memory.store(value:, offset: offset + static_offset, bits:)
-      in NUMERIC_INSTRUCTION_REGEXP
-        rest = evaluate_numeric_instruction(expression, locals:)
+      in NumericOp(type: :integer, bits:, operation:)
+        evaluate_integer_instruction(operation:, bits:)
+      in NumericOp(type: :float, bits:, operation:)
+        evaluate_float_instruction(operation:, bits:)
       in Return
         # TODO some control flow effect
       in LocalGet(index:)
@@ -293,24 +286,6 @@ class Interpreter
 
       expression = rest
     end
-  end
-
-  def evaluate_numeric_instruction(expression, locals:)
-    expression => [instruction, *rest]
-
-    instruction.match(NUMERIC_INSTRUCTION_REGEXP) =>
-      { type:, bits:, operation: }
-    type = { 'f' => :float, 'i' => :integer }.fetch(type)
-    bits = bits.to_i(10)
-
-    case type
-    in :integer
-      evaluate_integer_instruction(operation:, bits:)
-    in :float
-      evaluate_float_instruction(operation:, bits:)
-    end
-
-    rest
   end
 
   def evaluate_integer_instruction(operation:, bits:)

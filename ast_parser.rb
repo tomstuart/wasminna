@@ -69,7 +69,7 @@ class ASTParser
     while s_expression in [instruction, *rest]
       result <<
         case instruction
-        in %r{\A[fi](32|64)\.(const|load|store)\z}
+        in NUMERIC_INSTRUCTION_REGEXP
           parse_numeric_instruction(s_expression) =>
             [numeric_instruction, rest]
           numeric_instruction
@@ -171,6 +171,8 @@ class ASTParser
           'load' => Load,
           'store' => Store
         }.fetch(operation).new(type:, bits:, offset:)
+      else
+        NumericOp.new(type:, bits:, operation:)
       end
 
     [result, rest]
