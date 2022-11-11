@@ -107,35 +107,10 @@ class ASTParser
       Nop.new
     in 'drop'
       Drop.new
-    in 'block' | 'loop' | 'if' => opcode
-      label =
-        if rest in [%r{\A\$} => label, *rest]
-          label.to_sym
-        else
-          0
-        end
-      rest in [['result', *], *rest]
-
-      case opcode
-      in 'block'
-        consume_structured_instruction(rest, terminated_by: 'end') =>
-          [body, ['end', *rest]]
-        body = parse_expression(body)
-        Block.new(label:, body:)
-      in 'loop'
-        consume_structured_instruction(rest, terminated_by: 'end') =>
-          [body, ['end', *rest]]
-        body = parse_expression(body)
-        Loop.new(label:, body:)
-      in 'if'
-        consume_structured_instruction(rest, terminated_by: 'else') =>
-          [consequent, ['else', *rest]]
-        consume_structured_instruction(rest, terminated_by: 'end') =>
-          [alternative, ['end', *rest]]
-        [consequent, alternative].map { parse_expression(_1) } =>
-          [consequent, alternative]
-        If.new(label:, consequent:, alternative:)
-      end
+    in 'block' | 'loop' | 'if'
+      parse_structured_instruction(s_expression) =>
+        [structured_instruction, rest]
+      structured_instruction
     in 'unreachable'
       Unreachable.new
     end.then do |result|
@@ -198,6 +173,41 @@ class ASTParser
       end
 
     [result, rest]
+  end
+
+  def parse_structured_instruction(s_expression)
+    s_expression => [opcode, *rest]
+
+    label =
+      if rest in [%r{\A\$} => label, *rest]
+        label.to_sym
+      else
+        0
+      end
+    rest in [['result', *], *rest]
+
+    case opcode
+    in 'block'
+      consume_structured_instruction(rest, terminated_by: 'end') =>
+        [body, ['end', *rest]]
+      body = parse_expression(body)
+      Block.new(label:, body:)
+    in 'loop'
+      consume_structured_instruction(rest, terminated_by: 'end') =>
+        [body, ['end', *rest]]
+      body = parse_expression(body)
+      Loop.new(label:, body:)
+    in 'if'
+      consume_structured_instruction(rest, terminated_by: 'else') =>
+        [consequent, ['else', *rest]]
+      consume_structured_instruction(rest, terminated_by: 'end') =>
+        [alternative, ['end', *rest]]
+      [consequent, alternative].map { parse_expression(_1) } =>
+        [consequent, alternative]
+      If.new(label:, consequent:, alternative:)
+    end.then do |result|
+      [result, rest]
+    end
   end
 
   def consume_structured_instruction(s_expression, terminated_by:)
