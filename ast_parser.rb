@@ -138,8 +138,6 @@ class ASTParser
       end
     in 'unreachable'
       Unreachable.new
-    else
-      opcode
     end.then do |result|
       [result, rest]
     end
