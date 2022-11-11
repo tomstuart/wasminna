@@ -136,6 +136,8 @@ class ASTParser
           [consequent, alternative]
         If.new(label:, consequent:, alternative:)
       end
+    in 'unreachable'
+      Unreachable.new
     else
       opcode
     end.then do |result|

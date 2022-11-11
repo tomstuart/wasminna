@@ -16,4 +16,5 @@ module AST
   Store = Struct.new(:type, :bits, :offset, keyword_init: true)
   UnaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
   BinaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
+  Unreachable = Struct.new(nil)
 end
