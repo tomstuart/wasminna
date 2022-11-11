@@ -83,8 +83,14 @@ class ASTParser
       parse_numeric_instruction(s_expression) =>
         [numeric_instruction, rest]
       numeric_instruction
-    in 'return'
-      Return.new
+    in 'return' | 'select' | 'nop' | 'drop' | 'unreachable'
+      {
+        'return' => Return,
+        'select' => Select,
+        'nop' => Nop,
+        'drop' => Drop,
+        'unreachable' => Unreachable
+      }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
       rest => [index, *rest]
       index =
@@ -101,18 +107,10 @@ class ASTParser
         'br_if' => BrIf,
         'call' => Call
       }.fetch(opcode).new(index:)
-    in 'select'
-      Select.new
-    in 'nop'
-      Nop.new
-    in 'drop'
-      Drop.new
     in 'block' | 'loop' | 'if'
       parse_structured_instruction(s_expression) =>
         [structured_instruction, rest]
       structured_instruction
-    in 'unreachable'
-      Unreachable.new
     end.then do |result|
       [result, rest]
     end
