@@ -210,21 +210,23 @@ class ASTParser
   end
 
   def consume_structured_instruction(s_expression, terminated_by:)
-    rest = s_expression
     atoms = []
 
-    until rest in [^terminated_by, *]
-      case rest
-      in ['block' | 'loop' | 'if' => opcode, *rest]
-        consume_structured_instruction(rest, terminated_by: 'end') =>
-          [s_expression, ['end' => terminator, *rest]]
-        atoms.concat([opcode, *s_expression, terminator])
-      in [opcode, *rest]
+    until s_expression in [^terminated_by, *]
+      s_expression.shift => opcode
+
+      case opcode
+      in 'block' | 'loop' | 'if'
+        consume_structured_instruction(s_expression, terminated_by: 'end') =>
+          [body, s_expression]
+        s_expression.shift => 'end' => terminator
+        atoms.concat([opcode, *body, terminator])
+      in opcode
         atoms << opcode
       end
     end
 
-    [atoms, rest]
+    [atoms, s_expression]
   end
 
   def unsigned(signed, bits:)
