@@ -68,11 +68,7 @@ class ASTParser
 
   def parse_expression
     result = []
-
-    until s_expression.empty?
-      result << parse_instruction
-    end
-
+    result << parse_instruction until finished?
     result
   end
 
@@ -88,7 +84,7 @@ class ASTParser
   end
 
   def parse_instruction
-    case s_expression.first
+    case peek
     in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction
     in 'block' | 'loop' | 'if'
@@ -99,7 +95,7 @@ class ASTParser
   end
 
   def parse_numeric_instruction
-    s_expression.shift => opcode
+    read => opcode
 
     opcode.match(NUMERIC_OPCODE_REGEXP) =>
       { type:, bits:, operation: }
@@ -119,8 +115,8 @@ class ASTParser
       Const.new(type:, bits:, number:)
     in 'load' | 'store'
       offset =
-        if s_expression.first in %r{\Aoffset=\d+\z}
-          s_expression.shift => %r{\Aoffset=\d+\z} => offset
+        if peek in %r{\Aoffset=\d+\z}
+          read => %r{\Aoffset=\d+\z} => offset
           offset.split('=') => [_, offset]
           offset.to_i(10)
         else
@@ -152,17 +148,17 @@ class ASTParser
   end
 
   def parse_structured_instruction
-    s_expression.shift => opcode
+    read => opcode
 
     label =
-      if s_expression.first in %r{\A\$}
-        s_expression.shift => %r{\A\$} => label
+      if peek in %r{\A\$}
+        read => %r{\A\$} => label
         label.to_sym
       else
         0
       end
-    if s_expression.first in ['result', *]
-      s_expression.shift
+    if peek in ['result', *]
+      read
     end
 
     case opcode
@@ -183,7 +179,7 @@ class ASTParser
   end
 
   def parse_normal_instruction
-    s_expression.shift => opcode
+    read => opcode
 
     case opcode
     in 'return' | 'select' | 'nop' | 'drop' | 'unreachable'
@@ -195,7 +191,7 @@ class ASTParser
         'unreachable' => Unreachable
       }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
-      s_expression.shift => index
+      read => index
       index =
         if index.start_with?('$')
           index
@@ -217,7 +213,7 @@ class ASTParser
     atoms = []
 
     loop do
-      s_expression.shift => opcode
+      read => opcode
       break if opcode == terminated_by
 
       atoms << opcode
@@ -242,7 +238,7 @@ class ASTParser
   end
 
   def parse_integer(bits:)
-    s_expression.shift => string
+    read => string
     value =
       if string.delete_prefix('-').start_with?('0x')
         string.to_i(16)
@@ -255,6 +251,18 @@ class ASTParser
 
   def parse_float(bits:)
     format = Wasminna::Float::Format.for(bits:)
-    Wasminna::Float.parse(s_expression.shift).encode(format:)
+    Wasminna::Float.parse(read).encode(format:)
+  end
+
+  def finished?
+    s_expression.empty?
+  end
+
+  def peek
+    s_expression.first
+  end
+
+  def read
+    s_expression.shift
   end
 end
