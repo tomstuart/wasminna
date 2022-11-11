@@ -97,7 +97,7 @@ class Interpreter
           end
 
           invoke_function(function:, arguments:)
-        in ['assert_return', ['invoke', name, *arguments], *expected]
+        in ['assert_return', ['invoke', name, *arguments], *expecteds]
           function = functions.detect { |function| function.name == name }
           if function.nil?
             puts
@@ -106,33 +106,33 @@ class Interpreter
           end
 
           invoke_function(function:, arguments:)
-          actual_value = stack.pop
+          actual_values = stack.pop(expecteds.length)
           raise unless stack.empty?
 
-          case expected.first
-          in nil
-            success = true
-          in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
-            expected_value = nan
-            bits = instruction.slice(%r{\d+}).to_i(10)
-            format = Wasminna::Float::Format.for(bits:)
-            float = Wasminna::Float.decode(actual_value, format:).to_f
-            success = float.nan? # TODO check whether canonical or arithmetic
-          else
-            evaluate(ASTParser.new.parse(expected.first), locals: [])
-            stack.pop(1) => [expected_value]
-            raise unless stack.empty?
-            success = actual_value == expected_value
+          expecteds.zip(actual_values).each do |expected, actual_value|
+            case expected
+            in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+              expected_value = nan
+              bits = instruction.slice(%r{\d+}).to_i(10)
+              format = Wasminna::Float::Format.for(bits:)
+              float = Wasminna::Float.decode(actual_value, format:).to_f
+              success = float.nan? # TODO check whether canonical or arithmetic
+            else
+              evaluate(ASTParser.new.parse(expected), locals: [])
+              stack.pop(1) => [expected_value]
+              raise unless stack.empty?
+              success = actual_value == expected_value
+            end
+
+            unless success
+              puts
+              puts "\e[31mFAILED\e[0m: \e[33m#{pretty_print(command)}\e[0m"
+              puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
+              exit 1
+            end
           end
 
-          if success
-            print "\e[32m.\e[0m"
-          else
-            puts
-            puts "\e[31mFAILED\e[0m: \e[33m#{pretty_print(command)}\e[0m"
-            puts "expected #{expected_value.inspect}, got #{actual_value.inspect}"
-            exit 1
-          end
+          print "\e[32m.\e[0m"
         in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
           # TODO
           print "\e[33m.\e[0m"
