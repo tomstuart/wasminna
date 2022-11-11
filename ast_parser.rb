@@ -67,9 +67,7 @@ class ASTParser
     result = []
 
     until s_expression.empty?
-      parse_instruction(s_expression) => [instruction, rest]
-      result << instruction
-      s_expression = rest
+      result << parse_instruction(s_expression)
     end
 
     result
@@ -78,13 +76,9 @@ class ASTParser
   def parse_instruction(s_expression)
     case s_expression.first
     in NUMERIC_OPCODE_REGEXP
-      parse_numeric_instruction(s_expression) =>
-        [numeric_instruction, s_expression]
-      numeric_instruction
+      parse_numeric_instruction(s_expression)
     in 'block' | 'loop' | 'if'
-      parse_structured_instruction(s_expression) =>
-        [structured_instruction, s_expression]
-      structured_instruction
+      parse_structured_instruction(s_expression)
     else
       s_expression.shift => opcode
 
@@ -114,8 +108,6 @@ class ASTParser
           'call' => Call
         }.fetch(opcode).new(index:)
       end
-    end.then do |result|
-      [result, s_expression]
     end
   end
 
@@ -127,54 +119,51 @@ class ASTParser
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
 
-    result =
-      case operation
-      in 'const'
-        s_expression.shift => string
-        number =
-          case type
-          in :integer
-            parse_integer(string, bits:)
-          in :float
-            format = Wasminna::Float::Format.for(bits:)
-            Wasminna::Float.parse(string).encode(format:)
-          end
-
-        Const.new(type:, bits:, number:)
-      in 'load' | 'store'
-        offset =
-          if s_expression.first in %r{\Aoffset=\d+\z}
-            s_expression.shift => %r{\Aoffset=\d+\z} => offset
-            offset.split('=') => [_, offset]
-            offset.to_i(10)
-          else
-            0
-          end
-
-        {
-          'load' => Load,
-          'store' => Store
-        }.fetch(operation).new(type:, bits:, offset:)
-      else
+    case operation
+    in 'const'
+      s_expression.shift => string
+      number =
         case type
         in :integer
-          case operation
-          in 'add' | 'sub' | 'mul' | 'div_s' | 'div_u' | 'rem_s' | 'rem_u' | 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u' | 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
-            BinaryOp.new(type:, bits:, operation:)
-          in 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
-            UnaryOp.new(type:, bits:, operation:)
-          end
+          parse_integer(string, bits:)
         in :float
-          case operation
-          in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-            BinaryOp.new(type:, bits:, operation:)
-          in 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest' | 'abs' | 'neg' | 'convert_i32_s' | 'convert_i64_s' | 'convert_i32_u' | 'convert_i64_u' | 'promote_f32' | 'demote_f64' | 'reinterpret_i32' | 'reinterpret_i64'
-            UnaryOp.new(type:, bits:, operation:)
-          end
+          format = Wasminna::Float::Format.for(bits:)
+          Wasminna::Float.parse(string).encode(format:)
+        end
+
+      Const.new(type:, bits:, number:)
+    in 'load' | 'store'
+      offset =
+        if s_expression.first in %r{\Aoffset=\d+\z}
+          s_expression.shift => %r{\Aoffset=\d+\z} => offset
+          offset.split('=') => [_, offset]
+          offset.to_i(10)
+        else
+          0
+        end
+
+      {
+        'load' => Load,
+        'store' => Store
+      }.fetch(operation).new(type:, bits:, offset:)
+    else
+      case type
+      in :integer
+        case operation
+        in 'add' | 'sub' | 'mul' | 'div_s' | 'div_u' | 'rem_s' | 'rem_u' | 'and' | 'or' | 'xor' | 'shl' | 'shr_s' | 'shr_u' | 'rotl' | 'rotr' | 'eq' | 'ne' | 'lt_s' | 'lt_u' | 'le_s' | 'le_u' | 'gt_s' | 'gt_u' | 'ge_s' | 'ge_u'
+          BinaryOp.new(type:, bits:, operation:)
+        in 'clz' | 'ctz' | 'popcnt' | 'extend8_s' | 'extend16_s' | 'extend32_s' | 'extend_i32_s' | 'extend_i32_u' | 'eqz' | 'wrap_i64' | 'reinterpret_f32' | 'reinterpret_f64' | 'trunc_f32_s' | 'trunc_f64_s' | 'trunc_f32_u' | 'trunc_f64_u' | 'trunc_sat_f32_s' | 'trunc_sat_f64_s' | 'trunc_sat_f32_u' | 'trunc_sat_f64_u'
+          UnaryOp.new(type:, bits:, operation:)
+        end
+      in :float
+        case operation
+        in 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'copysign' | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
+          BinaryOp.new(type:, bits:, operation:)
+        in 'sqrt' | 'floor' | 'ceil' | 'trunc' | 'nearest' | 'abs' | 'neg' | 'convert_i32_s' | 'convert_i64_s' | 'convert_i32_u' | 'convert_i64_u' | 'promote_f32' | 'demote_f64' | 'reinterpret_i32' | 'reinterpret_i64'
+          UnaryOp.new(type:, bits:, operation:)
         end
       end
-
-    [result, s_expression]
+    end
   end
 
   def parse_structured_instruction(s_expression)
@@ -193,29 +182,23 @@ class ASTParser
 
     case opcode
     in 'block'
-      consume_structured_instruction(s_expression, terminated_by: 'end') =>
-        [body, s_expression]
+      body = consume_structured_instruction(s_expression, terminated_by: 'end')
       s_expression.shift => 'end'
       body = parse_expression(body)
       Block.new(label:, body:)
     in 'loop'
-      consume_structured_instruction(s_expression, terminated_by: 'end') =>
-        [body, s_expression]
+      body = consume_structured_instruction(s_expression, terminated_by: 'end')
       s_expression.shift => 'end'
       body = parse_expression(body)
       Loop.new(label:, body:)
     in 'if'
-      consume_structured_instruction(s_expression, terminated_by: 'else') =>
-        [consequent, s_expression]
+      consequent = consume_structured_instruction(s_expression, terminated_by: 'else')
       s_expression.shift => 'else'
-      consume_structured_instruction(s_expression, terminated_by: 'end') =>
-        [alternative, s_expression]
+      alternative = consume_structured_instruction(s_expression, terminated_by: 'end')
       s_expression.shift => 'end'
       [consequent, alternative].map { parse_expression(_1) } =>
         [consequent, alternative]
       If.new(label:, consequent:, alternative:)
-    end.then do |result|
-      [result, s_expression]
     end
   end
 
@@ -227,8 +210,7 @@ class ASTParser
 
       case opcode
       in 'block' | 'loop' | 'if'
-        consume_structured_instruction(s_expression, terminated_by: 'end') =>
-          [body, s_expression]
+        body = consume_structured_instruction(s_expression, terminated_by: 'end')
         s_expression.shift => 'end' => terminator
         atoms.concat([opcode, *body, terminator])
       in opcode
@@ -236,7 +218,7 @@ class ASTParser
       end
     end
 
-    [atoms, s_expression]
+    atoms
   end
 
   def unsigned(signed, bits:)
