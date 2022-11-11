@@ -165,16 +165,16 @@ class ASTParser
     in 'block'
       Block.new \
         label:,
-        body: with_input(consume_structured_instruction) { parse_expression }
+        body: with_input(read_structured) { parse_expression }
     in 'loop'
       Loop.new \
         label:,
-        body: with_input(consume_structured_instruction) { parse_expression }
+        body: with_input(read_structured) { parse_expression }
     in 'if'
       If.new \
         label:,
-        consequent: with_input(consume_structured_instruction(terminated_by: 'else')) { parse_expression },
-        alternative: with_input(consume_structured_instruction) { parse_expression }
+        consequent: with_input(read_structured(terminated_by: 'else')) { parse_expression },
+        alternative: with_input(read_structured) { parse_expression }
     end
   end
 
@@ -209,7 +209,7 @@ class ASTParser
     end
   end
 
-  def consume_structured_instruction(terminated_by: 'end')
+  def read_structured(terminated_by: 'end')
     atoms = []
 
     loop do
@@ -218,7 +218,7 @@ class ASTParser
 
       atoms << opcode
       if opcode in 'block' | 'loop' | 'if'
-        atoms.concat(consume_structured_instruction)
+        atoms.concat(read_structured)
         atoms << 'end'
       end
     end
