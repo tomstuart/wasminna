@@ -7,7 +7,8 @@ class ASTParser
   include Helpers::Mask
 
   def parse(s_expression)
-    parse_expression(s_expression.flat_map { unfold(_1) })
+    self.s_expression = s_expression.flat_map { unfold(_1) }
+    parse_expression
   end
 
   private
@@ -65,13 +66,11 @@ class ASTParser
 
   using Helpers::MatchPattern
 
-  def parse_expression(s_expression)
+  def parse_expression
     result = []
 
-    with_input(s_expression) do
-      until s_expression.empty?
-        result << parse_instruction
-      end
+    until s_expression.empty?
+      result << parse_instruction
     end
 
     result
@@ -170,16 +169,16 @@ class ASTParser
     in 'block'
       Block.new \
         label:,
-        body: parse_expression(consume_structured_instruction)
+        body: with_input(consume_structured_instruction) { parse_expression }
     in 'loop'
       Loop.new \
         label:,
-        body: parse_expression(consume_structured_instruction)
+        body: with_input(consume_structured_instruction) { parse_expression }
     in 'if'
       If.new \
         label:,
-        consequent: parse_expression(consume_structured_instruction(terminated_by: 'else')),
-        alternative: parse_expression(consume_structured_instruction)
+        consequent: with_input(consume_structured_instruction(terminated_by: 'else')) { parse_expression },
+        alternative: with_input(consume_structured_instruction) { parse_expression }
     end
   end
 
