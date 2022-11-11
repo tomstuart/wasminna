@@ -80,34 +80,7 @@ class ASTParser
     in 'block' | 'loop' | 'if'
       parse_structured_instruction(s_expression)
     else
-      s_expression.shift => opcode
-
-      case opcode
-      in 'return' | 'select' | 'nop' | 'drop' | 'unreachable'
-        {
-          'return' => Return,
-          'select' => Select,
-          'nop' => Nop,
-          'drop' => Drop,
-          'unreachable' => Unreachable
-        }.fetch(opcode).new
-      in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
-        s_expression.shift => index
-        index =
-          if index.start_with?('$')
-            index
-          else
-            index.to_i(10)
-          end
-
-        {
-          'local.get' => LocalGet,
-          'local.set' => LocalSet,
-          'local.tee' => LocalTee,
-          'br_if' => BrIf,
-          'call' => Call
-        }.fetch(opcode).new(index:)
-      end
+      parse_normal_instruction(s_expression)
     end
   end
 
@@ -199,6 +172,37 @@ class ASTParser
       [consequent, alternative].map { parse_expression(_1) } =>
         [consequent, alternative]
       If.new(label:, consequent:, alternative:)
+    end
+  end
+
+  def parse_normal_instruction(s_expression)
+    s_expression.shift => opcode
+
+    case opcode
+    in 'return' | 'select' | 'nop' | 'drop' | 'unreachable'
+      {
+        'return' => Return,
+        'select' => Select,
+        'nop' => Nop,
+        'drop' => Drop,
+        'unreachable' => Unreachable
+      }.fetch(opcode).new
+    in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
+      s_expression.shift => index
+      index =
+        if index.start_with?('$')
+          index
+        else
+          index.to_i(10)
+        end
+
+      {
+        'local.get' => LocalGet,
+        'local.set' => LocalSet,
+        'local.tee' => LocalTee,
+        'br_if' => BrIf,
+        'call' => Call
+      }.fetch(opcode).new(index:)
     end
   end
 
