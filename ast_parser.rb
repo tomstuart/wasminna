@@ -68,16 +68,24 @@ class ASTParser
   def parse_expression(s_expression)
     result = []
 
-    previous_s_expression = self.s_expression
-    self.s_expression = s_expression
-
-    until s_expression.empty?
-      result << parse_instruction
+    with_input(s_expression) do
+      until s_expression.empty?
+        result << parse_instruction
+      end
     end
 
-    self.s_expression = previous_s_expression
-
     result
+  end
+
+  def with_input(s_expression)
+    previous_s_expression, self.s_expression =
+      self.s_expression, s_expression
+
+    begin
+      yield
+    ensure
+      self.s_expression = previous_s_expression
+    end
   end
 
   def parse_instruction
