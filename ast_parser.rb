@@ -72,7 +72,7 @@ class ASTParser
       result << parse_instruction until finished?
       result
     else
-      with_input(read_structured(terminated_by:)) { parse_expression }
+      with_input(read_until(terminated_by:)) { parse_expression }
     end
   end
 
@@ -209,7 +209,7 @@ class ASTParser
     end
   end
 
-  def read_structured(terminated_by:)
+  def read_until(terminated_by:)
     atoms = []
 
     loop do
@@ -218,7 +218,7 @@ class ASTParser
 
       atoms << opcode
       if opcode in 'block' | 'loop' | 'if'
-        atoms.concat(read_structured(terminated_by: 'end'))
+        atoms.concat(read_until(terminated_by: 'end'))
         atoms << 'end'
       end
     end
