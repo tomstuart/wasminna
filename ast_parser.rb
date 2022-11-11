@@ -163,19 +163,19 @@ class ASTParser
 
     case opcode
     in 'block'
-      Block.new \
-        label:,
-        body: with_input(read_structured) { parse_expression }
+      Block.new(label:, body: parse_nested_expression)
     in 'loop'
-      Loop.new \
-        label:,
-        body: with_input(read_structured) { parse_expression }
+      Loop.new(label:, body: parse_nested_expression)
     in 'if'
       If.new \
         label:,
-        consequent: with_input(read_structured(terminated_by: 'else')) { parse_expression },
-        alternative: with_input(read_structured) { parse_expression }
+        consequent: parse_nested_expression(terminated_by: 'else'),
+        alternative: parse_nested_expression
     end
+  end
+
+  def parse_nested_expression(terminated_by: 'end')
+    with_input(read_structured(terminated_by:)) { parse_expression }
   end
 
   def parse_normal_instruction
@@ -209,7 +209,7 @@ class ASTParser
     end
   end
 
-  def read_structured(terminated_by: 'end')
+  def read_structured(terminated_by:)
     atoms = []
 
     loop do
@@ -218,7 +218,7 @@ class ASTParser
 
       atoms << opcode
       if opcode in 'block' | 'loop' | 'if'
-        atoms.concat(read_structured)
+        atoms.concat(read_structured(terminated_by: 'end'))
         atoms << 'end'
       end
     end
