@@ -12,6 +12,8 @@ class ASTParser
 
   private
 
+  attr_accessor :s_expression
+
   def unfold(s_expression)
     case s_expression
     in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => opcode, argument, *rest]
@@ -66,25 +68,30 @@ class ASTParser
   def parse_expression(s_expression)
     result = []
 
+    previous_s_expression = self.s_expression
+    self.s_expression = s_expression
+
     until s_expression.empty?
-      result << parse_instruction(s_expression)
+      result << parse_instruction
     end
+
+    self.s_expression = previous_s_expression
 
     result
   end
 
-  def parse_instruction(s_expression)
+  def parse_instruction
     case s_expression.first
     in NUMERIC_OPCODE_REGEXP
-      parse_numeric_instruction(s_expression)
+      parse_numeric_instruction
     in 'block' | 'loop' | 'if'
-      parse_structured_instruction(s_expression)
+      parse_structured_instruction
     else
-      parse_normal_instruction(s_expression)
+      parse_normal_instruction
     end
   end
 
-  def parse_numeric_instruction(s_expression)
+  def parse_numeric_instruction
     s_expression.shift => opcode
 
     opcode.match(NUMERIC_OPCODE_REGEXP) =>
@@ -97,9 +104,9 @@ class ASTParser
       number =
         case type
         in :integer
-          parse_integer(s_expression, bits:)
+          parse_integer(bits:)
         in :float
-          parse_float(s_expression, bits:)
+          parse_float(bits:)
         end
 
       Const.new(type:, bits:, number:)
@@ -137,7 +144,7 @@ class ASTParser
     end
   end
 
-  def parse_structured_instruction(s_expression)
+  def parse_structured_instruction
     s_expression.shift => opcode
 
     label =
@@ -155,20 +162,20 @@ class ASTParser
     in 'block'
       Block.new \
         label:,
-        body: parse_expression(consume_structured_instruction(s_expression))
+        body: parse_expression(consume_structured_instruction)
     in 'loop'
       Loop.new \
         label:,
-        body: parse_expression(consume_structured_instruction(s_expression))
+        body: parse_expression(consume_structured_instruction)
     in 'if'
       If.new \
         label:,
-        consequent: parse_expression(consume_structured_instruction(s_expression, terminated_by: 'else')),
-        alternative: parse_expression(consume_structured_instruction(s_expression))
+        consequent: parse_expression(consume_structured_instruction(terminated_by: 'else')),
+        alternative: parse_expression(consume_structured_instruction)
     end
   end
 
-  def parse_normal_instruction(s_expression)
+  def parse_normal_instruction
     s_expression.shift => opcode
 
     case opcode
@@ -199,7 +206,7 @@ class ASTParser
     end
   end
 
-  def consume_structured_instruction(s_expression, terminated_by: 'end')
+  def consume_structured_instruction(terminated_by: 'end')
     atoms = []
 
     loop do
@@ -208,7 +215,7 @@ class ASTParser
 
       atoms << opcode
       if opcode in 'block' | 'loop' | 'if'
-        atoms.concat(consume_structured_instruction(s_expression))
+        atoms.concat(consume_structured_instruction)
         atoms << 'end'
       end
     end
@@ -227,7 +234,7 @@ class ASTParser
     end
   end
 
-  def parse_integer(s_expression, bits:)
+  def parse_integer(bits:)
     s_expression.shift => string
     value =
       if string.delete_prefix('-').start_with?('0x')
@@ -239,7 +246,7 @@ class ASTParser
     unsigned(value, bits:)
   end
 
-  def parse_float(s_expression, bits:)
+  def parse_float(bits:)
     format = Wasminna::Float::Format.for(bits:)
     Wasminna::Float.parse(s_expression.shift).encode(format:)
   end
