@@ -117,7 +117,7 @@ class ASTParser
   end
 
   def parse_numeric_instruction(s_expression)
-    s_expression => [opcode, *rest]
+    s_expression.shift => opcode
 
     opcode.match(NUMERIC_OPCODE_REGEXP) =>
       { type:, bits:, operation: }
@@ -127,7 +127,7 @@ class ASTParser
     result =
       case operation
       in 'const'
-        rest => [string, *rest]
+        s_expression.shift => string
         number =
           case type
           in :integer
@@ -140,7 +140,8 @@ class ASTParser
         Const.new(type:, bits:, number:)
       in 'load' | 'store'
         offset =
-          if rest in [%r{\Aoffset=\d+\z} => offset, *rest]
+          if s_expression.first in %r{\Aoffset=\d+\z}
+            s_expression.shift => %r{\Aoffset=\d+\z} => offset
             offset.split('=') => [_, offset]
             offset.to_i(10)
           else
@@ -170,7 +171,7 @@ class ASTParser
         end
       end
 
-    [result, rest]
+    [result, s_expression]
   end
 
   def parse_structured_instruction(s_expression)
