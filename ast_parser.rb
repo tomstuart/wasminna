@@ -66,10 +66,14 @@ class ASTParser
 
   using Helpers::MatchPattern
 
-  def parse_expression
-    result = []
-    result << parse_instruction until finished?
-    result
+  def parse_expression(terminated_by: nil)
+    if terminated_by.nil?
+      result = []
+      result << parse_instruction until finished?
+      result
+    else
+      with_input(read_structured(terminated_by:)) { parse_expression }
+    end
   end
 
   def with_input(s_expression)
@@ -163,19 +167,15 @@ class ASTParser
 
     case opcode
     in 'block'
-      Block.new(label:, body: parse_nested_expression)
+      Block.new(label:, body: parse_expression(terminated_by: 'end'))
     in 'loop'
-      Loop.new(label:, body: parse_nested_expression)
+      Loop.new(label:, body: parse_expression(terminated_by: 'end'))
     in 'if'
       If.new \
         label:,
-        consequent: parse_nested_expression(terminated_by: 'else'),
-        alternative: parse_nested_expression
+        consequent: parse_expression(terminated_by: 'else'),
+        alternative: parse_expression(terminated_by: 'end')
     end
-  end
-
-  def parse_nested_expression(terminated_by: 'end')
-    with_input(read_structured(terminated_by:)) { parse_expression }
   end
 
   def parse_normal_instruction
