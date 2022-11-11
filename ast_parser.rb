@@ -7,8 +7,9 @@ class ASTParser
   include Helpers::Mask
 
   def parse(s_expression)
-    self.s_expression = s_expression.flat_map { unfold(_1) }
-    parse_expression
+    end_of_input = Object.new
+    self.s_expression = s_expression.flat_map { unfold(_1) } + [end_of_input]
+    parse_expression(terminated_by: end_of_input)
   end
 
   private
@@ -66,13 +67,11 @@ class ASTParser
 
   using Helpers::MatchPattern
 
-  def parse_expression(terminated_by: nil)
-    if terminated_by.nil?
+  def parse_expression(terminated_by:)
+    with_input(read_until(terminated_by:)) do
       result = []
       result << parse_instruction until finished?
       result
-    else
-      with_input(read_until(terminated_by:)) { parse_expression }
     end
   end
 
