@@ -204,18 +204,16 @@ class ASTParser
   def consume_structured_instruction(s_expression, terminated_by: 'end')
     atoms = []
 
-    until s_expression in [^terminated_by, *]
+    loop do
       s_expression.shift => opcode
+      break if opcode == terminated_by
 
-      case opcode
-      in 'block' | 'loop' | 'if'
-        body = consume_structured_instruction(s_expression)
-        atoms.concat([opcode, *body, 'end'])
-      in opcode
-        atoms << opcode
+      atoms << opcode
+      if opcode in 'block' | 'loop' | 'if'
+        atoms.concat(consume_structured_instruction(s_expression))
+        atoms << 'end'
       end
     end
-    s_expression.shift => terminated_by
 
     atoms
   end
