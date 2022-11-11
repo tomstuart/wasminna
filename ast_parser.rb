@@ -66,74 +66,81 @@ class ASTParser
   def parse_expression(s_expression)
     result = []
 
-    while s_expression in [instruction, *rest]
-      result <<
-        case instruction
-        in NUMERIC_INSTRUCTION_REGEXP
-          parse_numeric_instruction(s_expression) =>
-            [numeric_instruction, rest]
-          numeric_instruction
-        in 'return'
-          Return.new
-        in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
-          rest => [index, *rest]
-          index =
-            if index.start_with?('$')
-              index
-            else
-              index.to_i(10)
-            end
-
-          {
-            'local.get' => LocalGet,
-            'local.set' => LocalSet,
-            'local.tee' => LocalTee,
-            'br_if' => BrIf,
-            'call' => Call
-          }.fetch(instruction).new(index:)
-        in 'select'
-          Select.new
-        in 'nop'
-          Nop.new
-        in 'drop'
-          Drop.new
-        in 'block' | 'loop' | 'if' => instruction
-          label =
-            if rest in [%r{\A\$} => label, *rest]
-              label.to_sym
-            else
-              0
-            end
-          rest in [['result', *], *rest]
-
-          case instruction
-          in 'block'
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [body, ['end', *rest]]
-            body = parse_expression(body)
-            Block.new(label:, body:)
-          in 'loop'
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [body, ['end', *rest]]
-            body = parse_expression(body)
-            Loop.new(label:, body:)
-          in 'if'
-            consume_structured_instruction(rest, terminated_by: 'else') =>
-              [consequent, ['else', *rest]]
-            consume_structured_instruction(rest, terminated_by: 'end') =>
-              [alternative, ['end', *rest]]
-            [consequent, alternative].map { parse_expression(_1) } =>
-              [consequent, alternative]
-            If.new(label:, consequent:, alternative:)
-          end
-        else
-          instruction
-        end
-
+    until s_expression.empty?
+      parse_instruction(s_expression) => [instruction, rest]
+      result << instruction
       s_expression = rest
     end
 
     result
+  end
+
+  def parse_instruction(s_expression)
+    s_expression => [instruction, *rest]
+
+    case instruction
+    in NUMERIC_INSTRUCTION_REGEXP
+      parse_numeric_instruction(s_expression) =>
+        [numeric_instruction, rest]
+      numeric_instruction
+    in 'return'
+      Return.new
+    in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
+      rest => [index, *rest]
+      index =
+        if index.start_with?('$')
+          index
+        else
+          index.to_i(10)
+        end
+
+      {
+        'local.get' => LocalGet,
+        'local.set' => LocalSet,
+        'local.tee' => LocalTee,
+        'br_if' => BrIf,
+        'call' => Call
+      }.fetch(instruction).new(index:)
+    in 'select'
+      Select.new
+    in 'nop'
+      Nop.new
+    in 'drop'
+      Drop.new
+    in 'block' | 'loop' | 'if' => instruction
+      label =
+        if rest in [%r{\A\$} => label, *rest]
+          label.to_sym
+        else
+          0
+        end
+      rest in [['result', *], *rest]
+
+      case instruction
+      in 'block'
+        consume_structured_instruction(rest, terminated_by: 'end') =>
+          [body, ['end', *rest]]
+        body = parse_expression(body)
+        Block.new(label:, body:)
+      in 'loop'
+        consume_structured_instruction(rest, terminated_by: 'end') =>
+          [body, ['end', *rest]]
+        body = parse_expression(body)
+        Loop.new(label:, body:)
+      in 'if'
+        consume_structured_instruction(rest, terminated_by: 'else') =>
+          [consequent, ['else', *rest]]
+        consume_structured_instruction(rest, terminated_by: 'end') =>
+          [alternative, ['end', *rest]]
+        [consequent, alternative].map { parse_expression(_1) } =>
+          [consequent, alternative]
+        If.new(label:, consequent:, alternative:)
+      end
+    else
+      instruction
+    end.then do |result|
+      [result, rest]
+    end
   end
 
   def parse_numeric_instruction(s_expression)
