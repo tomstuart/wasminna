@@ -24,12 +24,12 @@ class ASTParser
 
       case opcode
       in 'block' | 'loop'
-        rest => [*instructions]
+        rest => [*body]
         [
           opcode,
           label,
           type,
-          *instructions.flat_map { unfold(_1) },
+          *body.flat_map { unfold(_1) },
           'end'
         ].compact
       in 'if'
