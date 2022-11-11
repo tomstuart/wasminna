@@ -94,14 +94,13 @@ class ASTParser
 
     case operation
     in 'const'
-      s_expression.shift => string
       number =
         case type
         in :integer
-          parse_integer(string, bits:)
+          parse_integer(s_expression, bits:)
         in :float
           format = Wasminna::Float::Format.for(bits:)
-          Wasminna::Float.parse(string).encode(format:)
+          Wasminna::Float.parse(s_expression.shift).encode(format:)
         end
 
       Const.new(type:, bits:, number:)
@@ -229,7 +228,8 @@ class ASTParser
     end
   end
 
-  def parse_integer(string, bits:)
+  def parse_integer(s_expression, bits:)
+    s_expression.shift => string
     value =
       if string.delete_prefix('-').start_with?('0x')
         string.to_i(16)
