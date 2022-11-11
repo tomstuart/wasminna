@@ -175,37 +175,44 @@ class ASTParser
   end
 
   def parse_structured_instruction(s_expression)
-    s_expression => [opcode, *rest]
+    s_expression.shift => opcode
 
     label =
-      if rest in [%r{\A\$} => label, *rest]
+      if s_expression.first in %r{\A\$}
+        s_expression.shift => %r{\A\$} => label
         label.to_sym
       else
         0
       end
-    rest in [['result', *], *rest]
+    if s_expression.first in ['result', *]
+      s_expression.shift
+    end
 
     case opcode
     in 'block'
-      consume_structured_instruction(rest, terminated_by: 'end') =>
-        [body, ['end', *rest]]
+      consume_structured_instruction(s_expression, terminated_by: 'end') =>
+        [body, s_expression]
+      s_expression.shift => 'end'
       body = parse_expression(body)
       Block.new(label:, body:)
     in 'loop'
-      consume_structured_instruction(rest, terminated_by: 'end') =>
-        [body, ['end', *rest]]
+      consume_structured_instruction(s_expression, terminated_by: 'end') =>
+        [body, s_expression]
+      s_expression.shift => 'end'
       body = parse_expression(body)
       Loop.new(label:, body:)
     in 'if'
-      consume_structured_instruction(rest, terminated_by: 'else') =>
-        [consequent, ['else', *rest]]
-      consume_structured_instruction(rest, terminated_by: 'end') =>
-        [alternative, ['end', *rest]]
+      consume_structured_instruction(s_expression, terminated_by: 'else') =>
+        [consequent, s_expression]
+      s_expression.shift => 'else'
+      consume_structured_instruction(s_expression, terminated_by: 'end') =>
+        [alternative, s_expression]
+      s_expression.shift => 'end'
       [consequent, alternative].map { parse_expression(_1) } =>
         [consequent, alternative]
       If.new(label:, consequent:, alternative:)
     end.then do |result|
-      [result, rest]
+      [result, s_expression]
     end
   end
 
