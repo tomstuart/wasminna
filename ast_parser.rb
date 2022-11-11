@@ -69,9 +69,9 @@ class ASTParser
 
   def parse_expression(terminated_by:)
     with_input(read_until(terminated_by:)) do
-      result = []
-      result << parse_instruction until finished?
-      result
+      [].tap do |expression|
+        expression << parse_instruction until finished?
+      end
     end
   end
 
@@ -209,20 +209,18 @@ class ASTParser
   end
 
   def read_until(terminated_by:)
-    atoms = []
+    [].tap do |atoms|
+      loop do
+        read => opcode
+        break if opcode == terminated_by
 
-    loop do
-      read => opcode
-      break if opcode == terminated_by
-
-      atoms << opcode
-      if opcode in 'block' | 'loop' | 'if'
-        atoms.concat(read_until(terminated_by: 'end'))
-        atoms << 'end'
+        atoms << opcode
+        if opcode in 'block' | 'loop' | 'if'
+          atoms.concat(read_until(terminated_by: 'end'))
+          atoms << 'end'
+        end
       end
     end
-
-    atoms
   end
 
   def unsigned(signed, bits:)
