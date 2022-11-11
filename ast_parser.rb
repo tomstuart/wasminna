@@ -99,8 +99,7 @@ class ASTParser
         in :integer
           parse_integer(s_expression, bits:)
         in :float
-          format = Wasminna::Float::Format.for(bits:)
-          Wasminna::Float.parse(s_expression.shift).encode(format:)
+          parse_float(s_expression, bits:)
         end
 
       Const.new(type:, bits:, number:)
@@ -238,5 +237,10 @@ class ASTParser
       end
 
     unsigned(value, bits:)
+  end
+
+  def parse_float(s_expression, bits:)
+    format = Wasminna::Float::Format.for(bits:)
+    Wasminna::Float.parse(s_expression.shift).encode(format:)
   end
 end
