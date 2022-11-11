@@ -155,10 +155,10 @@ class Interpreter
         case expression
         in ['export', name]
           function.name = name
-        in ['param', name, _]
+        in ['param', %r{\A\$} => name, _]
           function.parameters << Parameter.new(name:)
-        in ['param', _]
-          function.parameters << Parameter.new
+        in ['param', *types]
+          function.parameters.concat(types.map { Parameter.new })
         in ['result', *]
         in ['local', %r{\A\$} => name, _]
           function.locals << Local.new(name:)
