@@ -155,16 +155,16 @@ class ASTParser
 
     case opcode
     in 'block'
-      body = consume_structured_instruction(s_expression, terminated_by: 'end')
+      body = consume_structured_instruction(s_expression)
       body = parse_expression(body)
       Block.new(label:, body:)
     in 'loop'
-      body = consume_structured_instruction(s_expression, terminated_by: 'end')
+      body = consume_structured_instruction(s_expression)
       body = parse_expression(body)
       Loop.new(label:, body:)
     in 'if'
       consequent = consume_structured_instruction(s_expression, terminated_by: 'else')
-      alternative = consume_structured_instruction(s_expression, terminated_by: 'end')
+      alternative = consume_structured_instruction(s_expression)
       [consequent, alternative].map { parse_expression(_1) } =>
         [consequent, alternative]
       If.new(label:, consequent:, alternative:)
@@ -202,7 +202,7 @@ class ASTParser
     end
   end
 
-  def consume_structured_instruction(s_expression, terminated_by:)
+  def consume_structured_instruction(s_expression, terminated_by: 'end')
     atoms = []
 
     until s_expression in [^terminated_by, *]
@@ -210,7 +210,7 @@ class ASTParser
 
       case opcode
       in 'block' | 'loop' | 'if'
-        body = consume_structured_instruction(s_expression, terminated_by: 'end')
+        body = consume_structured_instruction(s_expression)
         atoms.concat([opcode, *body, 'end'])
       in opcode
         atoms << opcode
