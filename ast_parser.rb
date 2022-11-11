@@ -14,19 +14,19 @@ class ASTParser
 
   def unfold(s_expression)
     case s_expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => instruction, argument, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction, argument]
-    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => instruction, %r{\Aoffset=\d+\z} => static_offset, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction, static_offset]
-    in ['block' | 'loop' | 'if' => instruction, *rest]
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => opcode, argument, *rest]
+      [*rest.flat_map { unfold(_1) }, opcode, argument]
+    in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => opcode, %r{\Aoffset=\d+\z} => static_offset, *rest]
+      [*rest.flat_map { unfold(_1) }, opcode, static_offset]
+    in ['block' | 'loop' | 'if' => opcode, *rest]
       rest in [%r{\A\$} => label, *rest]
       rest in [['result', *] => type, *rest]
 
-      case instruction
+      case opcode
       in 'block' | 'loop'
         rest => [*instructions]
         [
-          instruction,
+          opcode,
           label,
           type,
           *instructions.flat_map { unfold(_1) },
@@ -38,7 +38,7 @@ class ASTParser
         rest => []
         [
           *condition.flat_map { unfold(_1) },
-          instruction,
+          opcode,
           label,
           type,
           *consequent.flat_map { unfold(_1) },
@@ -47,14 +47,14 @@ class ASTParser
           'end'
         ].compact
       end
-    in [instruction, *rest]
-      [*rest.flat_map { unfold(_1) }, instruction]
+    in [opcode, *rest]
+      [*rest.flat_map { unfold(_1) }, opcode]
     else
       [s_expression]
     end
   end
 
-  NUMERIC_INSTRUCTION_REGEXP =
+  NUMERIC_OPCODE_REGEXP =
     %r{
       \A
       (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
@@ -76,10 +76,10 @@ class ASTParser
   end
 
   def parse_instruction(s_expression)
-    s_expression => [instruction, *rest]
+    s_expression => [opcode, *rest]
 
-    case instruction
-    in NUMERIC_INSTRUCTION_REGEXP
+    case opcode
+    in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction(s_expression) =>
         [numeric_instruction, rest]
       numeric_instruction
@@ -100,14 +100,14 @@ class ASTParser
         'local.tee' => LocalTee,
         'br_if' => BrIf,
         'call' => Call
-      }.fetch(instruction).new(index:)
+      }.fetch(opcode).new(index:)
     in 'select'
       Select.new
     in 'nop'
       Nop.new
     in 'drop'
       Drop.new
-    in 'block' | 'loop' | 'if' => instruction
+    in 'block' | 'loop' | 'if' => opcode
       label =
         if rest in [%r{\A\$} => label, *rest]
           label.to_sym
@@ -116,7 +116,7 @@ class ASTParser
         end
       rest in [['result', *], *rest]
 
-      case instruction
+      case opcode
       in 'block'
         consume_structured_instruction(rest, terminated_by: 'end') =>
           [body, ['end', *rest]]
@@ -137,16 +137,16 @@ class ASTParser
         If.new(label:, consequent:, alternative:)
       end
     else
-      instruction
+      opcode
     end.then do |result|
       [result, rest]
     end
   end
 
   def parse_numeric_instruction(s_expression)
-    s_expression => [instruction, *rest]
+    s_expression => [opcode, *rest]
 
-    instruction.match(NUMERIC_INSTRUCTION_REGEXP) =>
+    opcode.match(NUMERIC_OPCODE_REGEXP) =>
       { type:, bits:, operation: }
     type = { 'f' => :float, 'i' => :integer }.fetch(type)
     bits = bits.to_i(10)
@@ -206,12 +206,12 @@ class ASTParser
 
     until rest in [^terminated_by, *]
       case rest
-      in ['block' | 'loop' | 'if' => instruction, *rest]
+      in ['block' | 'loop' | 'if' => opcode, *rest]
         consume_structured_instruction(rest, terminated_by: 'end') =>
           [s_expression, ['end' => terminator, *rest]]
-        instructions.concat([instruction, *s_expression, terminator])
-      in [instruction, *rest]
-        instructions << instruction
+        instructions.concat([opcode, *s_expression, terminator])
+      in [opcode, *rest]
+        instructions << opcode
       end
     end
 
