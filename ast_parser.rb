@@ -155,19 +155,18 @@ class ASTParser
 
     case opcode
     in 'block'
-      body = consume_structured_instruction(s_expression)
-      body = parse_expression(body)
-      Block.new(label:, body:)
+      Block.new \
+        label:,
+        body: parse_expression(consume_structured_instruction(s_expression))
     in 'loop'
-      body = consume_structured_instruction(s_expression)
-      body = parse_expression(body)
-      Loop.new(label:, body:)
+      Loop.new \
+        label:,
+        body: parse_expression(consume_structured_instruction(s_expression))
     in 'if'
-      consequent = consume_structured_instruction(s_expression, terminated_by: 'else')
-      alternative = consume_structured_instruction(s_expression)
-      [consequent, alternative].map { parse_expression(_1) } =>
-        [consequent, alternative]
-      If.new(label:, consequent:, alternative:)
+      If.new \
+        label:,
+        consequent: parse_expression(consume_structured_instruction(s_expression, terminated_by: 'else')),
+        alternative: parse_expression(consume_structured_instruction(s_expression))
     end
   end
 
