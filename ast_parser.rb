@@ -51,6 +51,14 @@ class ASTParser
           'end'
         ].compact
       end
+    in ['br_table' => opcode, *rest]
+      rest => [%r{\A(\d+|\$.+)\z} => index, *rest]
+      indexes = [index]
+      while rest in [%r{\A(\d+|\$.+)\z} => index, *rest]
+        indexes << index
+      end
+
+      [*rest.flat_map { unfold(_1) }, opcode, *indexes]
     in [opcode, *rest]
       [*rest.flat_map { unfold(_1) }, opcode]
     else
