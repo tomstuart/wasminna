@@ -290,6 +290,22 @@ class Interpreter
     in If(label:, consequent:, alternative:)
       stack.pop(1) => [condition]
       evaluate(condition.zero? ? alternative : consequent, locals:)
+    in BrTable(target_indexes:, default_index:)
+      stack.pop(1) => [table_index]
+      index =
+        if table_index < target_indexes.length
+          target_indexes.slice(table_index)
+        else
+          default_index
+        end
+      tag =
+        case index
+        in String
+          index.to_sym
+        in Integer
+          index
+        end
+      throw(tag, :branch)
     end
   end
 
