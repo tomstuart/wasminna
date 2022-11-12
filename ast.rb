@@ -17,4 +17,5 @@ module AST
   UnaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
   BinaryOp = Struct.new(:type, :bits, :operation, keyword_init: true)
   Unreachable = Struct.new(nil)
+  BrTable = Struct.new(:target_indexes, :default_index, keyword_init: true)
 end
