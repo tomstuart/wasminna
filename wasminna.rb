@@ -227,7 +227,7 @@ class Interpreter
     in UnaryOp(type: :float) | BinaryOp(type: :float)
       evaluate_float_instruction(instruction)
     in Return
-      # TODO some control flow effect
+      # TODO branch to outermost block (i.e. function body)
     in LocalGet(index:)
       case index
       in String
