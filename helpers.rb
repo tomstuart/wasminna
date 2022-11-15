@@ -12,12 +12,7 @@ module Helpers
     private
 
     def size_of(value, **kwargs)
-      quotient, remainder = value.divmod(kwargs.fetch(:in))
-      if remainder.zero?
-        quotient
-      else
-        quotient + 1
-      end
+      value.ceildiv(kwargs.fetch(:in))
     end
   end
 end
