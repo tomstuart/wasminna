@@ -242,9 +242,9 @@ class Interpreter
     in UnaryOp(type: :float) | BinaryOp(type: :float)
       evaluate_float_instruction(instruction)
     in Return
-      stack.pop(1) => [result] # TODO use function return type
+      stack.pop(function.results.length) => results
       stack.pop until stack.empty? # TODO stop at activation frame
-      stack.push(result)
+      stack.push(*results)
       # TODO branch to outermost block (i.e. function body)
     in LocalGet(index:)
       case index
