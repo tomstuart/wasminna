@@ -308,8 +308,9 @@ class Interpreter
         result =
           catch(label) do
             evaluate(body, locals:)
+            :did_not_throw
           end
-        break unless result == :branch
+        break if result == :did_not_throw
       end
     in If(label:, consequent:, alternative:)
       stack.pop(1) => [condition]
