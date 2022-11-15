@@ -195,7 +195,7 @@ class ASTParser
         'drop' => Drop,
         'unreachable' => Unreachable
       }.fetch(opcode).new
-    in 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call'
+    in 'local.get' | 'local.set' | 'local.tee' | 'br' | 'br_if' | 'call'
       read => index
       index =
         if index.start_with?('$')
@@ -208,6 +208,7 @@ class ASTParser
         'local.get' => LocalGet,
         'local.set' => LocalSet,
         'local.tee' => LocalTee,
+        'br' => Br,
         'br_if' => BrIf,
         'call' => Call
       }.fetch(opcode).new(index:)

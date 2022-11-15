@@ -18,4 +18,5 @@ module AST
   BinaryOp = Data.define(:type, :bits, :operation)
   Unreachable = Data.define
   BrTable = Data.define(:target_indexes, :default_index)
+  Br = Data.define(:index)
 end
