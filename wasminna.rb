@@ -285,8 +285,19 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, body:)
-      catch(:branch) do
-        evaluate(body, locals:)
+      result =
+        catch(:branch) do
+          evaluate(body, locals:)
+          :did_not_throw
+        end
+
+      case result
+      in :did_not_throw
+        # do nothing
+      in String
+        throw(:branch, result) unless result == label
+      in Integer
+        throw(:branch, result - 1) unless result.zero?
       end
     in Loop(label:, body:)
       loop do
@@ -295,7 +306,15 @@ class Interpreter
             evaluate(body, locals:)
             :did_not_throw
           end
-        break if result == :did_not_throw
+
+        case result
+        in :did_not_throw
+          break
+        in String
+          throw(:branch, result) unless result == label
+        in Integer
+          throw(:branch, result - 1) unless result.zero?
+        end
       end
     in If(label:, consequent:, alternative:)
       stack.pop(1) => [condition]
