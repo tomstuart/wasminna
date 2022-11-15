@@ -18,7 +18,7 @@ class ASTParser
 
   def unfold(s_expression)
     case s_expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br_if' | 'call' => opcode, argument, *rest]
+    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'br' | 'br_if' | 'call' => opcode, argument, *rest]
       [*rest.flat_map { unfold(_1) }, opcode, argument]
     in ['i32.load' | 'i64.load' | 'f32.load' | 'f64.load' | 'i32.store' | 'i64.store' | 'f32.store' | 'f64.store' => opcode, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [*rest.flat_map { unfold(_1) }, opcode, static_offset]
