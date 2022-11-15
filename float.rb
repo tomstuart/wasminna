@@ -141,8 +141,6 @@ module Wasminna
         \z
       }x
 
-    using Helpers::MatchPattern
-
     def parse(string)
       if finite_regexp_match(string) in [
         { sign:, whole:, fractional:, exponent_sign:, exponent: },

@@ -73,8 +73,6 @@ class ASTParser
       \z
     }x
 
-  using Helpers::MatchPattern
-
   def parse_expression(terminated_by:)
     with_input(read_until(terminated_by:)) do
       [].tap do |expression|
