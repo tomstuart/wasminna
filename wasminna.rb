@@ -96,7 +96,8 @@ class Interpreter
             next
           end
 
-          invoke_function(function:, arguments:)
+          evaluate(ASTParser.new.parse(arguments), locals: [])
+          invoke_function(function)
         in ['assert_return', ['invoke', name, *arguments], *expecteds]
           function = functions.detect { |function| function.name == name }
           if function.nil?
@@ -105,7 +106,8 @@ class Interpreter
             next
           end
 
-          invoke_function(function:, arguments:)
+          evaluate(ASTParser.new.parse(arguments), locals: [])
+          invoke_function(function)
           actual_values = stack.pop(expecteds.length)
           raise unless stack.empty?
 
@@ -206,10 +208,9 @@ class Interpreter
     end
   end
 
-  def invoke_function(function:, arguments:)
+  def invoke_function(function)
     parameter_names = function.parameters.map(&:name)
-    evaluate(ASTParser.new.parse(arguments), locals: [])
-    argument_values = stack.pop(arguments.length)
+    argument_values = stack.pop(function.parameters.length)
     raise unless stack.empty?
     parameters = parameter_names.zip(argument_values)
     locals = function.locals.map(&:name).map { [_1, 0] }
