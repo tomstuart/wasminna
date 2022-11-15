@@ -264,25 +264,11 @@ class Interpreter
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
     in Br(index:)
-      tag =
-        case index
-        in String
-          index.to_sym
-        in Integer
-          index
-        end
       throw(:branch)
     in BrIf(index:)
       stack.pop(1) => [condition]
 
       unless condition.zero?
-        tag =
-          case index
-          in String
-            index.to_sym
-          in Integer
-            index
-          end
         throw(:branch)
       end
     in Select
@@ -322,13 +308,6 @@ class Interpreter
           target_indexes.slice(table_index)
         else
           default_index
-        end
-      tag =
-        case index
-        in String
-          index.to_sym
-        in Integer
-          index
         end
       throw(:branch)
     end
