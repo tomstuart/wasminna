@@ -284,7 +284,7 @@ module Wasminna
       end
     end
 
-    Approximation = Struct.new(:rational, :exponent, keyword_init: true) do
+    Approximation = Struct.new(:rational, :exponent) do
       def fit_within(quotients:, exponents:)
         scale_within(quotients:, exponents:)
         round_within(quotients:, exponents:)
