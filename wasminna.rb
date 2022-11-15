@@ -266,13 +266,10 @@ class Interpreter
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
     in Br(index:)
-      throw(:branch)
+      throw(:branch, index)
     in BrIf(index:)
       stack.pop(1) => [condition]
-
-      unless condition.zero?
-        throw(:branch)
-      end
+      throw(:branch, index) unless condition.zero?
     in Select
       stack.pop(3) => [value_1, value_2, condition]
 
@@ -311,7 +308,7 @@ class Interpreter
         else
           default_index
         end
-      throw(:branch)
+      throw(:branch, index)
     end
   end
 
