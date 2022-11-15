@@ -152,7 +152,9 @@ class Interpreter
   using Sign::Conversion
 
   def define_function(expressions:)
-    { name: nil, parameters: [], results: [], locals: [], body: [] }.tap do |function|
+    expressions in [%r{\A\$} => name, *expressions]
+
+    { name:, parameters: [], results: [], locals: [], body: [] }.tap do |function|
       expressions.each do |expression|
         case expression
         in ['export', name]
