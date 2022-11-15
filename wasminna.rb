@@ -21,7 +21,7 @@ class Interpreter
   Local = Struct.new(:name, keyword_init: true)
   Function = Struct.new(:name, :parameters, :locals, :body, keyword_init: true)
 
-  class Memory < Struct.new(:bytes, keyword_init: true)
+  class Memory < Data.define(:bytes)
     include Helpers::Mask
     include Helpers::SizeOf
     extend Helpers::SizeOf
