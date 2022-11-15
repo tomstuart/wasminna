@@ -216,7 +216,9 @@ class Interpreter
     locals = parameters + locals
 
     with_current_function(function) do
-      evaluate(ASTParser.new.parse(function.body), locals:)
+      catch(:return) do
+        evaluate(ASTParser.new.parse(function.body), locals:)
+      end
     end
   end
 
@@ -245,7 +247,7 @@ class Interpreter
       stack.pop(function.results.length) => results
       stack.pop until stack.empty? # TODO stop at activation frame
       stack.push(*results)
-      # TODO branch to outermost block (i.e. function body)
+      throw(:return)
     in LocalGet(index:)
       case index
       in String
