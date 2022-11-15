@@ -184,9 +184,13 @@ module Wasminna
       end
     end
 
-    Infinite = Struct.new(:sign, keyword_init: true) do
+    Infinite = Data.define(:sign) do
       def to_f
         ::Float::INFINITY * sign
+      end
+
+      def with_sign(sign)
+        self.class.new(**to_h, sign:)
       end
 
       def encode(format:)
@@ -197,11 +201,15 @@ module Wasminna
       end
     end
 
-    Nan = Struct.new(:payload, :sign, keyword_init: true) do
+    Nan = Data.define(:payload, :sign) do
       include Helpers::Mask
 
       def to_f
         ::Float::NAN
+      end
+
+      def with_sign(sign)
+        self.class.new(**to_h, sign:)
       end
 
       def encode(format:)
@@ -215,9 +223,13 @@ module Wasminna
       end
     end
 
-    Zero = Struct.new(:sign, keyword_init: true) do
+    Zero = Data.define(:sign) do
       def to_f
         0.0 * sign
+      end
+
+      def with_sign(sign)
+        self.class.new(**to_h, sign:)
       end
 
       def encode(format:)
@@ -228,7 +240,7 @@ module Wasminna
       end
     end
 
-    Finite = Struct.new(:rational, keyword_init: true) do
+    Finite = Data.define(:rational) do
       include Helpers::Mask
 
       def to_f
@@ -239,8 +251,8 @@ module Wasminna
         rational.sign
       end
 
-      def sign=(sign)
-        self.rational = rational.abs * sign
+      def with_sign(sign)
+        self.class.new(**to_h, rational: rational.abs * sign)
       end
 
       def encode(format:)

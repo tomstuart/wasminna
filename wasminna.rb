@@ -477,8 +477,7 @@ class Interpreter
       in 'copysign'
         left, right =
           [left, right].map { Wasminna::Float.decode(_1, format:) }
-        left.sign = right.sign
-        left.encode(format:)
+        left.with_sign(right.sign).encode(format:)
       in 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
         left, right =
           [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
@@ -530,12 +529,10 @@ class Interpreter
         end
       in 'abs'
         value = Wasminna::Float.decode(value, format:)
-        value.sign = Sign::PLUS
-        value.encode(format:)
+        value.with_sign(Sign::PLUS).encode(format:)
       in 'neg'
         value = Wasminna::Float.decode(value, format:)
-        value.sign = !value.sign
-        value.encode(format:)
+        value.with_sign(!value.sign).encode(format:)
       in 'convert_i32_s' | 'convert_i64_s'
         integer_bits = operation.slice(%r{\d+}).to_i(10)
         integer = signed(value, bits: integer_bits)
