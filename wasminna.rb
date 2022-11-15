@@ -250,6 +250,15 @@ class Interpreter
       in Integer
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
+    in Br(index:)
+      tag =
+        case index
+        in String
+          index.to_sym
+        in Integer
+          index
+        end
+      throw(tag, :branch)
     in BrIf(index:)
       stack.pop(1) => [condition]
 
