@@ -159,13 +159,9 @@ class ASTParser
   def parse_structured_instruction
     read => opcode
 
-    label =
-      if peek in %r{\A\$}
-        read => %r{\A\$} => label
-        label.to_sym
-      else
-        0
-      end
+    if peek in %r{\A\$}
+      read => %r{\A\$} => label
+    end
     if peek in ['result', *]
       read
     end
