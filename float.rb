@@ -3,7 +3,7 @@ require 'sign'
 
 module Wasminna
   module Float
-    class Format < Struct.new(:exponent_bits, :significand_bits, keyword_init: true)
+    class Format < Data.define(:exponent_bits, :significand_bits)
       include Helpers::Mask
 
       ALL = [
