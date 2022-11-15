@@ -19,7 +19,7 @@ class Interpreter
 
   Parameter = Data.define(:name)
   Local = Data.define(:name)
-  Function = Data.define(:name, :parameters, :locals, :body)
+  Function = Data.define(:name, :parameters, :results, :locals, :body)
 
   class Memory < Data.define(:bytes)
     include Helpers::Mask
@@ -150,7 +150,7 @@ class Interpreter
   using Sign::Conversion
 
   def define_function(expressions:)
-    { name: nil, parameters: [], locals: [], body: [] }.tap do |function|
+    { name: nil, parameters: [], results: [], locals: [], body: [] }.tap do |function|
       expressions.each do |expression|
         case expression
         in ['export', name]
@@ -159,7 +159,8 @@ class Interpreter
           function[:parameters] << Parameter.new(name:)
         in ['param', *types]
           function[:parameters].concat(types.map { Parameter.new(name: nil) })
-        in ['result', *]
+        in ['result', *types]
+          function[:results].concat(types)
         in ['local', %r{\A\$} => name, _]
           function[:locals] << Local.new(name:)
         in ['local', *types]
