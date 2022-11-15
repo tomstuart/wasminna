@@ -56,7 +56,7 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack
+  attr_accessor :stack, :function
 
   def interpret_script(script)
     functions = nil
@@ -196,6 +196,16 @@ class Interpreter
       force_encoding(encoding)
   end
 
+  def with_current_function(function)
+    previous_function, self.function = self.function, function
+
+    begin
+      yield
+    ensure
+      self.function = previous_function
+    end
+  end
+
   def invoke_function(function:, arguments:)
     parameter_names = function.parameters.map(&:name)
     evaluate(ASTParser.new.parse(arguments), locals: [])
@@ -205,7 +215,9 @@ class Interpreter
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
 
-    evaluate(ASTParser.new.parse(function.body), locals:)
+    with_current_function(function) do
+      evaluate(ASTParser.new.parse(function.body), locals:)
+    end
   end
 
   def evaluate(expression, locals:)
