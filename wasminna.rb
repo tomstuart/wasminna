@@ -271,7 +271,7 @@ class Interpreter
         in Integer
           index
         end
-      throw(tag, :branch)
+      throw(:branch)
     in BrIf(index:)
       stack.pop(1) => [condition]
 
@@ -283,7 +283,7 @@ class Interpreter
           in Integer
             index
           end
-        throw(tag, :branch)
+        throw(:branch)
       end
     in Select
       stack.pop(3) => [value_1, value_2, condition]
@@ -300,13 +300,13 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, body:)
-      catch(label) do
+      catch(:branch) do
         evaluate(body, locals:)
       end
     in Loop(label:, body:)
       loop do
         result =
-          catch(label) do
+          catch(:branch) do
             evaluate(body, locals:)
             :did_not_throw
           end
@@ -330,7 +330,7 @@ class Interpreter
         in Integer
           index
         end
-      throw(tag, :branch)
+      throw(:branch)
     end
   end
 
