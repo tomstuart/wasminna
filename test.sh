@@ -18,7 +18,7 @@ do
   ruby -W:no-experimental -I"$WASMINNA_PATH" "$WASMINNA_PATH"/wasminna.rb "$WASM_SPEC_PATH"/test/core/$file
 done
 
-for pending in if
+for pending in
 do
   file=$pending.wast
   printf "\e[1m%s\e[0m (pending): " "$file"
