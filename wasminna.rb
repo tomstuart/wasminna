@@ -56,10 +56,10 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :function
+  attr_accessor :stack, :functions, :function
 
   def interpret_script(script)
-    functions = nil
+    self.functions = []
     @memory = nil
     self.stack = []
 
@@ -69,7 +69,7 @@ class Interpreter
         in ['module', 'binary', *]
           # TODO
         in ['module', *expressions]
-          functions = []
+          self.functions = []
 
           expressions.each do |expression|
             case expression
