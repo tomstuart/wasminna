@@ -284,7 +284,8 @@ class Interpreter
     in Nop
       # do nothing
     in Call(index:)
-      # TODO actually call the function
+      function = functions.detect { _1.name == index } || raise
+      invoke_function(function)
     in Drop
       stack.pop(1)
     in Block(label:, body:)
