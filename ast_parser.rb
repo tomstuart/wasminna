@@ -207,10 +207,9 @@ class ASTParser
     read => opcode
 
     case opcode
-    in 'return' | 'select' | 'nop' | 'drop' | 'unreachable' | 'memory.grow'
+    in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow'
       {
         'return' => Return,
-        'select' => Select,
         'nop' => Nop,
         'drop' => Drop,
         'unreachable' => Unreachable,
@@ -267,6 +266,12 @@ class ASTParser
       read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
 
       CallIndirect.new(table_index:, type_index:)
+    in 'select'
+      if peek in ['result', *]
+        read => ['result', *]
+      end
+
+      Select.new
     end
   end
 
