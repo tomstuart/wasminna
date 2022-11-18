@@ -59,6 +59,16 @@ class ASTParser
       end
 
       [*rest.flat_map { unfold(_1) }, opcode, *indexes]
+    in ['call_indirect' => opcode, *rest]
+      rest in [%r{\A(\d+|\$.+)\z} => table_index, *rest]
+      rest => [['type', %r{\A(\d+|\$.+)\z}] => typeuse, *rest]
+
+      [
+        *rest.flat_map { unfold(_1) },
+        opcode,
+        table_index,
+        typeuse
+      ].compact
     in [opcode, *rest]
       [*rest.flat_map { unfold(_1) }, opcode]
     else
