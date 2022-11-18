@@ -219,7 +219,9 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        evaluate(ASTParser.new.parse(function.body), locals:)
+        as_branch_target(label: nil, arity: function.results.length) do
+          evaluate(ASTParser.new.parse(function.body), locals:)
+        end
       end
     end
   end
