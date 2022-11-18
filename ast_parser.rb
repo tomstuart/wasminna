@@ -239,6 +239,21 @@ class ASTParser
       indexes => [*target_indexes, default_index]
 
       BrTable.new(target_indexes:, default_index:)
+    in 'call_indirect'
+      if peek in %r{\A(\d+|\$.+)\z}
+        read => %r{\A(\d+|\$.+)\z} => table_index
+        table_index =
+          if table_index.start_with?('$')
+            table_index
+          else
+            table_index.to_i(10)
+          end
+      else
+        table_index = 0
+      end
+      read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
+
+      CallIndirect.new(table_index:, type_index:)
     end
   end
 
