@@ -346,9 +346,37 @@ class Interpreter
           end
         end
       end
-    in If(label:, consequent:, alternative:)
+    in If(label:, results:, consequent:, alternative:)
       stack.pop(1) => [condition]
-      evaluate(condition.zero? ? alternative : consequent, locals:)
+      stack_height = stack.length
+      body = condition.zero? ? alternative : consequent
+
+      result =
+        catch(:branch) do
+          evaluate(body, locals:)
+          :did_not_throw
+        end
+
+      case result
+      in :did_not_throw
+        # do nothing
+      in String
+        if result == label
+          stack.pop(results.length) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+        else
+          throw(:branch, result)
+        end
+      in Integer
+        if result.zero?
+          stack.pop(results.length) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+        else
+          throw(:branch, result - 1)
+        end
+      end
     in BrTable(target_indexes:, default_index:)
       stack.pop(1) => [table_index]
       index =
