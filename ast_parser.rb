@@ -163,14 +163,16 @@ class ASTParser
       read => %r{\A\$} => label
     end
     if peek in ['result', *]
-      read
+      read => ['result', *results]
+    else
+      results = []
     end
 
     case opcode
     in 'block'
-      Block.new(label:, body: parse_expression(terminated_by: 'end'))
+      Block.new(label:, results:, body: parse_expression(terminated_by: 'end'))
     in 'loop'
-      Loop.new(label:, body: parse_expression(terminated_by: 'end'))
+      Loop.new(label:, results:, body: parse_expression(terminated_by: 'end'))
     in 'if'
       If.new \
         label:,
