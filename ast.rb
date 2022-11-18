@@ -20,4 +20,5 @@ module AST
   BrTable = Data.define(:target_indexes, :default_index)
   Br = Data.define(:index)
   CallIndirect = Data.define(:table_index, :type_index)
+  GlobalSet = Data.define(:index)
 end
