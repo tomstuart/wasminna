@@ -10,7 +10,7 @@ module AST
   Drop = Data.define
   Block = Data.define(:label, :results, :body)
   Loop = Data.define(:label, :results, :body)
-  If = Data.define(:label, :consequent, :alternative)
+  If = Data.define(:label, :results, :consequent, :alternative)
   Const = Data.define(:type, :bits, :number)
   Load = Data.define(:type, :bits, :offset)
   Store = Data.define(:type, :bits, :offset)

@@ -176,6 +176,7 @@ class ASTParser
     in 'if'
       If.new \
         label:,
+        results:,
         consequent: parse_expression(terminated_by: 'else'),
         alternative: parse_expression(terminated_by: 'end')
     end
