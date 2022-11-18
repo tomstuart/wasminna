@@ -213,7 +213,6 @@ class Interpreter
   def invoke_function(function)
     parameter_names = function.parameters.map(&:name)
     argument_values = stack.pop(function.parameters.length)
-    raise unless stack.empty?
     parameters = parameter_names.zip(argument_values)
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
