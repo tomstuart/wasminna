@@ -132,7 +132,7 @@ class ASTParser
         end
 
       Const.new(type:, bits:, number:)
-    in 'load' | 'store'
+    in 'load' | 'load8_s' | 'store' | 'store8' | 'store16'
       offset =
         if peek in %r{\Aoffset=\d+\z}
           read => %r{\Aoffset=\d+\z} => offset
@@ -144,7 +144,10 @@ class ASTParser
 
       {
         'load' => Load,
-        'store' => Store
+        'load8_s' => Load,
+        'store' => Store,
+        'store8' => Store,
+        'store16' => Store
       }.fetch(operation).new(type:, bits:, offset:)
     else
       case type
