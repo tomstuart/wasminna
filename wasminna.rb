@@ -317,8 +317,8 @@ class Interpreter
         end
       end
     in Loop(label:, results:, body:)
-      stack_height = stack.length
       loop do
+        stack_height = stack.length
         result =
           catch(:branch) do
             evaluate(body, locals:)
