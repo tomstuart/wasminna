@@ -289,93 +289,23 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, results:, body:)
-      stack_height = stack.length
-      result =
-        catch(:branch) do
-          evaluate(body, locals:)
-          :did_not_throw
-        end
-
-      case result
-      in :did_not_throw
-        # do nothing
-      in String
-        if result == label
-          stack.pop(results.length) => saved_operands
-          stack.pop(stack.length - stack_height)
-          stack.push(*saved_operands)
-        else
-          throw(:branch, result)
-        end
-      in Integer
-        if result.zero?
-          stack.pop(results.length) => saved_operands
-          stack.pop(stack.length - stack_height)
-          stack.push(*saved_operands)
-        else
-          throw(:branch, result - 1)
-        end
+      as_branch_target(label:, arity: results.length) do
+        evaluate(body, locals:)
       end
     in Loop(label:, results:, body:)
       loop do
-        stack_height = stack.length
-        result =
-          catch(:branch) do
+        branched =
+          as_branch_target(label:, arity: results.length) do
             evaluate(body, locals:)
-            :did_not_throw
           end
-
-        case result
-        in :did_not_throw
-          break
-        in String
-          if result == label
-            stack.pop(results.length) => saved_operands
-            stack.pop(stack.length - stack_height)
-            stack.push(*saved_operands)
-          else
-            throw(:branch, result)
-          end
-        in Integer
-          if result.zero?
-            stack.pop(results.length) => saved_operands
-            stack.pop(stack.length - stack_height)
-            stack.push(*saved_operands)
-          else
-            throw(:branch, result - 1)
-          end
-        end
+        break unless branched
       end
     in If(label:, results:, consequent:, alternative:)
       stack.pop(1) => [condition]
-      stack_height = stack.length
       body = condition.zero? ? alternative : consequent
 
-      result =
-        catch(:branch) do
-          evaluate(body, locals:)
-          :did_not_throw
-        end
-
-      case result
-      in :did_not_throw
-        # do nothing
-      in String
-        if result == label
-          stack.pop(results.length) => saved_operands
-          stack.pop(stack.length - stack_height)
-          stack.push(*saved_operands)
-        else
-          throw(:branch, result)
-        end
-      in Integer
-        if result.zero?
-          stack.pop(results.length) => saved_operands
-          stack.pop(stack.length - stack_height)
-          stack.push(*saved_operands)
-        else
-          throw(:branch, result - 1)
-        end
+      as_branch_target(label:, arity: results.length) do
+        evaluate(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
       stack.pop(1) => [table_index]
@@ -386,6 +316,38 @@ class Interpreter
           default_index
         end
       throw(:branch, index)
+    end
+  end
+
+  def as_branch_target(label:, arity:)
+    stack_height = stack.length
+    result =
+      catch(:branch) do
+        yield
+        :did_not_throw
+      end
+
+    case result
+    in :did_not_throw
+      false
+    in String
+      if result == label
+        stack.pop(arity) => saved_operands
+        stack.pop(stack.length - stack_height)
+        stack.push(*saved_operands)
+        true
+      else
+        throw(:branch, result)
+      end
+    in Integer
+      if result.zero?
+        stack.pop(arity) => saved_operands
+        stack.pop(stack.length - stack_height)
+        stack.push(*saved_operands)
+        true
+      else
+        throw(:branch, result - 1)
+      end
     end
   end
 
