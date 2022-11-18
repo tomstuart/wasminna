@@ -199,13 +199,14 @@ class ASTParser
     read => opcode
 
     case opcode
-    in 'return' | 'select' | 'nop' | 'drop' | 'unreachable'
+    in 'return' | 'select' | 'nop' | 'drop' | 'unreachable' | 'memory.grow'
       {
         'return' => Return,
         'select' => Select,
         'nop' => Nop,
         'drop' => Drop,
-        'unreachable' => Unreachable
+        'unreachable' => Unreachable,
+        'memory.grow' => MemoryGrow
       }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'global.set' | 'br' | 'br_if' | 'call'
       read => index
