@@ -69,6 +69,14 @@ class ASTParser
         table_index,
         typeuse
       ].compact
+    in ['select' => opcode, *rest]
+      rest in [['result', *] => type, *rest]
+
+      [
+        *rest.flat_map { unfold(_1) },
+        opcode,
+        type
+      ].compact
     in [opcode, *rest]
       [*rest.flat_map { unfold(_1) }, opcode]
     else
