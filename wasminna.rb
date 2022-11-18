@@ -288,7 +288,8 @@ class Interpreter
       invoke_function(function)
     in Drop
       stack.pop(1)
-    in Block(label:, body:)
+    in Block(label:, results:, body:)
+      stack_height = stack.length
       result =
         catch(:branch) do
           evaluate(body, locals:)
@@ -299,11 +300,24 @@ class Interpreter
       in :did_not_throw
         # do nothing
       in String
-        throw(:branch, result) unless result == label
+        if result == label
+          stack.pop(results.length) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+        else
+          throw(:branch, result)
+        end
       in Integer
-        throw(:branch, result - 1) unless result.zero?
+        if result.zero?
+          stack.pop(results.length) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+        else
+          throw(:branch, result - 1)
+        end
       end
-    in Loop(label:, body:)
+    in Loop(label:, results:, body:)
+      stack_height = stack.length
       loop do
         result =
           catch(:branch) do
@@ -315,9 +329,21 @@ class Interpreter
         in :did_not_throw
           break
         in String
-          throw(:branch, result) unless result == label
+          if result == label
+            stack.pop(results.length) => saved_operands
+            stack.pop(stack.length - stack_height)
+            stack.push(*saved_operands)
+          else
+            throw(:branch, result)
+          end
         in Integer
-          throw(:branch, result - 1) unless result.zero?
+          if result.zero?
+            stack.pop(results.length) => saved_operands
+            stack.pop(stack.length - stack_height)
+            stack.push(*saved_operands)
+          else
+            throw(:branch, result - 1)
+          end
         end
       end
     in If(label:, consequent:, alternative:)
