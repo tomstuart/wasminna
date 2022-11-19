@@ -61,7 +61,7 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :functions, :function, :tables
+  attr_accessor :stack, :functions, :function, :tables, :globals
 
   def interpret_script(script)
     @memory = nil
@@ -75,6 +75,7 @@ class Interpreter
         in ['module', *expressions]
           self.functions = []
           self.tables = []
+          self.globals = []
 
           expressions.each do |expression|
             case expression
@@ -91,7 +92,11 @@ class Interpreter
               @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
             in ['table', 'funcref', ['elem', *elements]]
               tables << Table.new(elements:)
-            in ['type' | 'global', *]
+            in ['global', name, ['mut', _], value]
+              evaluate(ASTParser.new.parse(value), locals: [])
+              stack.pop(1) => [value]
+              globals << [name, value]
+            in ['type', *]
               # TODO
             end
           end
