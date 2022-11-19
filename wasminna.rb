@@ -59,7 +59,6 @@ class Interpreter
   attr_accessor :stack, :functions, :function
 
   def interpret_script(script)
-    self.functions = []
     @memory = nil
     self.stack = []
 
