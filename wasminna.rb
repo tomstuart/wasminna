@@ -20,7 +20,7 @@ class Interpreter
   Parameter = Data.define(:name)
   Local = Data.define(:name)
   Function = Data.define(:name, :exported_name, :parameters, :results, :locals, :body)
-  Table = Data.define(:elements)
+  Table = Data.define(:name, :elements)
 
   class Memory < Data.define(:bytes)
     include Helpers::Mask
@@ -90,8 +90,10 @@ class Interpreter
             in ['memory', minimum_size]
               minimum_size = interpret_integer(minimum_size, bits: 32)
               @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
-            in ['table', 'funcref', ['elem', *elements]]
-              tables << Table.new(elements:)
+            in ['table', *rest]
+              rest in [%r{\A\$} => name, *rest]
+              rest => ['funcref', ['elem', *elements]]
+              tables << Table.new(name:, elements:)
             in ['global', name, ['mut', _], value]
               evaluate(ASTParser.new.parse(value), locals: [])
               stack.pop(1) => [value]
