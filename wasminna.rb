@@ -55,6 +55,10 @@ class Interpreter
         bytes.setbyte(offset + index, byte)
       end
     end
+
+    def size_in_pages
+      size_of(bytes.bytesize, in: BYTES_PER_PAGE)
+    end
   end
 
   attr_accessor :stack, :functions, :function, :tables
@@ -330,6 +334,10 @@ class Interpreter
           default_index
         end
       throw(:branch, index)
+    in MemoryGrow
+      stack.pop(1) => [delta]
+      stack.push(@memory.size_in_pages)
+      # TODO actually grow the memory
     end
   end
 
