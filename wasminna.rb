@@ -293,6 +293,13 @@ class Interpreter
     in Call(index:)
       function = functions.detect { _1.name == index } || raise
       invoke_function(function)
+    in CallIndirect(table_index:, type_index:)
+      stack.pop(1) => [index]
+
+      table = tables.slice(table_index)
+      name = table.elements.slice(index)
+      function = functions.detect { _1.name == name } || raise
+      invoke_function(function)
     in Drop
       stack.pop(1)
     in Block(label:, results:, body:)
