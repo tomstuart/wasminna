@@ -20,6 +20,7 @@ class Interpreter
   Parameter = Data.define(:name)
   Local = Data.define(:name)
   Function = Data.define(:name, :exported_name, :parameters, :results, :locals, :body)
+  Table = Data.define(:elements)
 
   class Memory < Data.define(:bytes)
     include Helpers::Mask
@@ -56,7 +57,7 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :functions, :function
+  attr_accessor :stack, :functions, :function, :tables
 
   def interpret_script(script)
     @memory = nil
@@ -69,6 +70,7 @@ class Interpreter
           # TODO
         in ['module', *expressions]
           self.functions = []
+          self.tables = []
 
           expressions.each do |expression|
             case expression
@@ -83,7 +85,9 @@ class Interpreter
             in ['memory', minimum_size]
               minimum_size = interpret_integer(minimum_size, bits: 32)
               @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
-            in ['type' | 'table' | 'global', *]
+            in ['table', 'funcref', ['elem', *elements]]
+              tables << Table.new(elements:)
+            in ['type' | 'global', *]
               # TODO
             end
           end
