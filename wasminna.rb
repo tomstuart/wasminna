@@ -290,7 +290,13 @@ class Interpreter
       end.tap { stack.push(_1) }
     in GlobalSet(index:)
       stack.pop(1) => [value]
-      # TODO store the value in the global
+
+      case index
+      in String
+        globals.assoc(index)[1] = value
+      in Integer
+        globals.slice(index)[1] = value
+      end
     in Br(index:)
       throw(:branch, index)
     in BrIf(index:)
