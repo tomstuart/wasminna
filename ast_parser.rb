@@ -215,7 +215,7 @@ class ASTParser
         'unreachable' => Unreachable,
         'memory.grow' => MemoryGrow
       }.fetch(opcode).new
-    in 'local.get' | 'local.set' | 'local.tee' | 'global.set' | 'br' | 'br_if' | 'call'
+    in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call'
       read => index
       index =
         if index.start_with?('$')
@@ -228,6 +228,7 @@ class ASTParser
         'local.get' => LocalGet,
         'local.set' => LocalSet,
         'local.tee' => LocalTee,
+        'global.get' => GlobalGet,
         'global.set' => GlobalSet,
         'br' => Br,
         'br_if' => BrIf,

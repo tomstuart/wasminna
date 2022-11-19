@@ -22,4 +22,5 @@ module AST
   CallIndirect = Data.define(:table_index, :type_index)
   GlobalSet = Data.define(:index)
   MemoryGrow = Data.define
+  GlobalGet = Data.define(:index)
 end
