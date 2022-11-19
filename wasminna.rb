@@ -19,7 +19,7 @@ class Interpreter
 
   Parameter = Data.define(:name)
   Local = Data.define(:name)
-  Function = Data.define(:name, :parameters, :results, :locals, :body)
+  Function = Data.define(:name, :exported_name, :parameters, :results, :locals, :body)
 
   class Memory < Data.define(:bytes)
     include Helpers::Mask
@@ -88,7 +88,7 @@ class Interpreter
             end
           end
         in ['invoke', name, *arguments]
-          function = functions.detect { |function| function.name == name }
+          function = functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
             puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -98,7 +98,7 @@ class Interpreter
           evaluate(ASTParser.new.parse(arguments), locals: [])
           invoke_function(function)
         in ['assert_return', ['invoke', name, *arguments], *expecteds]
-          function = functions.detect { |function| function.name == name }
+          function = functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
             puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -134,7 +134,7 @@ class Interpreter
           end
 
           print "\e[32m.\e[0m"
-        in ['assert_malformed' | 'assert_trap' | 'assert_invalid', *]
+        in ['assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion', *]
           # TODO
           print "\e[33m.\e[0m"
         end
@@ -153,11 +153,11 @@ class Interpreter
   def define_function(expressions:)
     expressions in [%r{\A\$} => name, *expressions]
 
-    { name:, parameters: [], results: [], locals: [], body: [] }.tap do |function|
+    { name:, exported_name: nil, parameters: [], results: [], locals: [], body: [] }.tap do |function|
       expressions.each do |expression|
         case expression
         in ['export', name]
-          function[:name] = name
+          function[:exported_name] = name
         in ['param', %r{\A\$} => name, _]
           function[:parameters] << Parameter.new(name:)
         in ['param', *types]
