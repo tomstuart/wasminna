@@ -269,6 +269,9 @@ class Interpreter
       in Integer
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
+    in GlobalSet(index:)
+      stack.pop(1) => [value]
+      # TODO store the value in the global
     in Br(index:)
       throw(:branch, index)
     in BrIf(index:)
