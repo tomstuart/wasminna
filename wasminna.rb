@@ -281,6 +281,13 @@ class Interpreter
       in Integer
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
+    in GlobalGet(index:)
+      case index
+      in String
+        globals.assoc(index)[1]
+      in Integer
+        globals.slice(index)[1]
+      end.tap { stack.push(_1) }
     in GlobalSet(index:)
       stack.pop(1) => [value]
       # TODO store the value in the global
