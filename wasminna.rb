@@ -91,8 +91,10 @@ class Interpreter
               minimum_size = interpret_integer(minimum_size, bits: 32)
               @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
             in ['table', *rest]
-              rest in [%r{\A\$} => name, *rest]
-              rest => ['funcref', ['elem', *elements]]
+              rest in [%r{\A(\d+|\$.+)\z} => name, *rest]
+              rest => ['funcref', *rest]
+              rest in [['elem', *elements], *rest]
+              rest => []
               tables << Table.new(name:, elements:)
             in ['global', name, ['mut', _], value]
               evaluate(ASTParser.new.parse(value), locals: [])
