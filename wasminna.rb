@@ -333,12 +333,8 @@ class Interpreter
         evaluate(body, locals:)
       end
     in Loop(label:, results:, body:)
-      loop do
-        branched =
-          as_branch_target(label:, arity: results.length) do
-            evaluate(body, locals:)
-          end
-        break unless branched
+      as_branch_target(label:, arity: results.length, branch_to_sequence_start: true) do
+        evaluate(body, locals:)
       end
     in If(label:, results:, consequent:, alternative:)
       stack.pop(1) => [condition]
@@ -363,23 +359,22 @@ class Interpreter
     end
   end
 
-  def as_branch_target(label:, arity:)
+  define_method :as_branch_target do |label:, arity:, branch_to_sequence_start: false, &block|
     stack_height = stack.length
     result =
       catch(:branch) do
-        yield
+        block.call
         :did_not_throw
       end
 
     case result
     in :did_not_throw
-      false
     in String
       if result == label
         stack.pop(arity) => saved_operands
         stack.pop(stack.length - stack_height)
         stack.push(*saved_operands)
-        true
+        redo if branch_to_sequence_start
       else
         throw(:branch, result)
       end
@@ -388,7 +383,7 @@ class Interpreter
         stack.pop(arity) => saved_operands
         stack.pop(stack.length - stack_height)
         stack.push(*saved_operands)
-        true
+        redo if branch_to_sequence_start
       else
         throw(:branch, result - 1)
       end
