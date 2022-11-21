@@ -6,7 +6,7 @@ class ASTParser
   include AST
   include Helpers::Mask
 
-  def parse(s_expression)
+  def parse_expression(s_expression)
     end_of_input = Object.new
     self.s_expression = s_expression + [end_of_input]
     parse_instructions(terminated_by: end_of_input)

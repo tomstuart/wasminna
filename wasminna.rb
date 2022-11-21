@@ -97,7 +97,7 @@ class Interpreter
               rest => []
               tables << Table.new(name:, elements:)
             in ['global', name, ['mut', _], value]
-              evaluate(ASTParser.new.parse(value), locals: [])
+              evaluate(ASTParser.new.parse_expression(value), locals: [])
               stack.pop(1) => [value]
               globals << [name, value]
             in ['type', *]
@@ -112,7 +112,7 @@ class Interpreter
             next
           end
 
-          evaluate(ASTParser.new.parse(arguments), locals: [])
+          evaluate(ASTParser.new.parse_expression(arguments), locals: [])
           invoke_function(function)
         in ['assert_return', ['invoke', name, *arguments], *expecteds]
           function = functions.detect { |function| function.exported_name == name }
@@ -122,7 +122,7 @@ class Interpreter
             next
           end
 
-          evaluate(ASTParser.new.parse(arguments), locals: [])
+          evaluate(ASTParser.new.parse_expression(arguments), locals: [])
           invoke_function(function)
           actual_values = stack.pop(expecteds.length)
           raise unless stack.empty?
@@ -136,7 +136,7 @@ class Interpreter
               float = Wasminna::Float.decode(actual_value, format:).to_f
               success = float.nan? # TODO check whether canonical or arithmetic
             else
-              evaluate(ASTParser.new.parse(expected), locals: [])
+              evaluate(ASTParser.new.parse_expression(expected), locals: [])
               stack.pop(1) => [expected_value]
               raise unless stack.empty?
               success = actual_value == expected_value
@@ -191,7 +191,7 @@ class Interpreter
           function[:body] << expression
         end
       end
-      function[:body] = ASTParser.new.parse(function[:body])
+      function[:body] = ASTParser.new.parse_expression(function[:body])
     end.then do |attributes|
       Function.new(**attributes)
     end
