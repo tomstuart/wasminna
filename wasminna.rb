@@ -87,12 +87,8 @@ class Interpreter
                 else
                   Memory.from_string(string: memory.string)
                 end
-            in ['table', *rest]
-              rest in [%r{\A(\d+|\$.+)\z} => name, *rest]
-              rest => ['funcref', *rest]
-              rest in [['elem', *elements], *rest]
-              rest => []
-              tables << Table.new(name:, elements:)
+            in ['table', *expressions]
+              tables << ASTParser.new.parse_table(expressions)
             in ['global', name, ['mut', _], value]
               evaluate(ASTParser.new.parse_expression(value), locals: [])
               stack.pop(1) => [value]

@@ -58,6 +58,15 @@ class ASTParser
     Memory.new(string:, minimum_size:, maximum_size:)
   end
 
+  def parse_table(s_expression)
+    s_expression in [%r{\A(\d+|\$.+)\z} => name, *s_expression]
+    s_expression => ['funcref', *s_expression]
+    s_expression in [['elem', *elements], *s_expression]
+    s_expression => []
+
+    Table.new(name:, elements:)
+  end
+
   private
 
   attr_accessor :s_expression
