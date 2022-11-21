@@ -90,15 +90,16 @@ class Interpreter
               stack.pop(1) => [value]
               [global.name, value]
             end
-        in ['invoke', name, *arguments]
-          function = functions.detect { |function| function.exported_name == name }
+        in ['invoke', *expressions]
+          invoke = ASTParser.new.parse_invoke(expressions)
+          function = functions.detect { |function| function.exported_name == invoke.name }
           if function.nil?
             puts
-            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
+            puts "\e[33mWARNING: couldn’t find function #{invoke.name} (could be binary?), skipping\e[0m"
             next
           end
 
-          evaluate(ASTParser.new.parse_expression(arguments), locals: [])
+          evaluate(invoke.arguments, locals: [])
           invoke_function(function)
         in ['assert_return', ['invoke', name, *arguments], *expecteds]
           function = functions.detect { |function| function.exported_name == name }

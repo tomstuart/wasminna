@@ -42,6 +42,13 @@ class ASTParser
     Module.new(functions:, memory:, tables:, globals:)
   end
 
+  def parse_invoke(s_expression)
+    s_expression => [name, *arguments]
+    arguments = parse_expression(arguments)
+
+    Invoke.new(name:, arguments:)
+  end
+
   def parse_function(s_expression)
     s_expression in [%r{\A\$} => name, *s_expression]
 

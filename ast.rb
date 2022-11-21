@@ -30,4 +30,5 @@ module AST
   Table = Data.define(:name, :elements)
   Global = Data.define(:name, :value)
   Module = Data.define(:functions, :memory, :tables, :globals)
+  Invoke = Data.define(:name, :arguments)
 end
