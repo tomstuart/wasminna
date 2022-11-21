@@ -66,38 +66,30 @@ class Interpreter
     script.each do |command|
       begin
         case command
-        in ['module', 'binary', *]
-          # TODO
         in ['module', *expressions]
-          self.functions = []
-          self.tables = []
-          self.globals = []
+          module_ = ASTParser.new.parse_module(expressions)
 
-          expressions.each do |expression|
-            case expression
-            in ['func', *expressions]
-              functions << ASTParser.new.parse_function(expressions)
-            in ['memory', *expressions]
-              memory = ASTParser.new.parse_memory(expressions)
-              @memory =
-                if memory.string.nil?
-                  Memory.from_limits \
-                    minimum_size: memory.minimum_size,
-                    maximum_size: memory.maximum_size
-                else
-                  Memory.from_string(string: memory.string)
-                end
-            in ['table', *expressions]
-              tables << ASTParser.new.parse_table(expressions)
-            in ['global', *expressions]
-              global = ASTParser.new.parse_global(expressions)
+          self.functions = module_.functions
+          self.tables = module_.tables
+
+          memory = module_.memory
+          unless memory.nil?
+            @memory =
+              if memory.string.nil?
+                Memory.from_limits \
+                  minimum_size: memory.minimum_size,
+                  maximum_size: memory.maximum_size
+              else
+                Memory.from_string(string: memory.string)
+              end
+          end
+
+          self.globals =
+            module_.globals.map do |global|
               evaluate(global.value, locals: [])
               stack.pop(1) => [value]
-              globals << [global.name, value]
-            in ['type', *]
-              # TODO
+              [global.name, value]
             end
-          end
         in ['invoke', name, *arguments]
           function = functions.detect { |function| function.exported_name == name }
           if function.nil?

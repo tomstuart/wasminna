@@ -16,6 +16,32 @@ class ASTParser
     s_expression
   end
 
+  def parse_module(s_expression)
+    functions, memory, tables, globals = [], nil, [], []
+
+    case s_expression
+    in ['binary', *]
+      # TODO
+    in [*expressions]
+      expressions.each do |expression|
+        case expression
+        in ['func', *expressions]
+          functions << parse_function(expressions)
+        in ['memory', *expressions]
+          memory = parse_memory(expressions)
+        in ['table', *expressions]
+          tables << parse_table(expressions)
+        in ['global', *expressions]
+          globals << parse_global(expressions)
+        in ['type', *]
+          # TODO
+        end
+      end
+    end
+
+    Module.new(functions:, memory:, tables:, globals:)
+  end
+
   def parse_function(s_expression)
     s_expression in [%r{\A\$} => name, *s_expression]
 

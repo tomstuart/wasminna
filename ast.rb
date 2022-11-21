@@ -29,4 +29,5 @@ module AST
   Memory = Data.define(:string, :minimum_size, :maximum_size)
   Table = Data.define(:name, :elements)
   Global = Data.define(:name, :value)
+  Module = Data.define(:functions, :memory, :tables, :globals)
 end
