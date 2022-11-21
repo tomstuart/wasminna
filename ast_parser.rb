@@ -94,7 +94,14 @@ class ASTParser
   def parse_expression(terminated_by:)
     with_input(read_until(terminated_by:)) do
       [].tap do |expression|
-        expression << parse_instruction until finished?
+        until finished?
+          case peek
+          in [*]
+            expression.concat(parse_folded_instruction)
+          else
+            expression << parse_instruction
+          end
+        end
       end
     end
   end
@@ -112,8 +119,6 @@ class ASTParser
 
   def parse_instruction
     case peek
-    in [*]
-      parse_folded_instruction
     in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction
     in 'block' | 'loop' | 'if'
@@ -125,9 +130,10 @@ class ASTParser
 
   def parse_folded_instruction
     read => [*] => folded_instruction
-    unfolded_instructions = unfold(folded_instruction)
-    s_expression.unshift(*unfolded_instructions)
-    parse_instruction
+    end_of_input = Object.new
+    with_input(unfold(folded_instruction) + [end_of_input]) do
+      parse_expression(terminated_by: end_of_input)
+    end
   end
 
   def parse_numeric_instruction
