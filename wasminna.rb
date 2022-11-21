@@ -191,6 +191,7 @@ class Interpreter
           function[:body] << expression
         end
       end
+      function[:body] = ASTParser.new.parse(function[:body])
     end.then do |attributes|
       Function.new(**attributes)
     end
@@ -236,7 +237,7 @@ class Interpreter
     with_current_function(function) do
       catch(:return) do
         as_branch_target(label: nil, arity: function.results.length) do
-          evaluate(ASTParser.new.parse(function.body), locals:)
+          evaluate(function.body, locals:)
         end
       end
     end
