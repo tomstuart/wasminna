@@ -9,7 +9,7 @@ class ASTParser
   def parse(s_expression)
     end_of_input = Object.new
     self.s_expression = s_expression + [end_of_input]
-    parse_expression(terminated_by: end_of_input)
+    parse_instructions(terminated_by: end_of_input)
   end
 
   private
@@ -99,7 +99,7 @@ class ASTParser
       \z
     }x
 
-  def parse_expression(terminated_by:)
+  def parse_instructions(terminated_by:)
     with_input(read_until(terminated_by:)) do
       [].tap do |expression|
         until finished?
@@ -140,7 +140,7 @@ class ASTParser
     read => [*] => folded_instruction
     end_of_input = Object.new
     with_input(unfold(folded_instruction) + [end_of_input]) do
-      parse_expression(terminated_by: end_of_input)
+      parse_instructions(terminated_by: end_of_input)
     end
   end
 
@@ -214,13 +214,13 @@ class ASTParser
 
     case opcode
     in 'block'
-      body = parse_expression(terminated_by: 'end')
+      body = parse_instructions(terminated_by: 'end')
       if !label.nil? && peek in ^label
         read => ^label
       end
       Block.new(label:, results:, body:)
     in 'loop'
-      body = parse_expression(terminated_by: 'end')
+      body = parse_instructions(terminated_by: 'end')
       if !label.nil? && peek in ^label
         read => ^label
       end
@@ -234,7 +234,7 @@ class ASTParser
       consequent, alternative = nil, nil
       end_of_input = Object.new
       with_input(body_s_expression + [end_of_input]) do
-        consequent = parse_expression(terminated_by: ['else', end_of_input])
+        consequent = parse_instructions(terminated_by: ['else', end_of_input])
         if !label.nil? && peek in ^label
           read => ^label
         end
@@ -242,7 +242,7 @@ class ASTParser
           if finished?
             []
           else
-            parse_expression(terminated_by: end_of_input)
+            parse_instructions(terminated_by: end_of_input)
           end
       end
 
