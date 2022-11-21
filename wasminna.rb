@@ -18,9 +18,6 @@ class Interpreter
   include AST
   include Helpers::Mask
 
-  Parameter = Data.define(:name)
-  Local = Data.define(:name)
-  Function = Data.define(:name, :exported_name, :parameters, :results, :locals, :body)
   Table = Data.define(:name, :elements)
 
   class Memory < Data.define(:bytes)
