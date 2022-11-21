@@ -8,7 +8,7 @@ class ASTParser
 
   def parse(s_expression)
     end_of_input = Object.new
-    self.s_expression = s_expression.flat_map { unfold(_1) } + [end_of_input]
+    self.s_expression = s_expression + [end_of_input]
     parse_expression(terminated_by: end_of_input)
   end
 
@@ -112,6 +112,8 @@ class ASTParser
 
   def parse_instruction
     case peek
+    in [*]
+      parse_folded_instruction
     in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction
     in 'block' | 'loop' | 'if'
@@ -119,6 +121,13 @@ class ASTParser
     else
       parse_normal_instruction
     end
+  end
+
+  def parse_folded_instruction
+    read => [*] => folded_instruction
+    unfolded_instructions = unfold(folded_instruction)
+    s_expression.unshift(*unfolded_instructions)
+    parse_instruction
   end
 
   def parse_numeric_instruction
