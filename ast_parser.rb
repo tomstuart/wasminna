@@ -61,7 +61,7 @@ class ASTParser
       [*rest.flat_map { unfold(_1) }, opcode, *indexes]
     in ['call_indirect' => opcode, *rest]
       rest in [%r{\A(\d+|\$.+)\z} => table_index, *rest]
-      rest => [['type', %r{\A(\d+|\$.+)\z}] => typeuse, *rest]
+      rest in [['type', %r{\A(\d+|\$.+)\z}] => typeuse, *rest]
 
       [
         *rest.flat_map { unfold(_1) },
@@ -276,7 +276,9 @@ class ASTParser
       else
         table_index = 0
       end
-      read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
+      if peek in ['type', %r{\A(\d+|\$.+)\z}]
+        read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
+      end
 
       CallIndirect.new(table_index:, type_index:)
     in 'select'
