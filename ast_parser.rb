@@ -327,10 +327,12 @@ class ASTParser
   end
 
   def read_until(terminated_by:)
+    terminators = Array(terminated_by)
+
     [].tap do |atoms|
       loop do
         read => opcode
-        break if opcode == terminated_by
+        break if terminators.include?(opcode)
 
         atoms << opcode
         if opcode in 'block' | 'loop' | 'if'
