@@ -18,8 +18,6 @@ class Interpreter
   include AST
   include Helpers::Mask
 
-  Table = Data.define(:name, :elements)
-
   class Memory < Data.define(:bytes)
     include Helpers::Mask
     include Helpers::SizeOf
