@@ -191,15 +191,27 @@ class ASTParser
 
     case opcode
     in 'block'
-      Block.new(label:, results:, body: parse_expression(terminated_by: 'end'))
+      body = parse_expression(terminated_by: 'end')
+      if !label.nil? && peek in ^label
+        read => ^label
+      end
+      Block.new(label:, results:, body:)
     in 'loop'
-      Loop.new(label:, results:, body: parse_expression(terminated_by: 'end'))
+      body = parse_expression(terminated_by: 'end')
+      if !label.nil? && peek in ^label
+        read => ^label
+      end
+      Loop.new(label:, results:, body:)
     in 'if'
-      If.new \
-        label:,
-        results:,
-        consequent: parse_expression(terminated_by: 'else'),
-        alternative: parse_expression(terminated_by: 'end')
+      consequent = parse_expression(terminated_by: 'else')
+      if !label.nil? && peek in ^label
+        read => ^label
+      end
+      alternative = parse_expression(terminated_by: 'end')
+      if !label.nil? && peek in ^label
+        read => ^label
+      end
+      If.new(label:, results:, consequent:, alternative:)
     end
   end
 
