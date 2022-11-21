@@ -8,7 +8,8 @@ require 'sign'
 def main
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
-    Interpreter.new.interpret_script(s_expression)
+    ast = ASTParser.new.parse_script(s_expression)
+    Interpreter.new.interpret_script(ast)
     puts
   end
 end

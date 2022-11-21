@@ -12,6 +12,10 @@ class ASTParser
     parse_instructions(terminated_by: end_of_input)
   end
 
+  def parse_script(s_expression)
+    s_expression
+  end
+
   private
 
   attr_accessor :s_expression
