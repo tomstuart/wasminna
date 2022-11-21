@@ -16,6 +16,36 @@ class ASTParser
     s_expression
   end
 
+  def parse_function(s_expression)
+    s_expression in [%r{\A\$} => name, *s_expression]
+
+    { name:, exported_name: nil, parameters: [], results: [], locals: [], body: [] }.tap do |function|
+      s_expression.each do |expression|
+        case expression
+        in ['export', name]
+          function[:exported_name] = name
+        in ['param', %r{\A\$} => name, _]
+          function[:parameters] << Parameter.new(name:)
+        in ['param', *types]
+          function[:parameters].concat(types.map { Parameter.new(name: nil) })
+        in ['result', *types]
+          function[:results].concat(types)
+        in ['local', %r{\A\$} => name, _]
+          function[:locals] << Local.new(name:)
+        in ['local', *types]
+          types.each do
+            function[:locals] << Local.new(name: nil)
+          end
+        else
+          function[:body] << expression
+        end
+      end
+      function[:body] = ASTParser.new.parse_expression(function[:body])
+    end.then do |attributes|
+      Function.new(**attributes)
+    end
+  end
+
   private
 
   attr_accessor :s_expression

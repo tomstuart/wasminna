@@ -78,7 +78,7 @@ class Interpreter
           expressions.each do |expression|
             case expression
             in ['func', *expressions]
-              functions << define_function(expressions:)
+              functions << ASTParser.new.parse_function(expressions)
             in ['memory', ['data', *strings]]
               @memory = Memory.from_string(string: strings.map { parse_string(_1) }.join)
             in ['memory', minimum_size, maximum_size]
@@ -164,36 +164,6 @@ class Interpreter
   private
 
   using Sign::Conversion
-
-  def define_function(expressions:)
-    expressions in [%r{\A\$} => name, *expressions]
-
-    { name:, exported_name: nil, parameters: [], results: [], locals: [], body: [] }.tap do |function|
-      expressions.each do |expression|
-        case expression
-        in ['export', name]
-          function[:exported_name] = name
-        in ['param', %r{\A\$} => name, _]
-          function[:parameters] << Parameter.new(name:)
-        in ['param', *types]
-          function[:parameters].concat(types.map { Parameter.new(name: nil) })
-        in ['result', *types]
-          function[:results].concat(types)
-        in ['local', %r{\A\$} => name, _]
-          function[:locals] << Local.new(name:)
-        in ['local', *types]
-          types.each do
-            function[:locals] << Local.new(name: nil)
-          end
-        else
-          function[:body] << expression
-        end
-      end
-      function[:body] = ASTParser.new.parse_expression(function[:body])
-    end.then do |attributes|
-      Function.new(**attributes)
-    end
-  end
 
   def pretty_print(expression)
     case expression
