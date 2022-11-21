@@ -79,8 +79,6 @@ class ASTParser
       ].compact
     in [opcode, *rest]
       [*rest, opcode]
-    else
-      [s_expression]
     end
   end
 
