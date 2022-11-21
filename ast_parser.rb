@@ -62,12 +62,22 @@ class ASTParser
     in ['call_indirect' => opcode, *rest]
       rest in [%r{\A(\d+|\$.+)\z} => table_index, *rest]
       rest in [['type', %r{\A(\d+|\$.+)\z}] => typeuse, *rest]
+      params = []
+      while rest in [['param', *] => param, *rest]
+        params << param
+      end
+      results = []
+      while rest in [['result', *] => result, *rest]
+        results << result
+      end
 
       [
         *rest,
         opcode,
         table_index,
-        typeuse
+        typeuse,
+        *params,
+        *results
       ].compact
     in ['select' => opcode, *rest]
       rest in [['result', *] => type, *rest]
@@ -291,6 +301,12 @@ class ASTParser
       end
       if peek in ['type', %r{\A(\d+|\$.+)\z}]
         read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
+      end
+      while peek in ['param', *]
+        read => ['param', *]
+      end
+      while peek in ['result', *]
+        read => ['result', *]
       end
 
       CallIndirect.new(table_index:, type_index:)
