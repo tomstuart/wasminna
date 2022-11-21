@@ -89,10 +89,11 @@ class Interpreter
                 end
             in ['table', *expressions]
               tables << ASTParser.new.parse_table(expressions)
-            in ['global', name, ['mut', _], value]
-              evaluate(ASTParser.new.parse_expression(value), locals: [])
+            in ['global', *expressions]
+              global = ASTParser.new.parse_global(expressions)
+              evaluate(global.value, locals: [])
               stack.pop(1) => [value]
-              globals << [name, value]
+              globals << [global.name, value]
             in ['type', *]
               # TODO
             end

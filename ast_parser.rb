@@ -67,6 +67,13 @@ class ASTParser
     Table.new(name:, elements:)
   end
 
+  def parse_global(s_expression)
+    s_expression => [name, ['mut', _], value]
+    value = parse_expression(value)
+
+    Global.new(name:, value:)
+  end
+
   private
 
   attr_accessor :s_expression
