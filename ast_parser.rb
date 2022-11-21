@@ -226,14 +226,21 @@ class ASTParser
       end
       Loop.new(label:, results:, body:)
     in 'if'
-      consequent = parse_expression(terminated_by: 'else')
+      body_s_expression = read_until(terminated_by: 'end')
       if !label.nil? && peek in ^label
         read => ^label
       end
-      alternative = parse_expression(terminated_by: 'end')
-      if !label.nil? && peek in ^label
-        read => ^label
+
+      consequent, alternative = nil, nil
+      end_of_input = Object.new
+      with_input(body_s_expression + [end_of_input]) do
+        consequent = parse_expression(terminated_by: 'else')
+        if !label.nil? && peek in ^label
+          read => ^label
+        end
+        alternative = parse_expression(terminated_by: end_of_input)
       end
+
       If.new(label:, results:, consequent:, alternative:)
     end
   end
