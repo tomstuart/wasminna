@@ -79,15 +79,16 @@ class Interpreter
             case expression
             in ['func', *expressions]
               functions << ASTParser.new.parse_function(expressions)
-            in ['memory', ['data', *strings]]
-              @memory = Memory.from_string(string: strings.map { parse_string(_1) }.join)
-            in ['memory', minimum_size, maximum_size]
-              minimum_size, maximum_size =
-                [minimum_size, maximum_size].map { interpret_integer(_1, bits: 32) }
-              @memory = Memory.from_limits(minimum_size:, maximum_size:)
-            in ['memory', minimum_size]
-              minimum_size = interpret_integer(minimum_size, bits: 32)
-              @memory = Memory.from_limits(minimum_size:, maximum_size: nil)
+            in ['memory', *expressions]
+              memory = ASTParser.new.parse_memory(expressions)
+              @memory =
+                if memory.string.nil?
+                  Memory.from_limits \
+                    minimum_size: memory.minimum_size,
+                    maximum_size: memory.maximum_size
+                else
+                  Memory.from_string(string: memory.string)
+                end
             in ['table', *rest]
               rest in [%r{\A(\d+|\$.+)\z} => name, *rest]
               rest => ['funcref', *rest]
@@ -172,17 +173,6 @@ class Interpreter
     else
       expression
     end
-  end
-
-  def parse_string(string)
-    encoding = string.encoding
-    string.
-      delete_prefix('"').delete_suffix('"').
-      force_encoding(Encoding::ASCII_8BIT).
-      gsub!(%r{\\\h{2}}) do |digits|
-        digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
-      end.
-      force_encoding(encoding)
   end
 
   def with_current_function(function)
@@ -674,17 +664,6 @@ class Interpreter
     else
       signed
     end
-  end
-
-  def interpret_integer(string, bits:)
-    value =
-      if string.delete_prefix('-').start_with?('0x')
-        string.to_i(16)
-      else
-        string.to_i(10)
-      end
-
-    unsigned(value, bits:)
   end
 end
 

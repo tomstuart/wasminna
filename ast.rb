@@ -26,4 +26,5 @@ module AST
   Parameter = Data.define(:name)
   Local = Data.define(:name)
   Function = Data.define(:name, :exported_name, :parameters, :results, :locals, :body)
+  Memory = Data.define(:string, :minimum_size, :maximum_size)
 end

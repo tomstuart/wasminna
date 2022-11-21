@@ -44,6 +44,20 @@ class ASTParser
     Function.new(name:, exported_name:, parameters:, results:, locals:, body:)
   end
 
+  def parse_memory(s_expression)
+    case s_expression
+    in [['data', *strings]]
+      string = strings.map { with_input([_1]) { parse_string } }.join
+    in [minimum_size, maximum_size]
+      minimum_size, maximum_size =
+        [minimum_size, maximum_size].map { with_input([_1]) { parse_integer(bits: 32) } }
+    in [minimum_size]
+      minimum_size = with_input([minimum_size]) { parse_integer(bits: 32) }
+    end
+
+    Memory.new(string:, minimum_size:, maximum_size:)
+  end
+
   private
 
   attr_accessor :s_expression
@@ -406,6 +420,18 @@ class ASTParser
   def parse_float(bits:)
     format = Wasminna::Float::Format.for(bits:)
     Wasminna::Float.parse(read).encode(format:)
+  end
+
+  def parse_string
+    read => string
+    encoding = string.encoding
+    string.
+      delete_prefix('"').delete_suffix('"').
+      force_encoding(Encoding::ASCII_8BIT).
+      gsub!(%r{\\\h{2}}) do |digits|
+        digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
+      end.
+      force_encoding(encoding)
   end
 
   def finished?
