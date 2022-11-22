@@ -62,7 +62,7 @@ class ASTParser
           read => opcode
           case opcode
           in 'func'
-            functions << parse_function(s_expression)
+            functions << parse_function
           in 'memory'
             memory = parse_memory(s_expression)
           in 'table'
@@ -109,30 +109,58 @@ class ASTParser
     AssertReturn.new(invoke:, expecteds:)
   end
 
-  def parse_function(s_expression)
-    s_expression in [%r{\A\$} => name, *s_expression]
+  def parse_function
+    if peek in %r{\A\$}
+      read => %r{\A\$} => name
+    end
 
     exported_name, parameters, results, locals, body = nil, [], [], [], []
-    s_expression.each do |expression|
+    until finished?
+      read => expression
       case expression
-      in ['export', exported_name]
-      in ['param', %r{\A\$} => parameter_name, _]
-        parameters << Parameter.new(name: parameter_name)
-      in ['param', *types]
-        parameters.concat(types.map { Parameter.new(name: nil) })
-      in ['result', *types]
-        results.concat(types)
-      in ['local', %r{\A\$} => local_name, _]
-        locals << Local.new(name: local_name)
-      in ['local', *types]
-        types.each do
-          locals << Local.new(name: nil)
+      in [*]
+        with_input(expression) do
+          peek => opcode
+          case opcode
+          in 'export'
+            read => ^opcode
+            read => exported_name
+          in 'param'
+            read => ^opcode
+            if peek in %r{\A\$}
+              read => %r{\A\$} => parameter_name
+              read
+              parameters << Parameter.new(name: parameter_name)
+            else
+              until finished?
+                read
+                parameters << Parameter.new(name: nil)
+              end
+            end
+          in 'result'
+            read => ^opcode
+            results << read until finished?
+          in 'local'
+            read => ^opcode
+            if peek in %r{\A\$}
+              read => %r{\A\$} => local_name
+              read
+              locals << Local.new(name: local_name)
+            else
+              until finished?
+                read
+                locals << Local.new(name: nil)
+              end
+            end
+          else
+            body << expression
+          end
         end
       else
         body << expression
       end
     end
-    body = ASTParser.new.parse_expression(body)
+    body = with_input(body) { parse_instructions }
 
     Function.new(name:, exported_name:, parameters:, results:, locals:, body:)
   end
