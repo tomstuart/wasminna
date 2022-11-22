@@ -8,8 +8,9 @@ class ASTParser
 
   def parse_expression(s_expression)
     end_of_input = Object.new
-    self.s_expression = s_expression + [end_of_input]
-    parse_instructions(terminated_by: end_of_input)
+    with_input(s_expression + [end_of_input]) do
+      parse_instructions(terminated_by: end_of_input)
+    end
   end
 
   def parse_script(s_expression)
