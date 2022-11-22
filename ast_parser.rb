@@ -14,21 +14,29 @@ class ASTParser
   end
 
   def parse_script(s_expression)
-    s_expression.map do |command|
-      case command
-      in ['module', *expressions]
-        parse_module(expressions)
-      in ['invoke', *expressions]
-        parse_invoke(expressions)
-      in ['assert_return', *expressions]
-        parse_assert_return(expressions)
-      in ['assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion', *]
-        # TODO
-        SkippedAssertion.new
+    commands = []
+    with_input(s_expression) do
+      until finished?
+        read => command
+        commands <<
+          with_input(command) do
+            read => opcode
+            case opcode
+            in 'module'
+              parse_module(self.s_expression)
+            in 'invoke'
+              parse_invoke(self.s_expression)
+            in 'assert_return'
+              parse_assert_return(self.s_expression)
+            in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
+              # TODO
+              SkippedAssertion.new
+            end
+          end
       end
-    end.then do |commands|
-      Script.new(commands:)
     end
+
+    Script.new(commands:)
   end
 
   private
