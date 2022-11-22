@@ -31,4 +31,6 @@ module AST
   Global = Data.define(:name, :value)
   Module = Data.define(:functions, :memory, :tables, :globals)
   Invoke = Data.define(:name, :arguments)
+  AssertReturn = Data.define(:invoke, :expecteds)
+  NanExpectation = Data.define(:nan, :bits)
 end

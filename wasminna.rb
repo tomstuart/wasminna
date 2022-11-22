@@ -101,29 +101,29 @@ class Interpreter
 
           evaluate(invoke.arguments, locals: [])
           invoke_function(function)
-        in ['assert_return', ['invoke', name, *arguments], *expecteds]
-          function = functions.detect { |function| function.exported_name == name }
+        in ['assert_return', *expressions]
+          assert_return = ASTParser.new.parse_assert_return(expressions)
+          function = functions.detect { |function| function.exported_name == assert_return.invoke.name }
           if function.nil?
             puts
-            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
+            puts "\e[33mWARNING: couldn’t find function #{assert_return.invoke.name} (could be binary?), skipping\e[0m"
             next
           end
 
-          evaluate(ASTParser.new.parse_expression(arguments), locals: [])
+          evaluate(assert_return.invoke.arguments, locals: [])
           invoke_function(function)
-          actual_values = stack.pop(expecteds.length)
+          actual_values = stack.pop(assert_return.expecteds.length)
           raise unless stack.empty?
 
-          expecteds.zip(actual_values).each do |expected, actual_value|
+          assert_return.expecteds.zip(actual_values).each do |expected, actual_value|
             case expected
-            in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+            in NanExpectation(nan:, bits:)
               expected_value = nan
-              bits = instruction.slice(%r{\d+}).to_i(10)
               format = Wasminna::Float::Format.for(bits:)
               float = Wasminna::Float.decode(actual_value, format:).to_f
               success = float.nan? # TODO check whether canonical or arithmetic
             else
-              evaluate(ASTParser.new.parse_expression(expected), locals: [])
+              evaluate(expected, locals: [])
               stack.pop(1) => [expected_value]
               raise unless stack.empty?
               success = actual_value == expected_value

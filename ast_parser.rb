@@ -49,6 +49,24 @@ class ASTParser
     Invoke.new(name:, arguments:)
   end
 
+  def parse_assert_return(s_expression)
+    s_expression => [['invoke', *invoke], *expecteds]
+    invoke = parse_invoke(invoke)
+
+    expecteds =
+      expecteds.map do |expected|
+        case expected
+        in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+          bits = instruction.slice(%r{\d+}).to_i(10)
+          NanExpectation.new(nan:, bits:)
+        else
+          parse_expression(expected)
+        end
+      end
+
+    AssertReturn.new(invoke:, expecteds:)
+  end
+
   def parse_function(s_expression)
     s_expression in [%r{\A\$} => name, *s_expression]
 
