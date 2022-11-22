@@ -66,7 +66,7 @@ class ASTParser
           in 'memory'
             memory = parse_memory
           in 'table'
-            tables << parse_table(s_expression)
+            tables << parse_table
           in 'global'
             globals << parse_global(s_expression)
           in 'type'
@@ -184,11 +184,20 @@ class ASTParser
     Memory.new(string:, minimum_size:, maximum_size:)
   end
 
-  def parse_table(s_expression)
-    s_expression in [%r{\A(\d+|\$.+)\z} => name, *s_expression]
-    s_expression => ['funcref', *s_expression]
-    s_expression in [['elem', *elements], *s_expression]
-    s_expression => []
+  def parse_table
+    if peek in %r{\A(\d+|\$.+)\z}
+      read => %r{\A(\d+|\$.+)\z} => name
+    end
+
+    read => 'funcref'
+
+    elements = []
+    unless finished?
+      with_input(read) do
+        read => 'elem'
+        elements << read until finished?
+      end
+    end
 
     Table.new(name:, elements:)
   end
