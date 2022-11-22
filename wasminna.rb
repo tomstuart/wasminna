@@ -63,16 +63,13 @@ class Interpreter
     @memory = nil
     self.stack = []
 
-    script.each do |command|
+    script.commands.each do |command|
       begin
         case command
-        in ['module', *expressions]
-          module_ = ASTParser.new.parse_module(expressions)
+        in Module(functions:, tables:, memory:, globals:)
+          self.functions = functions
+          self.tables = tables
 
-          self.functions = module_.functions
-          self.tables = module_.tables
-
-          memory = module_.memory
           unless memory.nil?
             @memory =
               if memory.string.nil?
@@ -85,37 +82,35 @@ class Interpreter
           end
 
           self.globals =
-            module_.globals.map do |global|
+            globals.map do |global|
               evaluate(global.value, locals: [])
               stack.pop(1) => [value]
               [global.name, value]
             end
-        in ['invoke', *expressions]
-          invoke = ASTParser.new.parse_invoke(expressions)
-          function = functions.detect { |function| function.exported_name == invoke.name }
+        in Invoke(name:, arguments:)
+          function = self.functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
-            puts "\e[33mWARNING: couldn’t find function #{invoke.name} (could be binary?), skipping\e[0m"
+            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
             next
           end
 
-          evaluate(invoke.arguments, locals: [])
+          evaluate(arguments, locals: [])
           invoke_function(function)
-        in ['assert_return', *expressions]
-          assert_return = ASTParser.new.parse_assert_return(expressions)
-          function = functions.detect { |function| function.exported_name == assert_return.invoke.name }
+        in AssertReturn(invoke: Invoke(name:, arguments:), expecteds:)
+          function = self.functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
-            puts "\e[33mWARNING: couldn’t find function #{assert_return.invoke.name} (could be binary?), skipping\e[0m"
+            puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
             next
           end
 
-          evaluate(assert_return.invoke.arguments, locals: [])
+          evaluate(arguments, locals: [])
           invoke_function(function)
-          actual_values = stack.pop(assert_return.expecteds.length)
+          actual_values = stack.pop(expecteds.length)
           raise unless stack.empty?
 
-          assert_return.expecteds.zip(actual_values).each do |expected, actual_value|
+          expecteds.zip(actual_values).each do |expected, actual_value|
             case expected
             in NanExpectation(nan:, bits:)
               expected_value = nan
@@ -138,7 +133,7 @@ class Interpreter
           end
 
           print "\e[32m.\e[0m"
-        in ['assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion', *]
+        in SkippedAssertion
           # TODO
           print "\e[33m.\e[0m"
         end

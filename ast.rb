@@ -33,4 +33,6 @@ module AST
   Invoke = Data.define(:name, :arguments)
   AssertReturn = Data.define(:invoke, :expecteds)
   NanExpectation = Data.define(:nan, :bits)
+  Script = Data.define(:commands)
+  SkippedAssertion = Data.define
 end
