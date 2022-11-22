@@ -81,7 +81,7 @@ class ASTParser
 
   def parse_invoke
     read => name
-    arguments = parse_expression(s_expression)
+    arguments = parse_instructions
 
     Invoke.new(name:, arguments:)
   end
