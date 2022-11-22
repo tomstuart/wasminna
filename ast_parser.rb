@@ -40,7 +40,7 @@ class ASTParser
       in 'module'
         parse_module
       in 'invoke'
-        parse_invoke(s_expression)
+        parse_invoke
       in 'assert_return'
         parse_assert_return(s_expression)
       in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
@@ -80,16 +80,16 @@ class ASTParser
     Module.new(functions:, memory:, tables:, globals:)
   end
 
-  def parse_invoke(s_expression)
-    s_expression => [name, *arguments]
-    arguments = parse_expression(arguments)
+  def parse_invoke
+    read => name
+    arguments = parse_expression(s_expression)
 
     Invoke.new(name:, arguments:)
   end
 
   def parse_assert_return(s_expression)
     s_expression => [['invoke', *invoke], *expecteds]
-    invoke = parse_invoke(invoke)
+    invoke = with_input(invoke) { parse_invoke }
 
     expecteds =
       expecteds.map do |expected|
