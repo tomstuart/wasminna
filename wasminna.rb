@@ -83,7 +83,7 @@ class Interpreter
 
           self.globals =
             globals.map do |global|
-              evaluate(global.value, locals: [])
+              evaluate_expression(global.value, locals: [])
               stack.pop(1) => [value]
               [global.name, value]
             end
@@ -95,7 +95,7 @@ class Interpreter
             next
           end
 
-          evaluate(arguments, locals: [])
+          evaluate_expression(arguments, locals: [])
           invoke_function(function)
         in AssertReturn(invoke: Invoke(name:, arguments:), expecteds:)
           function = self.functions.detect { |function| function.exported_name == name }
@@ -105,7 +105,7 @@ class Interpreter
             next
           end
 
-          evaluate(arguments, locals: [])
+          evaluate_expression(arguments, locals: [])
           invoke_function(function)
           actual_values = stack.pop(expecteds.length)
           raise unless stack.empty?
@@ -118,7 +118,7 @@ class Interpreter
               float = Wasminna::Float.decode(actual_value, format:).to_f
               success = float.nan? # TODO check whether canonical or arithmetic
             else
-              evaluate(expected, locals: [])
+              evaluate_expression(expected, locals: [])
               stack.pop(1) => [expected_value]
               raise unless stack.empty?
               success = actual_value == expected_value
@@ -178,13 +178,13 @@ class Interpreter
     with_current_function(function) do
       catch(:return) do
         as_branch_target(label: nil, arity: function.results.length) do
-          evaluate(function.body, locals:)
+          evaluate_expression(function.body, locals:)
         end
       end
     end
   end
 
-  def evaluate(expression, locals:)
+  def evaluate_expression(expression, locals:)
     expression.each do |instruction|
       evaluate_instruction(instruction, locals:)
     end
@@ -272,13 +272,13 @@ class Interpreter
       stack.pop(1)
     in Block(label:, results:, body:)
       as_branch_target(label:, arity: results.length) do
-        evaluate(body, locals:)
+        evaluate_expression(body, locals:)
       end
     in Loop(label:, results:, body:)
       loop do
         branched =
           as_branch_target(label:, arity: results.length) do
-            evaluate(body, locals:)
+            evaluate_expression(body, locals:)
           end
         break unless branched
       end
@@ -287,7 +287,7 @@ class Interpreter
       body = condition.zero? ? alternative : consequent
 
       as_branch_target(label:, arity: results.length) do
-        evaluate(body, locals:)
+        evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
       stack.pop(1) => [table_index]
