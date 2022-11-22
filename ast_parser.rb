@@ -38,7 +38,7 @@ class ASTParser
       read => opcode
       case opcode
       in 'module'
-        parse_module(s_expression)
+        parse_module
       in 'invoke'
         parse_invoke(s_expression)
       in 'assert_return'
@@ -50,25 +50,29 @@ class ASTParser
     end
   end
 
-  def parse_module(s_expression)
+  def parse_module
     functions, memory, tables, globals = [], nil, [], []
 
-    case s_expression
-    in ['binary', *]
+    case peek
+    in 'binary'
       # TODO
-    in [*expressions]
-      expressions.each do |expression|
-        case expression
-        in ['func', *expressions]
-          functions << parse_function(expressions)
-        in ['memory', *expressions]
-          memory = parse_memory(expressions)
-        in ['table', *expressions]
-          tables << parse_table(expressions)
-        in ['global', *expressions]
-          globals << parse_global(expressions)
-        in ['type', *]
-          # TODO
+    else
+      until finished?
+        read => definition
+        with_input(definition) do
+          read => opcode
+          case opcode
+          in 'func'
+            functions << parse_function(s_expression)
+          in 'memory'
+            memory = parse_memory(s_expression)
+          in 'table'
+            tables << parse_table(s_expression)
+          in 'global'
+            globals << parse_global(s_expression)
+          in 'type'
+            # TODO
+          end
         end
       end
     end
