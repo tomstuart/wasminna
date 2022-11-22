@@ -9,7 +9,7 @@ def main
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
     ast = ASTParser.new.parse_script(s_expression)
-    Interpreter.new.interpret_script(ast)
+    Interpreter.new.evaluate_script(ast)
     puts
   end
 end
@@ -59,7 +59,7 @@ class Interpreter
 
   attr_accessor :stack, :functions, :function, :tables, :globals
 
-  def interpret_script(script)
+  def evaluate_script(script)
     @memory = nil
     self.stack = []
 
