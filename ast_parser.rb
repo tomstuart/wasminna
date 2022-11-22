@@ -30,6 +30,10 @@ class ASTParser
     end
   end
 
+  private
+
+  attr_accessor :s_expression
+
   def parse_module(s_expression)
     functions, memory, tables, globals = [], nil, [], []
 
@@ -138,10 +142,6 @@ class ASTParser
 
     Global.new(name:, value:)
   end
-
-  private
-
-  attr_accessor :s_expression
 
   def unfold(s_expression)
     case s_expression
