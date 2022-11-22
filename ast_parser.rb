@@ -7,9 +7,8 @@ class ASTParser
   include Helpers::Mask
 
   def parse_expression(s_expression)
-    end_of_input = Object.new
-    with_input(s_expression + [end_of_input]) do
-      parse_instructions(terminated_by: end_of_input)
+    with_input(s_expression) do
+      parse_instructions
     end
   end
 
@@ -246,16 +245,14 @@ class ASTParser
       \z
     }x
 
-  def parse_instructions(terminated_by:)
-    with_input(read_until(terminated_by:)) do
-      [].tap do |expression|
-        until finished?
-          case peek
-          in [*]
-            expression.concat(parse_folded_instruction)
-          else
-            expression << parse_instruction
-          end
+  def parse_instructions
+    [].tap do |expression|
+      until finished?
+        case peek
+        in [*]
+          expression.concat(parse_folded_instruction)
+        else
+          expression << parse_instruction
         end
       end
     end
@@ -285,9 +282,8 @@ class ASTParser
 
   def parse_folded_instruction
     read => [*] => folded_instruction
-    end_of_input = Object.new
-    with_input(unfold(folded_instruction) + [end_of_input]) do
-      parse_instructions(terminated_by: end_of_input)
+    with_input(unfold(folded_instruction)) do
+      parse_instructions
     end
   end
 
@@ -361,13 +357,19 @@ class ASTParser
 
     case opcode
     in 'block'
-      body = parse_instructions(terminated_by: 'end')
+      body =
+        with_input(read_until(terminated_by: 'end')) do
+          parse_instructions
+        end
       if !label.nil? && peek in ^label
         read => ^label
       end
       Block.new(label:, results:, body:)
     in 'loop'
-      body = parse_instructions(terminated_by: 'end')
+      body =
+        with_input(read_until(terminated_by: 'end')) do
+          parse_instructions
+        end
       if !label.nil? && peek in ^label
         read => ^label
       end
@@ -381,7 +383,10 @@ class ASTParser
       consequent, alternative = nil, nil
       end_of_input = Object.new
       with_input(body_s_expression + [end_of_input]) do
-        consequent = parse_instructions(terminated_by: ['else', end_of_input])
+        consequent =
+          with_input(read_until(terminated_by: ['else', end_of_input])) do
+            parse_instructions
+          end
         if !label.nil? && peek in ^label
           read => ^label
         end
@@ -389,7 +394,9 @@ class ASTParser
           if finished?
             []
           else
-            parse_instructions(terminated_by: end_of_input)
+            with_input(read_until(terminated_by: end_of_input)) do
+              parse_instructions
+            end
           end
       end
 
