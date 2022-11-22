@@ -1,10 +1,9 @@
 class SExpressionParser
-  def parse(string, &)
-    return to_enum(__method__, string) unless block_given?
-
+  def parse(string)
     self.string = string
-    parse_expressions(terminated_by: %r{\z}, &)
+    s_expression = parse_expressions(terminated_by: %r{\z})
     read %r{\z}
+    s_expression
   end
 
   private
@@ -12,13 +11,13 @@ class SExpressionParser
   attr_accessor :string
 
   def parse_expressions(terminated_by:)
-    return to_enum(__method__, terminated_by:) unless block_given?
-
+    expressions = []
     loop do
       skip_whitespace_and_comments
       break if can_read? terminated_by
-      yield parse_expression
+      expressions << parse_expression
     end
+    expressions
   end
 
   def parse_expression
@@ -45,7 +44,7 @@ class SExpressionParser
 
   def parse_list
     read %r{\(}
-    expressions = parse_expressions(terminated_by: %r{\)}).entries
+    expressions = parse_expressions(terminated_by: %r{\)})
     read %r{\)}
     expressions
   end
