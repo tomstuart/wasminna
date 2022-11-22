@@ -68,7 +68,7 @@ class ASTParser
           in 'table'
             tables << parse_table
           in 'global'
-            globals << parse_global(s_expression)
+            globals << parse_global
           in 'type'
             # TODO
           end
@@ -202,9 +202,13 @@ class ASTParser
     Table.new(name:, elements:)
   end
 
-  def parse_global(s_expression)
-    s_expression => [name, ['mut', _], value]
-    value = parse_expression(value)
+  def parse_global
+    read => name
+    with_input(read) do
+      read => 'mut'
+      read
+    end
+    value = parse_instructions
 
     Global.new(name:, value:)
   end
