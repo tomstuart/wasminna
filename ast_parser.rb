@@ -41,7 +41,7 @@ class ASTParser
       in 'invoke'
         parse_invoke
       in 'assert_return'
-        parse_assert_return(s_expression)
+        parse_assert_return
       in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
         # TODO
         SkippedAssertion.new
@@ -86,12 +86,17 @@ class ASTParser
     Invoke.new(name:, arguments:)
   end
 
-  def parse_assert_return(s_expression)
-    s_expression => [['invoke', *invoke], *expecteds]
-    invoke = with_input(invoke) { parse_invoke }
+  def parse_assert_return
+    invoke =
+      with_input(read) do
+        read => 'invoke'
+        parse_invoke
+      end
 
-    expecteds =
-      expecteds.map do |expected|
+    expecteds = []
+    until finished?
+      read => expected
+      expecteds <<
         case expected
         in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
           bits = instruction.slice(%r{\d+}).to_i(10)
@@ -99,7 +104,7 @@ class ASTParser
         else
           parse_expression(expected)
         end
-      end
+    end
 
     AssertReturn.new(invoke:, expecteds:)
   end
