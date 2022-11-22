@@ -64,7 +64,7 @@ class ASTParser
           in 'func'
             functions << parse_function
           in 'memory'
-            memory = parse_memory(s_expression)
+            memory = parse_memory
           in 'table'
             tables << parse_table(s_expression)
           in 'global'
@@ -165,15 +165,20 @@ class ASTParser
     Function.new(name:, exported_name:, parameters:, results:, locals:, body:)
   end
 
-  def parse_memory(s_expression)
-    case s_expression
-    in [['data', *strings]]
-      string = strings.map { with_input([_1]) { parse_string } }.join
-    in [minimum_size, maximum_size]
-      minimum_size, maximum_size =
-        [minimum_size, maximum_size].map { with_input([_1]) { parse_integer(bits: 32) } }
-    in [minimum_size]
-      minimum_size = with_input([minimum_size]) { parse_integer(bits: 32) }
+  def parse_memory
+    string = nil
+
+    case peek
+    in [*]
+      read => expression
+      with_input(expression) do
+        read => 'data'
+        string = ''
+        string << parse_string until finished?
+      end
+    else
+      minimum_size = parse_integer(bits: 32)
+      maximum_size = parse_integer(bits: 32) unless finished?
     end
 
     Memory.new(string:, minimum_size:, maximum_size:)
