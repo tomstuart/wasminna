@@ -381,23 +381,15 @@ class ASTParser
       end
 
       consequent, alternative = nil, nil
-      end_of_input = Object.new
-      with_input(body_s_expression + [end_of_input]) do
+      with_input(body_s_expression) do
         consequent =
-          with_input(read_until(terminated_by: ['else', end_of_input])) do
+          with_input(read_until(terminated_by: 'else')) do
             parse_instructions
           end
         if !label.nil? && peek in ^label
           read => ^label
         end
-        alternative =
-          if finished?
-            []
-          else
-            with_input(read_until(terminated_by: end_of_input)) do
-              parse_instructions
-            end
-          end
+        alternative = parse_instructions
       end
 
       If.new(label:, results:, consequent:, alternative:)
@@ -486,12 +478,10 @@ class ASTParser
   end
 
   def read_until(terminated_by:)
-    terminators = Array(terminated_by)
-
     [].tap do |atoms|
       loop do
         read => opcode
-        break if terminators.include?(opcode)
+        break if finished? || opcode == terminated_by
 
         atoms << opcode
         if opcode in 'block' | 'loop' | 'if'
