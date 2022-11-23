@@ -13,12 +13,9 @@ class ASTParser
   end
 
   def parse_script(s_expression)
-    commands =
-      read_list(s_expression) do
-        parse_commands
-      end
-
-    Script.new(commands:)
+    read_list(s_expression) do
+      parse_commands
+    end
   end
 
   private

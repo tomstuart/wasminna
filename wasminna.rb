@@ -8,8 +8,8 @@ require 'sign'
 def main
   unless ARGV.empty?
     s_expression = SExpressionParser.new.parse(ARGF.read)
-    ast = ASTParser.new.parse_script(s_expression)
-    Interpreter.new.evaluate_script(ast)
+    script = ASTParser.new.parse_script(s_expression)
+    Interpreter.new.evaluate_script(script)
     puts
   end
 end
@@ -67,7 +67,7 @@ class Interpreter
     @memory = nil
     self.stack = []
 
-    script.commands.each do |command|
+    script.each do |command|
       begin
         case command
         in Module(functions:, tables:, memory:, globals:, types:)
