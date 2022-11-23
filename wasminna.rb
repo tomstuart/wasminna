@@ -303,9 +303,9 @@ class Interpreter
         end
       throw(:branch, index)
     in MemoryGrow
-      stack.pop(1) => [delta]
+      stack.pop(1) => [pages]
       stack.push(@memory.size_in_pages)
-      # TODO actually grow the memory
+      @memory.grow_by(pages:)
     end
   end
 
