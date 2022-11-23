@@ -174,24 +174,7 @@ class Interpreter
   end
 
   def invoke_function(function)
-    parameter_names =
-      if function.type_index.nil?
-        function.parameters.map(&:name)
-      else
-        type =
-          case function.type_index
-          in String
-            types.detect { _1.name == function.type_index }
-          in Integer
-            types.slice(function.type_index)
-          end || raise
-
-        if function.parameters.empty?
-          type.parameters.map { nil }
-        else
-          function.parameters.map(&:name)
-        end
-      end
+    parameter_names = get_parameter_names(function)
     argument_values = stack.pop(parameter_names.length)
     parameters = parameter_names.zip(argument_values)
     locals = function.locals.map(&:name).map { [_1, 0] }
@@ -202,6 +185,26 @@ class Interpreter
         as_branch_target(label: nil, arity: function.results.length) do
           evaluate_expression(function.body, locals:)
         end
+      end
+    end
+  end
+
+  def get_parameter_names(function)
+    if function.type_index.nil?
+      function.parameters.map(&:name)
+    else
+      type =
+        case function.type_index
+        in String
+          types.detect { _1.name == function.type_index }
+        in Integer
+          types.slice(function.type_index)
+        end || raise
+
+      if function.parameters.empty?
+        type.parameters.map { nil }
+      else
+        function.parameters.map(&:name)
       end
     end
   end
