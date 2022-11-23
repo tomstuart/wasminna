@@ -354,11 +354,10 @@ class ASTParser
     previous_s_expression, self.s_expression =
       self.s_expression, s_expression
 
-    begin
-      yield
-    ensure
-      self.s_expression = previous_s_expression
-    end
+    result = yield
+
+    self.s_expression = previous_s_expression
+    result
   end
 
   def parse_instruction
