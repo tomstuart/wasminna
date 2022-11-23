@@ -32,8 +32,7 @@ class ASTParser
   end
 
   def parse_command
-    read => command
-    read_list(command) do
+    read_list do
       read => opcode
       case opcode
       in 'module'
@@ -57,8 +56,7 @@ class ASTParser
       # TODO
     else
       until finished?
-        read => definition
-        read_list(definition) do
+        read_list do
           read => opcode
           case opcode
           in 'func'
@@ -88,7 +86,7 @@ class ASTParser
 
   def parse_assert_return
     invoke =
-      read_list(read) do
+      read_list do
         read => 'invoke'
         parse_invoke
       end
@@ -115,11 +113,11 @@ class ASTParser
     end
 
     parameters, results = [], []
-    read_list(read) do
+    read_list do
       read => 'func'
 
       until finished?
-        read_list(read) do
+        read_list do
           case read
           in 'param'
             if peek in %r{\A\$}
@@ -213,8 +211,7 @@ class ASTParser
 
     case peek
     in [*]
-      read => expression
-      read_list(expression) do
+      read_list do
         read => 'data'
         string = ''
         string << parse_string until finished?
@@ -236,7 +233,7 @@ class ASTParser
 
     elements = []
     unless finished?
-      read_list(read) do
+      read_list do
         read => 'elem'
         elements << read until finished?
       end
@@ -247,7 +244,7 @@ class ASTParser
 
   def parse_global
     read => name
-    read_list(read) do
+    read_list do
       read => 'mut'
       read
     end
