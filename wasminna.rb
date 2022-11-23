@@ -52,6 +52,10 @@ class Interpreter
       end
     end
 
+    def grow_by(pages:)
+      bytes << "\0" * (pages * BYTES_PER_PAGE)
+    end
+
     def size_in_pages
       size_of(bytes.bytesize, in: BYTES_PER_PAGE)
     end
