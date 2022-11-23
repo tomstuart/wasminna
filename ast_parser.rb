@@ -110,7 +110,36 @@ class ASTParser
   end
 
   def parse_type
-    # TODO
+    if peek in %r{\A\$}
+      read => %r{\A\$} => name
+    end
+
+    parameters, results = [], []
+    with_input(read) do
+      read => 'func'
+
+      until finished?
+        with_input(read) do
+          case read
+          in 'param'
+            if peek in %r{\A\$}
+              read => %r{\A\$} => parameter_name
+              read
+              parameters << Parameter.new(name: parameter_name)
+            else
+              until finished?
+                read
+                parameters << Parameter.new(name: nil)
+              end
+            end
+          in 'result'
+            results << read until finished?
+          end
+        end
+      end
+    end
+
+    Type.new(name:, parameters:, results:)
   end
 
   def parse_function
