@@ -352,7 +352,7 @@ class ASTParser
     end
   end
 
-  def read_list(s_expression)
+  def read_list(s_expression = read)
     previous_s_expression, self.s_expression =
       self.s_expression, s_expression
 
