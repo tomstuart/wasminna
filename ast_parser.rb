@@ -7,14 +7,14 @@ class ASTParser
   include Helpers::Mask
 
   def parse_expression(s_expression)
-    with_input(s_expression) do
+    read_list(s_expression) do
       parse_instructions
     end
   end
 
   def parse_script(s_expression)
     commands =
-      with_input(s_expression) do
+      read_list(s_expression) do
         parse_commands
       end
 
@@ -33,7 +33,7 @@ class ASTParser
 
   def parse_command
     read => command
-    with_input(command) do
+    read_list(command) do
       read => opcode
       case opcode
       in 'module'
@@ -58,7 +58,7 @@ class ASTParser
     else
       until finished?
         read => definition
-        with_input(definition) do
+        read_list(definition) do
           read => opcode
           case opcode
           in 'func'
@@ -88,7 +88,7 @@ class ASTParser
 
   def parse_assert_return
     invoke =
-      with_input(read) do
+      read_list(read) do
         read => 'invoke'
         parse_invoke
       end
@@ -115,11 +115,11 @@ class ASTParser
     end
 
     parameters, results = [], []
-    with_input(read) do
+    read_list(read) do
       read => 'func'
 
       until finished?
-        with_input(read) do
+        read_list(read) do
           case read
           in 'param'
             if peek in %r{\A\$}
@@ -153,7 +153,7 @@ class ASTParser
       read => expression
       case expression
       in [*]
-        with_input(expression) do
+        read_list(expression) do
           peek => opcode
           case opcode
           in 'export'
@@ -203,7 +203,7 @@ class ASTParser
         body << expression
       end
     end
-    body = with_input(body) { parse_instructions }
+    body = read_list(body) { parse_instructions }
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
@@ -214,7 +214,7 @@ class ASTParser
     case peek
     in [*]
       read => expression
-      with_input(expression) do
+      read_list(expression) do
         read => 'data'
         string = ''
         string << parse_string until finished?
@@ -236,7 +236,7 @@ class ASTParser
 
     elements = []
     unless finished?
-      with_input(read) do
+      read_list(read) do
         read => 'elem'
         elements << read until finished?
       end
@@ -247,7 +247,7 @@ class ASTParser
 
   def parse_global
     read => name
-    with_input(read) do
+    read_list(read) do
       read => 'mut'
       read
     end
@@ -352,7 +352,7 @@ class ASTParser
     end
   end
 
-  def with_input(s_expression)
+  def read_list(s_expression)
     previous_s_expression, self.s_expression =
       self.s_expression, s_expression
 
@@ -376,7 +376,7 @@ class ASTParser
 
   def parse_folded_instruction
     read => [*] => folded_instruction
-    with_input(unfold(folded_instruction)) do
+    read_list(unfold(folded_instruction)) do
       parse_instructions
     end
   end
@@ -452,7 +452,7 @@ class ASTParser
     case opcode
     in 'block'
       body =
-        with_input(read_until(terminated_by: 'end')) do
+        read_list(read_until(terminated_by: 'end')) do
           parse_instructions
         end
       if !label.nil? && peek in ^label
@@ -461,7 +461,7 @@ class ASTParser
       Block.new(label:, results:, body:)
     in 'loop'
       body =
-        with_input(read_until(terminated_by: 'end')) do
+        read_list(read_until(terminated_by: 'end')) do
           parse_instructions
         end
       if !label.nil? && peek in ^label
@@ -475,9 +475,9 @@ class ASTParser
       end
 
       consequent, alternative = nil, nil
-      with_input(body_s_expression) do
+      read_list(body_s_expression) do
         consequent =
-          with_input(read_until(terminated_by: 'else')) do
+          read_list(read_until(terminated_by: 'else')) do
             parse_instructions
           end
         if !label.nil? && peek in ^label
