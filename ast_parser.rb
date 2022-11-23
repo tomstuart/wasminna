@@ -43,6 +43,7 @@ class ASTParser
         parse_assert_return
       in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
         # TODO
+        read until finished?
         SkippedAssertion.new
       end
     end
@@ -54,6 +55,7 @@ class ASTParser
     case peek
     in 'binary'
       # TODO
+      read until finished?
     else
       until finished?
         read_list do
@@ -194,6 +196,8 @@ class ASTParser
               end
             end
           else
+            expression = []
+            expression << read until finished?
             body << expression
           end
         end
@@ -355,6 +359,7 @@ class ASTParser
       self.s_expression, s_expression
 
     result = yield
+    raise unless self.s_expression.empty?
 
     self.s_expression = previous_s_expression
     result
