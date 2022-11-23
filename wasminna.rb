@@ -174,8 +174,25 @@ class Interpreter
   end
 
   def invoke_function(function)
-    parameter_names = function.parameters.map(&:name)
-    argument_values = stack.pop(function.parameters.length)
+    parameter_names =
+      if function.type_index.nil?
+        function.parameters.map(&:name)
+      else
+        type =
+          case function.type_index
+          in String
+            types.detect { _1.name == function.type_index }
+          in Integer
+            types.slice(function.type_index)
+          end || raise
+
+        if function.parameters.empty?
+          type.parameters.map { nil }
+        else
+          function.parameters.map(&:name)
+        end
+      end
+    argument_values = stack.pop(parameter_names.length)
     parameters = parameter_names.zip(argument_values)
     locals = function.locals.map(&:name).map { [_1, 0] }
     locals = parameters + locals
