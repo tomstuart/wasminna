@@ -51,8 +51,8 @@ class SExpressionParser
 
   def skip_whitespace_and_comments
     loop do
-      if can_read? %r{[ \n]+}
-        read %r{[ \n]+}
+      if can_read? %r{[ \t\n\r]+}
+        read %r{[ \t\n\r]+}
       elsif can_read? %r{;;.*$}
         read %r{;;.*$}
       elsif can_read? BLOCK_COMMENT_REGEXP
