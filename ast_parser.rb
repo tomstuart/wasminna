@@ -50,7 +50,7 @@ class ASTParser
   end
 
   def parse_module
-    functions, memory, tables, globals = [], nil, [], []
+    functions, memory, tables, globals, types = [], nil, [], [], []
 
     case peek
     in 'binary'
@@ -70,13 +70,13 @@ class ASTParser
           in 'global'
             globals << parse_global
           in 'type'
-            # TODO
+            types << parse_type
           end
         end
       end
     end
 
-    Module.new(functions:, memory:, tables:, globals:)
+    Module.new(functions:, memory:, tables:, globals:, types:)
   end
 
   def parse_invoke
@@ -107,6 +107,10 @@ class ASTParser
     end
 
     AssertReturn.new(invoke:, expecteds:)
+  end
+
+  def parse_type
+    # TODO
   end
 
   def parse_function
