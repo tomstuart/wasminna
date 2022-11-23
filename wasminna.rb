@@ -61,7 +61,7 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :functions, :function, :tables, :globals
+  attr_accessor :stack, :functions, :function, :tables, :globals, :types
 
   def evaluate_script(script)
     @memory = nil
@@ -70,9 +70,10 @@ class Interpreter
     script.commands.each do |command|
       begin
         case command
-        in Module(functions:, tables:, memory:, globals:)
+        in Module(functions:, tables:, memory:, globals:, types:)
           self.functions = functions
           self.tables = tables
+          self.types = types
 
           unless memory.nil?
             @memory =
