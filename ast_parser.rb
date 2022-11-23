@@ -350,6 +350,7 @@ class ASTParser
   end
 
   def read_list(s_expression = read)
+    raise unless s_expression in [*]
     previous_s_expression, self.s_expression =
       self.s_expression, s_expression
 
