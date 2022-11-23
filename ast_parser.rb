@@ -114,7 +114,8 @@ class ASTParser
       read => %r{\A\$} => name
     end
 
-    exported_name, parameters, results, locals, body = nil, [], [], [], []
+    exported_name, type_index, parameters, results, locals, body =
+      nil, nil, [], [], [], []
     until finished?
       read => expression
       case expression
@@ -125,6 +126,15 @@ class ASTParser
           in 'export'
             read => ^opcode
             read => exported_name
+          in 'type'
+            read => ^opcode
+            read => %r{\A(\d+|\$.+)\z} => type_index
+            type_index =
+              if type_index.start_with?('$')
+                type_index
+              else
+                type_index.to_i(10)
+              end
           in 'param'
             read => ^opcode
             if peek in %r{\A\$}
@@ -162,7 +172,7 @@ class ASTParser
     end
     body = with_input(body) { parse_instructions }
 
-    Function.new(name:, exported_name:, parameters:, results:, locals:, body:)
+    Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
 
   def parse_memory
