@@ -108,4 +108,40 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = '(hello (; cruel ;) world)'
+expected = [['hello', 'world']]
+actual = SExpressionParser.new.parse(input).entries
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = '(hello (; this; is; ( totally; ); fine ;) world)'
+expected = [['hello', 'world']]
+actual = SExpressionParser.new.parse(input).entries
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = '(hello (; cruel (; very cruel ;) extremely cruel ;) world)'
+expected = [['hello', 'world']]
+actual = SExpressionParser.new.parse(input).entries
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = '(hello (; cruel ;) happy (; terrible ;) world)'
+expected = [['hello', 'happy', 'world']]
+actual = SExpressionParser.new.parse(input).entries
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts

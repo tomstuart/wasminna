@@ -30,12 +30,33 @@ class SExpressionParser
     end
   end
 
+  BLOCK_COMMENT_REGEXP =
+    %r{
+      (?<comment>
+        \(;
+          (
+            (
+              [^(;]
+              |
+              ; (?!\))
+              |
+              \( (?!;)
+            )
+            |
+            \g<comment>
+          )*
+        ;\)
+      )
+    }x
+
   def skip_whitespace_and_comments
     loop do
       if can_read? %r{[ \n]+}
         read %r{[ \n]+}
       elsif can_read? %r{;;.*$}
         read %r{;;.*$}
+      elsif can_read? BLOCK_COMMENT_REGEXP
+        read BLOCK_COMMENT_REGEXP
       else
         break
       end
