@@ -23,9 +23,7 @@ class ASTParser
   attr_accessor :s_expression
 
   def parse_commands
-    [].tap do |commands|
-      commands << parse_command until finished?
-    end
+    repeatedly { parse_command }
   end
 
   def parse_command
@@ -40,7 +38,7 @@ class ASTParser
         parse_assert_return
       in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
         # TODO
-        read until finished?
+        repeatedly { read }
         SkippedAssertion.new
       end
     end
@@ -52,9 +50,9 @@ class ASTParser
     case peek
     in 'binary'
       # TODO
-      read until finished?
+      repeatedly { read }
     else
-      until finished?
+      repeatedly do
         read_list do
           read => opcode
           case opcode
@@ -90,10 +88,9 @@ class ASTParser
         parse_invoke
       end
 
-    expecteds = []
-    until finished?
-      read => expected
-      expecteds <<
+    expecteds =
+      repeatedly do
+        read => expected
         case expected
         in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
           bits = instruction.slice(%r{\d+}).to_i(10)
@@ -101,7 +98,7 @@ class ASTParser
         else
           parse_expression(expected)
         end
-    end
+      end
 
     AssertReturn.new(invoke:, expecteds:)
   end
@@ -115,7 +112,7 @@ class ASTParser
     read_list do
       read => 'func'
 
-      until finished?
+      repeatedly do
         read_list do
           case read
           in 'param'
@@ -124,13 +121,13 @@ class ASTParser
               read
               parameters << Parameter.new(name: parameter_name)
             else
-              until finished?
+              repeatedly do
                 read
                 parameters << Parameter.new(name: nil)
               end
             end
           in 'result'
-            results << read until finished?
+            results.concat(repeatedly { read })
           end
         end
       end
@@ -146,7 +143,7 @@ class ASTParser
 
     exported_name, type_index, parameters, results, locals, body =
       nil, nil, [], [], [], []
-    until finished?
+    repeatedly do
       read => expression
       case expression
       in [*]
@@ -172,14 +169,14 @@ class ASTParser
               read
               parameters << Parameter.new(name: parameter_name)
             else
-              until finished?
+              repeatedly do
                 read
                 parameters << Parameter.new(name: nil)
               end
             end
           in 'result'
             read => ^opcode
-            results << read until finished?
+            results.concat(repeatedly { read })
           in 'local'
             read => ^opcode
             if peek in %r{\A\$}
@@ -187,15 +184,13 @@ class ASTParser
               read
               locals << Local.new(name: local_name)
             else
-              until finished?
+              repeatedly do
                 read
                 locals << Local.new(name: nil)
               end
             end
           else
-            expression = []
-            expression << read until finished?
-            body << expression
+            body << repeatedly { read }
           end
         end
       else
@@ -214,8 +209,7 @@ class ASTParser
     in [*]
       read_list do
         read => 'data'
-        string = ''
-        string << parse_string until finished?
+        string = repeatedly { parse_string }.join
       end
     else
       minimum_size = parse_integer(bits: 32)
@@ -232,13 +226,15 @@ class ASTParser
 
     read => 'funcref'
 
-    elements = []
-    unless finished?
-      read_list do
-        read => 'elem'
-        elements << read until finished?
+    elements =
+      if finished?
+        []
+      else
+        read_list do
+          read => 'elem'
+          repeatedly { read }
+        end
       end
-    end
 
     Table.new(name:, elements:)
   end
@@ -338,16 +334,14 @@ class ASTParser
     }x
 
   def parse_instructions
-    [].tap do |expression|
-      until finished?
-        case peek
-        in [*]
-          expression.concat(parse_folded_instruction)
-        else
-          expression << parse_instruction
-        end
+    repeatedly do
+      case peek
+      in [*]
+        parse_folded_instruction
+      else
+        [parse_instruction]
       end
-    end
+    end.flatten(1)
   end
 
   def read_list(s_expression = read)
@@ -623,6 +617,12 @@ class ASTParser
         digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
       end.
       force_encoding(encoding)
+  end
+
+  def repeatedly
+    [].tap do |results|
+      results << yield until finished?
+    end
   end
 
   def finished?
