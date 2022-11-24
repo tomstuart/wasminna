@@ -441,31 +441,25 @@ class ASTParser
         []
       end
 
+    body_s_expression = read_until('end')
+    if !label.nil? && peek in ^label
+      read => ^label
+    end
+
     case opcode
     in 'block'
       body =
-        read_list(read_until('end')) do
+        read_list(body_s_expression) do
           parse_instructions
         end
-      if !label.nil? && peek in ^label
-        read => ^label
-      end
       Block.new(label:, results:, body:)
     in 'loop'
       body =
-        read_list(read_until('end')) do
+        read_list(body_s_expression) do
           parse_instructions
         end
-      if !label.nil? && peek in ^label
-        read => ^label
-      end
       Loop.new(label:, results:, body:)
     in 'if'
-      body_s_expression = read_until('end')
-      if !label.nil? && peek in ^label
-        read => ^label
-      end
-
       consequent, alternative = nil, nil
       read_list(body_s_expression) do
         consequent =
