@@ -203,8 +203,7 @@ class ASTParser
     read => 'memory'
     if can_read_list?(starting_with: 'data')
       string =
-        read_list do
-          read => 'data'
+        read_list(starting_with: 'data') do
           repeatedly { parse_string }.join
         end
     else
@@ -225,8 +224,7 @@ class ASTParser
 
     elements =
       if can_read_list?(starting_with: 'elem')
-        read_list do
-          read => 'elem'
+        read_list(starting_with: 'elem') do
           repeatedly { read }
         end
       else
@@ -239,10 +237,7 @@ class ASTParser
   def parse_global
     read => 'global'
     read => name
-    read_list do
-      read => 'mut'
-      read
-    end
+    read_list(starting_with: 'mut') { read }
     value = parse_instructions
 
     Global.new(name:, value:)
@@ -341,10 +336,11 @@ class ASTParser
     end.flatten(1)
   end
 
-  def read_list(from: read)
+  def read_list(from: read, starting_with: nil)
     raise unless from in [*]
     previous_s_expression, self.s_expression = self.s_expression, from
 
+    read => ^starting_with unless starting_with.nil?
     result = yield
     raise unless self.s_expression.empty?
 
@@ -433,8 +429,7 @@ class ASTParser
     end
     results =
       if can_read_list?(starting_with: 'result')
-        read_list do
-          read => 'result'
+        read_list(starting_with: 'result') do
           repeatedly { read }
         end
       else
@@ -527,20 +522,17 @@ class ASTParser
         end
       type_index =
         if can_read_list?(starting_with: 'type')
-          read_list do
-            read => 'type'
+          read_list(starting_with: 'type') do
             read => %r{\A(\d+|\$.+)\z}
           end
         end
       while can_read_list?(starting_with: 'param')
-        read_list do
-          read => 'param'
+        read_list(starting_with: 'param') do
           repeatedly { read }
         end
       end
       while can_read_list?(starting_with: 'result')
-        read_list do
-          read => 'result'
+        read_list(starting_with: 'result') do
           repeatedly { read }
         end
       end
@@ -548,8 +540,7 @@ class ASTParser
       CallIndirect.new(table_index:, type_index:)
     in 'select'
       if can_read_list?(starting_with: 'result')
-        read_list do
-          read => 'result'
+        read_list(starting_with: 'result') do
           repeatedly { read }
         end
       end
