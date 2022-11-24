@@ -196,14 +196,13 @@ class ASTParser
   end
 
   def parse_memory
-    string = nil
-
     case peek
     in [*]
-      read_list do
-        read => 'data'
-        string = repeatedly { parse_string }.join
-      end
+      string =
+        read_list do
+          read => 'data'
+          repeatedly { parse_string }.join
+        end
     else
       minimum_size = parse_integer(bits: 32)
       maximum_size = parse_integer(bits: 32) unless finished?
