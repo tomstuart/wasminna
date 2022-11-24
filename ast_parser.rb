@@ -152,55 +152,53 @@ class ASTParser
     exported_name, type_index, parameters, results, locals, body =
       nil, nil, [], [], [], []
     repeatedly do
-      if can_read_list?
-        read_list do
-          case peek
-          in 'export' | 'type' | 'param' | 'result' | 'local'
-            case read
-            in 'export'
-              read => exported_name
-            in 'type'
-              read => %r{\A(\d+|\$.+)\z} => type_index
-              type_index =
-                if type_index.start_with?('$')
-                  type_index
-                else
-                  type_index.to_i(10)
-                end
-            in 'param'
-              if peek in %r{\A\$}
-                read => %r{\A\$} => parameter_name
-                read
-                parameters << Parameter.new(name: parameter_name)
+      opcode =
+        ['export', 'type', 'param', 'result', 'local'].
+          detect { can_read_list?(starting_with: _1) }
+
+      if opcode.nil?
+        body = parse_instructions
+      else
+        read_list(starting_with: opcode) do
+          case opcode
+          in 'export'
+            read => exported_name
+          in 'type'
+            read => %r{\A(\d+|\$.+)\z} => type_index
+            type_index =
+              if type_index.start_with?('$')
+                type_index
               else
-                repeatedly do
-                  read
-                  parameters << Parameter.new(name: nil)
-                end
+                type_index.to_i(10)
               end
-            in 'result'
-              results.concat(repeatedly { read })
-            in 'local'
-              if peek in %r{\A\$}
-                read => %r{\A\$} => local_name
+          in 'param'
+            if peek in %r{\A\$}
+              read => %r{\A\$} => parameter_name
+              read
+              parameters << Parameter.new(name: parameter_name)
+            else
+              repeatedly do
                 read
-                locals << Local.new(name: local_name)
-              else
-                repeatedly do
-                  read
-                  locals << Local.new(name: nil)
-                end
+                parameters << Parameter.new(name: nil)
               end
             end
-          else
-            body << repeatedly { read }
+          in 'result'
+            results.concat(repeatedly { read })
+          in 'local'
+            if peek in %r{\A\$}
+              read => %r{\A\$} => local_name
+              read
+              locals << Local.new(name: local_name)
+            else
+              repeatedly do
+                read
+                locals << Local.new(name: nil)
+              end
+            end
           end
         end
-      else
-        body.concat(repeatedly { read })
       end
     end
-    body = read_list(from: body) { parse_instructions }
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
