@@ -28,7 +28,7 @@ class ASTParser
 
   def parse_command
     read_list do
-      case read
+      case peek
       in 'module'
         parse_module
       in 'invoke'
@@ -44,6 +44,7 @@ class ASTParser
   end
 
   def parse_module
+    read => 'module'
     functions, memory, tables, globals, types = [], nil, [], [], []
 
     case peek
@@ -53,7 +54,7 @@ class ASTParser
     else
       repeatedly do
         read_list do
-          case read
+          case peek
           in 'func'
             functions << parse_function
           in 'memory'
@@ -73,6 +74,7 @@ class ASTParser
   end
 
   def parse_invoke
+    read => 'invoke'
     read => name
     arguments = parse_instructions
 
@@ -80,11 +82,8 @@ class ASTParser
   end
 
   def parse_assert_return
-    invoke =
-      read_list do
-        read => 'invoke'
-        parse_invoke
-      end
+    read => 'assert_return'
+    invoke = read_list { parse_invoke }
 
     expecteds =
       repeatedly do
@@ -106,6 +105,7 @@ class ASTParser
   end
 
   def parse_type
+    read => 'type'
     if peek in %r{\A\$}
       read => %r{\A\$} => name
     end
@@ -138,6 +138,7 @@ class ASTParser
   end
 
   def parse_function
+    read => 'func'
     if peek in %r{\A\$}
       read => %r{\A\$} => name
     end
@@ -200,6 +201,7 @@ class ASTParser
   end
 
   def parse_memory
+    read => 'memory'
     case peek
     in [*]
       string =
@@ -216,6 +218,7 @@ class ASTParser
   end
 
   def parse_table
+    read => 'table'
     if peek in %r{\A(\d+|\$.+)\z}
       read => %r{\A(\d+|\$.+)\z} => name
     end
@@ -236,6 +239,7 @@ class ASTParser
   end
 
   def parse_global
+    read => 'global'
     read => name
     read_list do
       read => 'mut'
