@@ -90,9 +90,13 @@ class ASTParser
       repeatedly do
         case peek
         in ['f32.const' | 'f64.const', 'nan:canonical' | 'nan:arithmetic']
-          read => ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
-          bits = instruction.slice(%r{\d+}).to_i(10)
-          NanExpectation.new(nan:, bits:)
+          read_list do
+            read => 'f32.const' | 'f64.const' => instruction
+            bits = instruction.slice(%r{\d+}).to_i(10)
+            read => 'nan:canonical' | 'nan:arithmetic' => nan
+
+            NanExpectation.new(nan:, bits:)
+          end
         else
           read_list { parse_instructions }
         end
@@ -427,11 +431,15 @@ class ASTParser
     if peek in %r{\A\$}
       read => %r{\A\$} => label
     end
-    if peek in ['result', *]
-      read => ['result', *results]
-    else
-      results = []
-    end
+    results =
+      if peek in ['result', *]
+        read_list do
+          read => 'result'
+          repeatedly { read }
+        end
+      else
+        []
+      end
 
     case opcode
     in 'block'
@@ -527,20 +535,33 @@ class ASTParser
         else
           0
         end
-      if peek in ['type', %r{\A(\d+|\$.+)\z}]
-        read => ['type', %r{\A(\d+|\$.+)\z} => type_index]
-      end
+      type_index =
+        if peek in ['type', *]
+          read_list do
+            read => 'type'
+            read => %r{\A(\d+|\$.+)\z}
+          end
+        end
       while peek in ['param', *]
-        read => ['param', *]
+        read_list do
+          read => 'param'
+          repeatedly { read }
+        end
       end
       while peek in ['result', *]
-        read => ['result', *]
+        read_list do
+          read => 'result'
+          repeatedly { read }
+        end
       end
 
       CallIndirect.new(table_index:, type_index:)
     in 'select'
       if peek in ['result', *]
-        read => ['result', *]
+        read_list do
+          read => 'result'
+          repeatedly { read }
+        end
       end
 
       Select.new
