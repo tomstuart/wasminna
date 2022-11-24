@@ -197,7 +197,7 @@ class ASTParser
           end
         end
       else
-        body << read
+        body.concat(repeatedly { read })
       end
     end
     body = read_list(from: body) { parse_instructions }
