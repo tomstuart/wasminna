@@ -7,13 +7,13 @@ class ASTParser
   include Helpers::Mask
 
   def parse_expression(s_expression)
-    read_list(s_expression) do
+    read_list(from: s_expression) do
       parse_instructions
     end
   end
 
   def parse_script(s_expression)
-    read_list(s_expression) do
+    read_list(from: s_expression) do
       parse_commands
     end
   end
@@ -194,7 +194,7 @@ class ASTParser
         body << read
       end
     end
-    body = read_list(body) { parse_instructions }
+    body = read_list(from: body) { parse_instructions }
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
@@ -341,10 +341,9 @@ class ASTParser
     end.flatten(1)
   end
 
-  def read_list(s_expression = read)
-    raise unless s_expression in [*]
-    previous_s_expression, self.s_expression =
-      self.s_expression, s_expression
+  def read_list(from: read)
+    raise unless from in [*]
+    previous_s_expression, self.s_expression = self.s_expression, from
 
     result = yield
     raise unless self.s_expression.empty?
@@ -365,7 +364,7 @@ class ASTParser
   end
 
   def parse_folded_instruction
-    read_list(unfold(read)) do
+    read_list(from: unfold(read)) do
       parse_instructions
     end
   end
@@ -442,7 +441,7 @@ class ASTParser
         []
       end
 
-    read_list(read_until('end')) do
+    read_list(from: read_until('end')) do
       case opcode
       in 'block'
         body = parse_instructions
@@ -452,7 +451,7 @@ class ASTParser
         Loop.new(label:, results:, body:)
       in 'if'
         consequent =
-          read_list(read_until('else')) do
+          read_list(from: read_until('else')) do
             parse_instructions
           end
         if peek in 'else'
