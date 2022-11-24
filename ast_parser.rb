@@ -87,17 +87,23 @@ class ASTParser
 
     expecteds =
       repeatedly do
-        case peek
-        in ['f32.const' | 'f64.const', 'nan:canonical' | 'nan:arithmetic']
-          read_list do
-            read => 'f32.const' | 'f64.const' => instruction
-            bits = instruction.slice(%r{\d+}).to_i(10)
-            read => 'nan:canonical' | 'nan:arithmetic' => nan
+        float_opcode =
+          ['f32.const', 'f64.const'].detect { can_read_list?(starting_with: _1) }
 
-            NanExpectation.new(nan:, bits:)
-          end
-        else
+        if float_opcode.nil?
           read_list { parse_instructions }
+        else
+          bits = float_opcode.slice(%r{\d+}).to_i(10)
+
+          read_list(starting_with: float_opcode) do
+            if peek in 'nan:canonical' | 'nan:arithmetic'
+              read => 'nan:canonical' | 'nan:arithmetic' => nan
+              NanExpectation.new(nan:, bits:)
+            else
+              number = parse_float(bits:)
+              [Const.new(type: :float, bits:, number:)]
+            end
+          end
         end
       end
 
