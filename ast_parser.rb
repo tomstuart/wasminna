@@ -556,11 +556,10 @@ class ASTParser
 
   def read_until(terminator)
     repeatedly(until: terminator) do
-      read => opcode
-      if opcode in 'block' | 'loop' | 'if'
-        [opcode, *read_until('end'), 'end']
+      if peek in 'block' | 'loop' | 'if'
+        [read, *read_until('end'), 'end']
       else
-        [opcode]
+        [read]
       end
     end.flatten(1)
   end
