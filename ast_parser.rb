@@ -201,7 +201,7 @@ class ASTParser
 
   def parse_memory
     read => 'memory'
-    if can_read_list?
+    if can_read_list?(starting_with: 'data')
       string =
         read_list do
           read => 'data'
@@ -224,7 +224,7 @@ class ASTParser
     read => 'funcref'
 
     elements =
-      if can_read_list?
+      if can_read_list?(starting_with: 'elem')
         read_list do
           read => 'elem'
           repeatedly { read }
@@ -433,7 +433,7 @@ class ASTParser
       read => %r{\A\$} => label
     end
     results =
-      if peek in ['result', *]
+      if can_read_list?(starting_with: 'result')
         read_list do
           read => 'result'
           repeatedly { read }
@@ -527,19 +527,19 @@ class ASTParser
           0
         end
       type_index =
-        if peek in ['type', *]
+        if can_read_list?(starting_with: 'type')
           read_list do
             read => 'type'
             read => %r{\A(\d+|\$.+)\z}
           end
         end
-      while peek in ['param', *]
+      while can_read_list?(starting_with: 'param')
         read_list do
           read => 'param'
           repeatedly { read }
         end
       end
-      while peek in ['result', *]
+      while can_read_list?(starting_with: 'result')
         read_list do
           read => 'result'
           repeatedly { read }
@@ -548,7 +548,7 @@ class ASTParser
 
       CallIndirect.new(table_index:, type_index:)
     in 'select'
-      if peek in ['result', *]
+      if can_read_list?(starting_with: 'result')
         read_list do
           read => 'result'
           repeatedly { read }
@@ -619,8 +619,12 @@ class ASTParser
     end
   end
 
-  def can_read_list?
-    peek in [*]
+  def can_read_list?(starting_with: nil)
+    if starting_with.nil?
+      peek in [*]
+    else
+      peek in [^starting_with, *]
+    end
   end
 
   def finished?
