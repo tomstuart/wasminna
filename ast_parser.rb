@@ -89,8 +89,8 @@ class ASTParser
     expecteds =
       repeatedly do
         case peek
-        in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
-          read
+        in ['f32.const' | 'f64.const', 'nan:canonical' | 'nan:arithmetic']
+          read => ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
           bits = instruction.slice(%r{\d+}).to_i(10)
           NanExpectation.new(nan:, bits:)
         else
