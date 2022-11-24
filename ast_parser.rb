@@ -114,16 +114,15 @@ class ASTParser
         read_list do
           case read
           in 'param'
-            if peek in %r{\A\$}
-              read => %r{\A\$} => parameter_name
-              read
-              parameters << Parameter.new(name: parameter_name)
-            else
-              repeatedly do
+            parameters.concat(
+              if peek in %r{\A\$}
+                read => %r{\A\$} => parameter_name
                 read
-                parameters << Parameter.new(name: nil)
+                [Parameter.new(name: parameter_name)]
+              else
+                repeatedly { read }.map { Parameter.new(name: nil) }
               end
-            end
+            )
           in 'result'
             results.concat(repeatedly { read })
           end
