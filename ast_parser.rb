@@ -144,45 +144,42 @@ class ASTParser
       case peek
       in [*]
         read_list do
-          peek => opcode
-          case opcode
-          in 'export'
-            read => ^opcode
-            read => exported_name
-          in 'type'
-            read => ^opcode
-            read => %r{\A(\d+|\$.+)\z} => type_index
-            type_index =
-              if type_index.start_with?('$')
-                type_index
+          case peek
+          in 'export' | 'type' | 'param' | 'result' | 'local'
+            case read
+            in 'export'
+              read => exported_name
+            in 'type'
+              read => %r{\A(\d+|\$.+)\z} => type_index
+              type_index =
+                if type_index.start_with?('$')
+                  type_index
+                else
+                  type_index.to_i(10)
+                end
+            in 'param'
+              if peek in %r{\A\$}
+                read => %r{\A\$} => parameter_name
+                read
+                parameters << Parameter.new(name: parameter_name)
               else
-                type_index.to_i(10)
+                repeatedly do
+                  read
+                  parameters << Parameter.new(name: nil)
+                end
               end
-          in 'param'
-            read => ^opcode
-            if peek in %r{\A\$}
-              read => %r{\A\$} => parameter_name
-              read
-              parameters << Parameter.new(name: parameter_name)
-            else
-              repeatedly do
+            in 'result'
+              results.concat(repeatedly { read })
+            in 'local'
+              if peek in %r{\A\$}
+                read => %r{\A\$} => local_name
                 read
-                parameters << Parameter.new(name: nil)
-              end
-            end
-          in 'result'
-            read => ^opcode
-            results.concat(repeatedly { read })
-          in 'local'
-            read => ^opcode
-            if peek in %r{\A\$}
-              read => %r{\A\$} => local_name
-              read
-              locals << Local.new(name: local_name)
-            else
-              repeatedly do
-                read
-                locals << Local.new(name: nil)
+                locals << Local.new(name: local_name)
+              else
+                repeatedly do
+                  read
+                  locals << Local.new(name: nil)
+                end
               end
             end
           else
