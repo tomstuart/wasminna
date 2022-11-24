@@ -442,7 +442,7 @@ class ASTParser
     case opcode
     in 'block'
       body =
-        read_list(read_until(terminated_by: 'end')) do
+        read_list(read_until('end')) do
           parse_instructions
         end
       if !label.nil? && peek in ^label
@@ -451,7 +451,7 @@ class ASTParser
       Block.new(label:, results:, body:)
     in 'loop'
       body =
-        read_list(read_until(terminated_by: 'end')) do
+        read_list(read_until('end')) do
           parse_instructions
         end
       if !label.nil? && peek in ^label
@@ -459,7 +459,7 @@ class ASTParser
       end
       Loop.new(label:, results:, body:)
     in 'if'
-      body_s_expression = read_until(terminated_by: 'end')
+      body_s_expression = read_until('end')
       if !label.nil? && peek in ^label
         read => ^label
       end
@@ -467,7 +467,7 @@ class ASTParser
       consequent, alternative = nil, nil
       read_list(body_s_expression) do
         consequent =
-          read_list(read_until(terminated_by: 'else')) do
+          read_list(read_until('else')) do
             parse_instructions
           end
         if !label.nil? && peek in ^label
@@ -559,15 +559,15 @@ class ASTParser
     end
   end
 
-  def read_until(terminated_by:)
+  def read_until(terminator)
     [].tap do |atoms|
       loop do
         read => opcode
-        break if finished? || opcode == terminated_by
+        break if finished? || opcode == terminator
 
         atoms << opcode
         if opcode in 'block' | 'loop' | 'if'
-          atoms.concat(read_until(terminated_by: 'end'))
+          atoms.concat(read_until('end'))
           atoms << 'end'
         end
       end
