@@ -504,18 +504,12 @@ class ASTParser
         'call' => Call
       }.fetch(opcode).new(index:)
     in 'br_table'
-      read => %r{\A(\d+|\$.+)\z} => index
-      indexes = [index]
-      while peek in %r{\A(\d+|\$.+)\z}
-        read => %r{\A(\d+|\$.+)\z} => index
-        indexes << index
-      end
       indexes =
-        indexes.map do |index|
-          if index.start_with?('$')
-            index
+        repeatedly(until: -> { !%r{\A(\d+|\$.+)\z}.match(_1) }) do
+          if peek.start_with?('$')
+            read
           else
-            index.to_i(10)
+            read.to_i(10)
           end
         end
       indexes => [*target_indexes, default_index]
