@@ -146,8 +146,7 @@ class ASTParser
     exported_name, type_index, parameters, results, locals, body =
       nil, nil, [], [], [], []
     repeatedly do
-      case peek
-      in [*]
+      if can_read_list?
         read_list do
           case peek
           in 'export' | 'type' | 'param' | 'result' | 'local'
@@ -202,8 +201,7 @@ class ASTParser
 
   def parse_memory
     read => 'memory'
-    case peek
-    in [*]
+    if can_read_list?
       string =
         read_list do
           read => 'data'
@@ -226,13 +224,13 @@ class ASTParser
     read => 'funcref'
 
     elements =
-      if finished?
-        []
-      else
+      if can_read_list?
         read_list do
           read => 'elem'
           repeatedly { read }
         end
+      else
+        []
       end
 
     Table.new(name:, elements:)
@@ -335,8 +333,7 @@ class ASTParser
 
   def parse_instructions
     repeatedly do
-      case peek
-      in [*]
+      if can_read_list?
         parse_folded_instruction
       else
         [parse_instruction]
@@ -620,6 +617,10 @@ class ASTParser
         results << yield
       end
     end
+  end
+
+  def can_read_list?
+    peek in [*]
   end
 
   def finished?
