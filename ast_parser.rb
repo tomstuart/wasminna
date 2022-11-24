@@ -454,14 +454,18 @@ class ASTParser
           read_list(read_until('else')) do
             parse_instructions
           end
-        if !label.nil? && peek in ^label
-          read => ^label
+        if peek in 'else'
+          read => 'else'
+          if !label.nil? && peek in ^label
+            read => ^label
+          end
+          alternative = parse_instructions
         end
-        alternative = parse_instructions
 
         If.new(label:, results:, consequent:, alternative:)
       end
     end.tap do
+      read => 'end'
       if !label.nil? && peek in ^label
         read => ^label
       end
@@ -557,7 +561,7 @@ class ASTParser
   def read_until(terminator)
     repeatedly(until: terminator) do
       if peek in 'block' | 'loop' | 'if'
-        [read, *read_until('end'), 'end']
+        [read, *read_until('end'), read]
       else
         [read]
       end
@@ -611,7 +615,6 @@ class ASTParser
       until finished? || (!terminator.nil? && peek in ^terminator)
         results << yield
       end
-      read => ^terminator unless finished?
     end
   end
 
