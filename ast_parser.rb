@@ -360,8 +360,7 @@ class ASTParser
   end
 
   def parse_folded_instruction
-    read => [*] => folded_instruction
-    read_list(unfold(folded_instruction)) do
+    read_list(unfold(read)) do
       parse_instructions
     end
   end
