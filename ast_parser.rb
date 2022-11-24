@@ -560,18 +560,14 @@ class ASTParser
   end
 
   def read_until(terminator)
-    [].tap do |atoms|
-      loop do
-        read => opcode
-        break if finished? || opcode == terminator
-
-        atoms << opcode
-        if opcode in 'block' | 'loop' | 'if'
-          atoms.concat(read_until('end'))
-          atoms << 'end'
-        end
+    repeatedly(until: terminator) do
+      read => opcode
+      if opcode in 'block' | 'loop' | 'if'
+        [opcode, *read_until('end'), 'end']
+      else
+        [opcode]
       end
-    end
+    end.flatten(1)
   end
 
   def unsigned(signed, bits:)
