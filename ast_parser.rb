@@ -341,11 +341,11 @@ class ASTParser
     previous_s_expression, self.s_expression = self.s_expression, from
 
     read => ^starting_with unless starting_with.nil?
-    result = yield
-    raise unless self.s_expression.empty?
 
-    self.s_expression = previous_s_expression
-    result
+    yield.tap do
+      raise unless self.s_expression.empty?
+      self.s_expression = previous_s_expression
+    end
   end
 
   def parse_instruction
