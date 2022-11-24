@@ -28,8 +28,7 @@ class ASTParser
 
   def parse_command
     read_list do
-      read => opcode
-      case opcode
+      case read
       in 'module'
         parse_module
       in 'invoke'
@@ -54,8 +53,7 @@ class ASTParser
     else
       repeatedly do
         read_list do
-          read => opcode
-          case opcode
+          case read
           in 'func'
             functions << parse_function
           in 'memory'
@@ -90,13 +88,13 @@ class ASTParser
 
     expecteds =
       repeatedly do
-        read => expected
-        case expected
+        case peek
         in ['f32.const' | 'f64.const' => instruction, 'nan:canonical' | 'nan:arithmetic' => nan]
+          read
           bits = instruction.slice(%r{\d+}).to_i(10)
           NanExpectation.new(nan:, bits:)
         else
-          parse_expression(expected)
+          read_list { parse_instructions }
         end
       end
 
@@ -144,10 +142,9 @@ class ASTParser
     exported_name, type_index, parameters, results, locals, body =
       nil, nil, [], [], [], []
     repeatedly do
-      read => expression
-      case expression
+      case peek
       in [*]
-        read_list(expression) do
+        read_list do
           peek => opcode
           case opcode
           in 'export'
@@ -194,7 +191,7 @@ class ASTParser
           end
         end
       else
-        body << expression
+        body << read
       end
     end
     body = read_list(body) { parse_instructions }
@@ -484,10 +481,8 @@ class ASTParser
   end
 
   def parse_normal_instruction
-    read => opcode
-
-    case opcode
-    in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow'
+    case read
+    in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' => opcode
       {
         'return' => Return,
         'nop' => Nop,
@@ -495,7 +490,7 @@ class ASTParser
         'unreachable' => Unreachable,
         'memory.grow' => MemoryGrow
       }.fetch(opcode).new
-    in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call'
+    in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode
       read => index
       index =
         if index.start_with?('$')
