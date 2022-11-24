@@ -614,9 +614,14 @@ class ASTParser
       force_encoding(encoding)
   end
 
-  def repeatedly
+  def repeatedly(**kwargs)
+    terminator = kwargs[:until]
+
     [].tap do |results|
-      results << yield until finished?
+      until finished? || (!terminator.nil? && peek in ^terminator)
+        results << yield
+      end
+      read => ^terminator unless finished?
     end
   end
 
