@@ -495,10 +495,8 @@ class ASTParser
           read_list(from: read_until('else')) do
             parse_instructions
           end
-        if peek in 'else'
-          read_labelled('else', label:)
-          alternative = parse_instructions
-        end
+        read_labelled('else', label:) if peek in 'else'
+        alternative = parse_instructions
 
         If.new(label:, results:, consequent:, alternative:)
       end
