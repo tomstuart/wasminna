@@ -208,10 +208,7 @@ class ASTParser
     if can_read_list?(starting_with: 'data')
       string = read_list { parse_memory_data }
     else
-      case repeatedly { parse_integer(bits: 32) }
-      in [minimum_size]
-      in [minimum_size, maximum_size]
-      end
+      parse_memory_sizes => [minimum_size, maximum_size]
     end
 
     Memory.new(string:, minimum_size:, maximum_size:)
@@ -220,6 +217,15 @@ class ASTParser
   def parse_memory_data
     read => 'data'
     repeatedly { parse_string }.join
+  end
+
+  def parse_memory_sizes
+    case repeatedly { parse_integer(bits: 32) }
+    in [minimum_size]
+      [minimum_size, nil]
+    in [minimum_size, maximum_size]
+      [minimum_size, maximum_size]
+    end
   end
 
   def parse_table
