@@ -343,8 +343,7 @@ class ASTParser
       in 'block' | 'loop' | 'if'
         parse_folded_structured_instruction
       else
-        parse_instructions => [first, *rest]
-        [*rest, first]
+        parse_folded_plain_instruction
       end
     end
   end
@@ -379,6 +378,11 @@ class ASTParser
         end
       [*condition, If.new(label:, results:, consequent:, alternative:)]
     end
+  end
+
+  def parse_folded_plain_instruction
+    parse_instructions => [first, *rest]
+    [*rest, first]
   end
 
   def parse_numeric_instruction
