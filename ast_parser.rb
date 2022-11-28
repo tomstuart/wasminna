@@ -140,21 +140,30 @@ class ASTParser
 
     read_list do
       read => 'func'
-      parameters, results = [], []
+      parameters = parse_parameters
+      results = parse_results
 
+      Type.new(name:, parameters:, results:)
+    end
+  end
+
+  def parse_parameters
+    [].tap do |parameters|
       while can_read_list?(starting_with: 'param')
         read_list do
           parameters.concat(parse_parameter)
         end
       end
+    end
+  end
 
+  def parse_results
+    [].tap do |results|
       while can_read_list?(starting_with: 'result')
         read_list do
           results.concat(parse_result)
         end
       end
-
-      Type.new(name:, parameters:, results:)
     end
   end
 
