@@ -297,40 +297,6 @@ class ASTParser
     Global.new(name:, value:)
   end
 
-  def unfold(s_expression)
-    case s_expression
-    in ['block' | 'loop' | 'if' => opcode, *rest]
-      rest in [ID_REGEXP => label, *rest]
-      rest in [['result', *] => type, *rest]
-
-      case opcode
-      in 'block' | 'loop'
-        rest => [*body]
-        [
-          opcode,
-          label,
-          type,
-          *body,
-          'end'
-        ].compact
-      in 'if'
-        rest => [*condition, ['then', *consequent], *rest]
-        rest in [['else', *alternative], *rest]
-        rest => []
-        [
-          *condition,
-          opcode,
-          label,
-          type,
-          *consequent,
-          'else',
-          *alternative,
-          'end'
-        ].compact
-      end
-    end
-  end
-
   NUMERIC_OPCODE_REGEXP =
     %r{
       \A
