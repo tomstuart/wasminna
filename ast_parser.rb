@@ -205,20 +205,9 @@ class ASTParser
                 type_index.to_i(10)
               end
           in 'param'
-            read => ^opcode
-            if peek in %r{\A\$}
-              read => %r{\A\$} => parameter_name
-              read
-              parameters << Parameter.new(name: parameter_name)
-            else
-              repeatedly do
-                read
-                parameters << Parameter.new(name: nil)
-              end
-            end
+            parameters.concat(parse_parameter)
           in 'result'
-            read => ^opcode
-            results.concat(repeatedly { read })
+            results.concat(parse_result)
           in 'local'
             read => ^opcode
             if peek in %r{\A\$}
