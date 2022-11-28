@@ -138,9 +138,9 @@ class ASTParser
       read => %r{\A\$} => name
     end
 
-    parameters, results = [], []
     read_list do
       read => 'func'
+      parameters, results = [], []
 
       while can_read_list?(starting_with: 'param')
         read_list(starting_with: 'param') do
@@ -161,9 +161,9 @@ class ASTParser
           results.concat(repeatedly { read })
         end
       end
-    end
 
-    Type.new(name:, parameters:, results:)
+      Type.new(name:, parameters:, results:)
+    end
   end
 
   def parse_function
