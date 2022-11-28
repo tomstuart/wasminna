@@ -190,11 +190,13 @@ class ASTParser
       if opcode.nil?
         body = parse_instructions
       else
-        read_list(starting_with: opcode) do
+        read_list do
           case opcode
           in 'export'
+            read => ^opcode
             read => exported_name
           in 'type'
+            read => ^opcode
             read => %r{\A(\d+|\$.+)\z} => type_index
             type_index =
               if type_index.start_with?('$')
@@ -203,6 +205,7 @@ class ASTParser
                 type_index.to_i(10)
               end
           in 'param'
+            read => ^opcode
             if peek in %r{\A\$}
               read => %r{\A\$} => parameter_name
               read
@@ -214,8 +217,10 @@ class ASTParser
               end
             end
           in 'result'
+            read => ^opcode
             results.concat(repeatedly { read })
           in 'local'
+            read => ^opcode
             if peek in %r{\A\$}
               read => %r{\A\$} => local_name
               read
