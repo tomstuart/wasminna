@@ -36,9 +36,7 @@ class ASTParser
       in 'assert_return'
         parse_assert_return
       in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
-        # TODO
-        repeatedly { read }
-        SkippedAssertion.new
+        parse_unsupported_assertion
       end
     end
   end
@@ -108,6 +106,12 @@ class ASTParser
       end
 
     AssertReturn.new(invoke:, expecteds:)
+  end
+
+  def parse_unsupported_assertion
+    # TODO
+    repeatedly { read }
+    SkippedAssertion.new
   end
 
   def parse_type
