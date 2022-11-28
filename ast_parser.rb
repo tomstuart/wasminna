@@ -270,8 +270,8 @@ class ASTParser
     repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
       parse_integer(bits: 32)
     end
-    if peek in %r{\A(\d+|\$.+)\z}
-      read => %r{\A(\d+|\$.+)\z} => name
+    if peek in %r{\A\$}
+      read => %r{\A\$} => name
     end
 
     read => 'funcref'
