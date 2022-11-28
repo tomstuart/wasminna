@@ -341,39 +341,43 @@ class ASTParser
     read_list do
       case peek
       in 'block' | 'loop' | 'if'
-        read_labelled => [opcode, label]
-        results = parse_results
-
-        case opcode
-        in 'block'
-          body = parse_instructions
-          [Block.new(label:, results:, body:)]
-        in 'loop'
-          body = parse_instructions
-          [Loop.new(label:, results:, body:)]
-        in 'if'
-          condition = []
-          until can_read_list?(starting_with: 'then')
-            condition.concat(parse_folded_instruction)
-          end
-          consequent =
-            read_list(starting_with: 'then') do
-              parse_instructions
-            end
-          alternative =
-            if can_read_list?(starting_with: 'else')
-              read_list(starting_with: 'else') do
-                parse_instructions
-              end
-            else
-              []
-            end
-          [*condition, If.new(label:, results:, consequent:, alternative:)]
-        end
+        parse_folded_structured_instruction
       else
         parse_instructions => [first, *rest]
         [*rest, first]
       end
+    end
+  end
+
+  def parse_folded_structured_instruction
+    read_labelled => [opcode, label]
+    results = parse_results
+
+    case opcode
+    in 'block'
+      body = parse_instructions
+      [Block.new(label:, results:, body:)]
+    in 'loop'
+      body = parse_instructions
+      [Loop.new(label:, results:, body:)]
+    in 'if'
+      condition = []
+      until can_read_list?(starting_with: 'then')
+        condition.concat(parse_folded_instruction)
+      end
+      consequent =
+        read_list(starting_with: 'then') do
+          parse_instructions
+        end
+      alternative =
+        if can_read_list?(starting_with: 'else')
+          read_list(starting_with: 'else') do
+            parse_instructions
+          end
+        else
+          []
+        end
+      [*condition, If.new(label:, results:, consequent:, alternative:)]
     end
   end
 
