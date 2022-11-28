@@ -491,10 +491,7 @@ class ASTParser
         body = parse_instructions
         Loop.new(label:, results:, body:)
       in 'if'
-        consequent =
-          read_list(from: read_until('else')) do
-            parse_instructions
-          end
+        consequent = parse_consequent
         read_labelled('else', label:) if peek in 'else'
         alternative = parse_instructions
 
@@ -502,6 +499,12 @@ class ASTParser
       end
     end.tap do
       read_labelled('end', label:)
+    end
+  end
+
+  def parse_consequent
+    read_list(from: read_until('else')) do
+      parse_instructions
     end
   end
 
