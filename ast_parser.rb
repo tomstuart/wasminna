@@ -211,8 +211,10 @@ class ASTParser
           repeatedly { parse_string }.join
         end
     else
-      minimum_size = parse_integer(bits: 32)
-      maximum_size = parse_integer(bits: 32) unless finished?
+      case repeatedly { parse_integer(bits: 32) }
+      in [minimum_size]
+      in [minimum_size, maximum_size]
+      end
     end
 
     Memory.new(string:, minimum_size:, maximum_size:)
