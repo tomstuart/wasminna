@@ -169,6 +169,16 @@ class ASTParser
     end
   end
 
+  def parse_locals
+    [].tap do |locals|
+      while can_read_list?(starting_with: 'local')
+        read_list do
+          locals.concat(parse_local)
+        end
+      end
+    end
+  end
+
   def parse_parameter
     read => 'param'
     if peek in ID_REGEXP
