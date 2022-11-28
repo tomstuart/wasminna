@@ -299,10 +299,6 @@ class ASTParser
 
   def unfold(s_expression)
     case s_expression
-    in ['i32.const' | 'i64.const' | 'f32.const' | 'f64.const' | 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode, argument, *rest]
-      [*rest, opcode, argument]
-    in ['i32.load' | 'i64.load' | 'i64.load8_s' | 'f32.load' | 'f64.load' | 'i32.store' | 'i32.store8' | 'i64.store' | 'i64.store16' | 'f32.store' | 'f64.store' => opcode, %r{\Aoffset=\d+\z} => static_offset, *rest]
-      [*rest, opcode, static_offset]
     in ['block' | 'loop' | 'if' => opcode, *rest]
       rest in [ID_REGEXP => label, *rest]
       rest in [['result', *] => type, *rest]
@@ -332,44 +328,6 @@ class ASTParser
           'end'
         ].compact
       end
-    in ['br_table' => opcode, *rest]
-      rest => [INDEX_REGEXP => index, *rest]
-      indexes = [index]
-      while rest in [INDEX_REGEXP => index, *rest]
-        indexes << index
-      end
-
-      [*rest, opcode, *indexes]
-    in ['call_indirect' => opcode, *rest]
-      rest in [INDEX_REGEXP => table_index, *rest]
-      rest in [['type', INDEX_REGEXP] => typeuse, *rest]
-      params = []
-      while rest in [['param', *] => param, *rest]
-        params << param
-      end
-      results = []
-      while rest in [['result', *] => result, *rest]
-        results << result
-      end
-
-      [
-        *rest,
-        opcode,
-        table_index,
-        typeuse,
-        *params,
-        *results
-      ].compact
-    in ['select' => opcode, *rest]
-      rest in [['result', *] => type, *rest]
-
-      [
-        *rest,
-        opcode,
-        type
-      ].compact
-    in [opcode, *rest]
-      [*rest, opcode]
     end
   end
 
@@ -414,8 +372,15 @@ class ASTParser
   end
 
   def parse_folded_instruction
-    read_list(from: unfold(read)) do
-      parse_instructions
+    if ['block', 'loop', 'if'].any? { can_read_list?(starting_with: _1) }
+      read_list(from: unfold(read)) do
+        parse_instructions
+      end
+    else
+      read_list do
+        parse_instructions => [first, *rest]
+        [*rest, first]
+      end
     end
   end
 
