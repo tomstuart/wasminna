@@ -183,6 +183,17 @@ class ASTParser
     repeatedly { read }
   end
 
+  def parse_local
+    read => 'local'
+    if peek in %r{\A\$}
+      read => %r{\A\$} => name
+      read
+      [Local.new(name: name)]
+    else
+      repeatedly { read }.map { Local.new(name: nil) }
+    end
+  end
+
   def parse_function
     read => 'func'
     if peek in %r{\A\$}
@@ -212,17 +223,7 @@ class ASTParser
           in 'result'
             results.concat(parse_result)
           in 'local'
-            read => ^opcode
-            if peek in %r{\A\$}
-              read => %r{\A\$} => local_name
-              read
-              locals << Local.new(name: local_name)
-            else
-              repeatedly do
-                read
-                locals << Local.new(name: nil)
-              end
-            end
+            locals.concat(parse_local)
           end
         end
       end
