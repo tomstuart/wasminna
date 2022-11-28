@@ -206,13 +206,7 @@ class ASTParser
             read => exported_name
           in 'type'
             read => ^opcode
-            read => %r{\A(\d+|\$.+)\z} => type_index
-            type_index =
-              if type_index.start_with?('$')
-                type_index
-              else
-                type_index.to_i(10)
-              end
+            type_index = parse_index
           in 'param'
             parameters.concat(parse_parameter)
           in 'result'
@@ -235,6 +229,15 @@ class ASTParser
     end
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
+  end
+
+  def parse_index
+    read => %r{\A(\d+|\$.+)\z} => index
+    if index.start_with?('$')
+      index
+    else
+      index.to_i(10)
+    end
   end
 
   def parse_memory
@@ -526,13 +529,7 @@ class ASTParser
         'memory.grow' => MemoryGrow
       }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode
-      read => index
-      index =
-        if index.start_with?('$')
-          index
-        else
-          index.to_i(10)
-        end
+      index = parse_index
 
       {
         'local.get' => LocalGet,
@@ -547,11 +544,7 @@ class ASTParser
     in 'br_table'
       indexes =
         repeatedly(until: -> { !%r{\A(\d+|\$.+)\z}.match(_1) }) do
-          if peek.start_with?('$')
-            read
-          else
-            read.to_i(10)
-          end
+          parse_index
         end
       indexes => [*target_indexes, default_index]
 
@@ -559,19 +552,14 @@ class ASTParser
     in 'call_indirect'
       table_index =
         if peek in %r{\A(\d+|\$.+)\z}
-          read => %r{\A(\d+|\$.+)\z} => table_index
-          if table_index.start_with?('$')
-            table_index
-          else
-            table_index.to_i(10)
-          end
+          parse_index
         else
           0
         end
       type_index =
         if can_read_list?(starting_with: 'type')
           read_list(starting_with: 'type') do
-            read => %r{\A(\d+|\$.+)\z}
+            parse_index
           end
         end
       while can_read_list?(starting_with: 'param')
