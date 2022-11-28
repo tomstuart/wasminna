@@ -493,7 +493,7 @@ class ASTParser
       in 'if'
         consequent = parse_consequent
         read_labelled('else', label:) if peek in 'else'
-        alternative = parse_instructions
+        alternative = parse_alternative
 
         If.new(label:, results:, consequent:, alternative:)
       end
@@ -506,6 +506,10 @@ class ASTParser
     read_list(from: read_until('else')) do
       parse_instructions
     end
+  end
+
+  def parse_alternative
+    parse_instructions
   end
 
   def read_labelled(atom = nil, label: nil)
