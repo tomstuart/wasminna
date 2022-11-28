@@ -552,7 +552,7 @@ class ASTParser
       }.fetch(opcode).new(index:)
     in 'br_table'
       indexes =
-        repeatedly(until: -> { !INDEX_REGEXP.match(_1) }) do
+        repeatedly(until: -> { can_read_list? || !INDEX_REGEXP.match(_1) }) do
           parse_index
         end
       indexes => [*target_indexes, default_index]
