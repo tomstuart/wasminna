@@ -201,12 +201,14 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
     end
+    if can_read_list?(starting_with: 'export')
+      exported_name = read_list(starting_with: 'export') { read }
+    end
 
-    exported_name, type_index, parameters, results, locals, body =
-      nil, nil, [], [], [], []
+    type_index, parameters, results, locals, body = nil, [], [], [], []
     repeatedly do
       opcode =
-        ['export', 'type', 'param', 'result', 'local'].
+        ['type', 'param', 'result', 'local'].
           detect { can_read_list?(starting_with: _1) }
 
       if opcode.nil?
@@ -214,9 +216,6 @@ class ASTParser
       else
         read_list do
           case opcode
-          in 'export'
-            read => ^opcode
-            read => exported_name
           in 'type'
             read => ^opcode
             type_index = parse_index
