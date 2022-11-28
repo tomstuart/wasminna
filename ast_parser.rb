@@ -267,6 +267,9 @@ class ASTParser
 
   def parse_table
     read => 'table'
+    repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
+      parse_integer(bits: 32)
+    end
     if peek in %r{\A(\d+|\$.+)\z}
       read => %r{\A(\d+|\$.+)\z} => name
     end
