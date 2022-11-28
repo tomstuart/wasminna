@@ -276,17 +276,19 @@ class ASTParser
     end
 
     read => 'funcref'
-
-    elements =
-      if can_read_list?(starting_with: 'elem')
-        read_list(starting_with: 'elem') do
-          repeatedly { read }
-        end
-      else
-        []
-      end
+    elements = parse_elements
 
     Table.new(name:, elements:)
+  end
+
+  def parse_elements
+    if can_read_list?(starting_with: 'elem')
+      read_list(starting_with: 'elem') do
+        repeatedly { read }
+      end
+    else
+      []
+    end
   end
 
   def parse_global
