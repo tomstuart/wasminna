@@ -95,20 +95,22 @@ class ASTParser
   def parse_assert_return
     read => 'assert_return'
     invoke = read_list { parse_invoke }
-
-    expecteds =
-      repeatedly do
-        read_list do
-          case peek
-          in 'f32.const' | 'f64.const'
-            parse_float_expectation
-          else
-            parse_instructions
-          end
-        end
-      end
+    expecteds = parse_expecteds
 
     AssertReturn.new(invoke:, expecteds:)
+  end
+
+  def parse_expecteds
+    repeatedly do
+      read_list do
+        case peek
+        in 'f32.const' | 'f64.const'
+          parse_float_expectation
+        else
+          parse_instructions
+        end
+      end
+    end
   end
 
   def parse_float_expectation
