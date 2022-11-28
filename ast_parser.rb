@@ -43,32 +43,45 @@ class ASTParser
 
   def parse_module
     read => 'module'
+    fields =
+      case peek
+      in 'binary'
+        parse_binary_fields
+      else
+        parse_text_fields
+      end
+
+    Module.new(**fields)
+  end
+
+  def parse_binary_fields
+    # TODO
+    repeatedly { read }
+
+    { functions: [], memory: nil, tables: [], globals: [], types: [] }
+  end
+
+  def parse_text_fields
     functions, memory, tables, globals, types = [], nil, [], [], []
 
-    case peek
-    in 'binary'
-      # TODO
-      repeatedly { read }
-    else
-      repeatedly do
-        read_list do
-          case peek
-          in 'func'
-            functions << parse_function
-          in 'memory'
-            memory = parse_memory
-          in 'table'
-            tables << parse_table
-          in 'global'
-            globals << parse_global
-          in 'type'
-            types << parse_type
-          end
+    repeatedly do
+      read_list do
+        case peek
+        in 'func'
+          functions << parse_function
+        in 'memory'
+          memory = parse_memory
+        in 'table'
+          tables << parse_table
+        in 'global'
+          globals << parse_global
+        in 'type'
+          types << parse_type
         end
       end
     end
 
-    Module.new(functions:, memory:, tables:, globals:, types:)
+    { functions:, memory:, tables:, globals:, types: }
   end
 
   def parse_invoke
