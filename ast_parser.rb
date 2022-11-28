@@ -404,7 +404,7 @@ class ASTParser
     read => ^starting_with unless starting_with.nil?
 
     yield.tap do
-      raise unless self.s_expression.empty?
+      raise unless finished?
       self.s_expression = previous_s_expression
     end
   end
