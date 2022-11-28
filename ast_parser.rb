@@ -234,8 +234,10 @@ class ASTParser
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
 
+  INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
+
   def parse_index
-    read => %r{\A(\d+|\$.+)\z} => index
+    read => INDEX_REGEXP => index
     if index.start_with?('$')
       index
     else
@@ -338,16 +340,16 @@ class ASTParser
         ].compact
       end
     in ['br_table' => opcode, *rest]
-      rest => [%r{\A(\d+|\$.+)\z} => index, *rest]
+      rest => [INDEX_REGEXP => index, *rest]
       indexes = [index]
-      while rest in [%r{\A(\d+|\$.+)\z} => index, *rest]
+      while rest in [INDEX_REGEXP => index, *rest]
         indexes << index
       end
 
       [*rest, opcode, *indexes]
     in ['call_indirect' => opcode, *rest]
-      rest in [%r{\A(\d+|\$.+)\z} => table_index, *rest]
-      rest in [['type', %r{\A(\d+|\$.+)\z}] => typeuse, *rest]
+      rest in [INDEX_REGEXP => table_index, *rest]
+      rest in [['type', INDEX_REGEXP] => typeuse, *rest]
       params = []
       while rest in [['param', *] => param, *rest]
         params << param
@@ -557,7 +559,7 @@ class ASTParser
       }.fetch(opcode).new(index:)
     in 'br_table'
       indexes =
-        repeatedly(until: -> { !%r{\A(\d+|\$.+)\z}.match(_1) }) do
+        repeatedly(until: -> { !INDEX_REGEXP.match(_1) }) do
           parse_index
         end
       indexes => [*target_indexes, default_index]
@@ -565,7 +567,7 @@ class ASTParser
       BrTable.new(target_indexes:, default_index:)
     in 'call_indirect'
       table_index =
-        if peek in %r{\A(\d+|\$.+)\z}
+        if peek in INDEX_REGEXP
           parse_index
         else
           0
