@@ -484,14 +484,7 @@ class ASTParser
     if peek in %r{\A\$}
       read => %r{\A\$} => label
     end
-    results =
-      if can_read_list?(starting_with: 'result')
-        read_list(starting_with: 'result') do
-          repeatedly { read }
-        end
-      else
-        []
-      end
+    results = parse_results
 
     read_list(from: read_until('end')) do
       case opcode
