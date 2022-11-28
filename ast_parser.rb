@@ -479,11 +479,7 @@ class ASTParser
   end
 
   def parse_structured_instruction
-    read => opcode
-
-    if peek in %r{\A\$}
-      read => %r{\A\$} => label
-    end
+    read_labelled => [opcode, label]
     results = parse_results
 
     read_list(from: read_until('end')) do
@@ -500,21 +496,33 @@ class ASTParser
             parse_instructions
           end
         if peek in 'else'
-          read => 'else'
-          if !label.nil? && peek in ^label
-            read => ^label
-          end
+          read_labelled('else', label:)
           alternative = parse_instructions
         end
 
         If.new(label:, results:, consequent:, alternative:)
       end
     end.tap do
-      read => 'end'
-      if !label.nil? && peek in ^label
+      read_labelled('end', label:)
+    end
+  end
+
+  def read_labelled(atom = nil, label: nil)
+    if atom.nil?
+      read => atom
+    else
+      read => ^atom
+    end
+
+    if peek in %r{\A\$}
+      if label.nil?
+        read => %r{\A\$} => label
+      else
         read => ^label
       end
     end
+
+    [atom, label]
   end
 
   def parse_normal_instruction
