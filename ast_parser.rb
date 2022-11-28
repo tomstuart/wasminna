@@ -6,12 +6,6 @@ class ASTParser
   include AST
   include Helpers::Mask
 
-  def parse_expression(s_expression)
-    read_list(from: s_expression) do
-      parse_instructions
-    end
-  end
-
   def parse_script(s_expression)
     read_list(from: s_expression) do
       parse_commands
