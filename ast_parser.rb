@@ -142,23 +142,23 @@ class ASTParser
     read_list do
       read => 'func'
 
-      repeatedly do
-        if can_read_list?(starting_with: 'param')
-          read_list(starting_with: 'param') do
-            parameters.concat(
-              if peek in %r{\A\$}
-                read => %r{\A\$} => parameter_name
-                read
-                [Parameter.new(name: parameter_name)]
-              else
-                repeatedly { read }.map { Parameter.new(name: nil) }
-              end
-            )
-          end
-        elsif can_read_list?(starting_with: 'result')
-          read_list(starting_with: 'result') do
-            results.concat(repeatedly { read })
-          end
+      while can_read_list?(starting_with: 'param')
+        read_list(starting_with: 'param') do
+          parameters.concat(
+            if peek in %r{\A\$}
+              read => %r{\A\$} => parameter_name
+              read
+              [Parameter.new(name: parameter_name)]
+            else
+              repeatedly { read }.map { Parameter.new(name: nil) }
+            end
+          )
+        end
+      end
+
+      while can_read_list?(starting_with: 'result')
+        read_list(starting_with: 'result') do
+          results.concat(repeatedly { read })
         end
       end
     end
