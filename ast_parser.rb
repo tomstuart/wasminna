@@ -143,9 +143,8 @@ class ASTParser
       read => 'func'
 
       repeatedly do
-        read_list do
-          case read
-          in 'param'
+        if can_read_list?(starting_with: 'param')
+          read_list(starting_with: 'param') do
             parameters.concat(
               if peek in %r{\A\$}
                 read => %r{\A\$} => parameter_name
@@ -155,7 +154,9 @@ class ASTParser
                 repeatedly { read }.map { Parameter.new(name: nil) }
               end
             )
-          in 'result'
+          end
+        elsif can_read_list?(starting_with: 'result')
+          read_list(starting_with: 'result') do
             results.concat(repeatedly { read })
           end
         end
