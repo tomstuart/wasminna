@@ -132,10 +132,12 @@ class ASTParser
     SkippedAssertion.new
   end
 
+  ID_REGEXP = %r{\A\$}
+
   def parse_type
     read => 'type'
-    if peek in %r{\A\$}
-      read => %r{\A\$} => name
+    if peek in ID_REGEXP
+      read => ID_REGEXP => name
     end
 
     read_list do
@@ -169,8 +171,8 @@ class ASTParser
 
   def parse_parameter
     read => 'param'
-    if peek in %r{\A\$}
-      read => %r{\A\$} => name
+    if peek in ID_REGEXP
+      read => ID_REGEXP => name
       read
       [Parameter.new(name:)]
     else
@@ -185,8 +187,8 @@ class ASTParser
 
   def parse_local
     read => 'local'
-    if peek in %r{\A\$}
-      read => %r{\A\$} => name
+    if peek in ID_REGEXP
+      read => ID_REGEXP => name
       read
       [Local.new(name: name)]
     else
@@ -196,8 +198,8 @@ class ASTParser
 
   def parse_function
     read => 'func'
-    if peek in %r{\A\$}
-      read => %r{\A\$} => name
+    if peek in ID_REGEXP
+      read => ID_REGEXP => name
     end
 
     exported_name, type_index, parameters, results, locals, body =
@@ -271,8 +273,8 @@ class ASTParser
     repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
       parse_integer(bits: 32)
     end
-    if peek in %r{\A\$}
-      read => %r{\A\$} => name
+    if peek in ID_REGEXP
+      read => ID_REGEXP => name
     end
 
     read => 'funcref'
@@ -307,7 +309,7 @@ class ASTParser
     in ['i32.load' | 'i64.load' | 'i64.load8_s' | 'f32.load' | 'f64.load' | 'i32.store' | 'i32.store8' | 'i64.store' | 'i64.store16' | 'f32.store' | 'f64.store' => opcode, %r{\Aoffset=\d+\z} => static_offset, *rest]
       [*rest, opcode, static_offset]
     in ['block' | 'loop' | 'if' => opcode, *rest]
-      rest in [%r{\A\$} => label, *rest]
+      rest in [ID_REGEXP => label, *rest]
       rest in [['result', *] => type, *rest]
 
       case opcode
@@ -519,9 +521,9 @@ class ASTParser
       read => ^atom
     end
 
-    if peek in %r{\A\$}
+    if peek in ID_REGEXP
       if label.nil?
-        read => %r{\A\$} => label
+        read => ID_REGEXP => label
       else
         read => ^label
       end
