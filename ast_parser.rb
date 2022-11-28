@@ -207,11 +207,12 @@ class ASTParser
     if can_read_list?(starting_with: 'type')
       type_index = read_list(starting_with: 'type') { parse_index }
     end
+    parameters = parse_parameters
 
-    parameters, results, locals, body = [], [], [], []
+    results, locals, body = [], [], []
     repeatedly do
       opcode =
-        ['param', 'result', 'local'].
+        ['result', 'local'].
           detect { can_read_list?(starting_with: _1) }
 
       if opcode.nil?
@@ -219,8 +220,6 @@ class ASTParser
       else
         read_list do
           case opcode
-          in 'param'
-            parameters.concat(parse_parameter)
           in 'result'
             results.concat(parse_result)
           in 'local'
