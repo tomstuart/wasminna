@@ -101,16 +101,7 @@ class ASTParser
         read_list do
           case peek
           in 'f32.const' | 'f64.const'
-            read => 'f32.const' | 'f64.const' => float_opcode
-            bits = float_opcode.slice(%r{\d+}).to_i(10)
-
-            if peek in 'nan:canonical' | 'nan:arithmetic'
-              read => 'nan:canonical' | 'nan:arithmetic' => nan
-              NanExpectation.new(nan:, bits:)
-            else
-              number = parse_float(bits:)
-              [Const.new(type: :float, bits:, number:)]
-            end
+            parse_float_expectation
           else
             parse_instructions
           end
@@ -118,6 +109,19 @@ class ASTParser
       end
 
     AssertReturn.new(invoke:, expecteds:)
+  end
+
+  def parse_float_expectation
+    read => 'f32.const' | 'f64.const' => opcode
+    bits = opcode.slice(%r{\d+}).to_i(10)
+
+    if peek in 'nan:canonical' | 'nan:arithmetic'
+      read => 'nan:canonical' | 'nan:arithmetic' => nan
+      NanExpectation.new(nan:, bits:)
+    else
+      number = parse_float(bits:)
+      [Const.new(type: :float, bits:, number:)]
+    end
   end
 
   def parse_unsupported_assertion
