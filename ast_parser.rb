@@ -211,9 +211,7 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
     end
-    if can_read_list?(starting_with: 'export')
-      exported_name = read_list(starting_with: 'export') { read }
-    end
+    exported_name = parse_export
     if can_read_list?(starting_with: 'type')
       type_index = read_list(starting_with: 'type') { parse_index }
     end
@@ -223,6 +221,12 @@ class ASTParser
     body = parse_instructions
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
+  end
+
+  def parse_export
+    if can_read_list?(starting_with: 'export')
+      read_list(starting_with: 'export') { read }
+    end
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
