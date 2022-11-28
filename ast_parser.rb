@@ -220,17 +220,7 @@ class ASTParser
     parameters = parse_parameters
     results = parse_results
     locals = parse_locals
-
-    body = []
-    repeatedly do
-      opcode =
-        [].
-          detect { can_read_list?(starting_with: _1) }
-
-      if opcode.nil?
-        body = parse_instructions
-      end
-    end
+    body = parse_instructions
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
