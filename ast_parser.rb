@@ -150,30 +150,22 @@ class ASTParser
   end
 
   def parse_parameters
-    [].tap do |parameters|
-      while can_read_list?(starting_with: 'param')
-        read_list do
-          parameters.concat(parse_parameter)
-        end
-      end
-    end
+    read_lists(starting_with: 'param') { parse_parameter }
   end
 
   def parse_results
-    [].tap do |results|
-      while can_read_list?(starting_with: 'result')
-        read_list do
-          results.concat(parse_result)
-        end
-      end
-    end
+    read_lists(starting_with: 'result') { parse_result }
   end
 
   def parse_locals
-    [].tap do |locals|
-      while can_read_list?(starting_with: 'local')
+    read_lists(starting_with: 'local') { parse_local }
+  end
+
+  def read_lists(starting_with:)
+    [].tap do |results|
+      while can_read_list?(starting_with:)
         read_list do
-          locals.concat(parse_local)
+          results.concat(yield)
         end
       end
     end
