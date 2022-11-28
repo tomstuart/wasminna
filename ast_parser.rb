@@ -219,22 +219,16 @@ class ASTParser
     end
     parameters = parse_parameters
     results = parse_results
+    locals = parse_locals
 
-    locals, body = [], []
+    body = []
     repeatedly do
       opcode =
-        ['local'].
+        [].
           detect { can_read_list?(starting_with: _1) }
 
       if opcode.nil?
         body = parse_instructions
-      else
-        read_list do
-          case opcode
-          in 'local'
-            locals.concat(parse_local)
-          end
-        end
       end
     end
 
