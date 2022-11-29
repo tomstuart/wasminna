@@ -109,7 +109,7 @@ class ASTParser
             read => ID_REGEXP => name
           end
           repeatedly { read }
-          context = Context.new(functions: context.functions + [name], globals: context.globals)
+          context += Context.new(functions: [name])
         in 'memory'
           repeatedly { read }
         in 'table'
@@ -119,7 +119,7 @@ class ASTParser
             read => ID_REGEXP => name
           end
           repeatedly { read }
-          context = Context.new(functions: context.functions, globals: context.globals + [name])
+          context += Context.new(globals: [name])
         in 'type'
           repeatedly { read }
         end
