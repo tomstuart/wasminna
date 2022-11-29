@@ -95,7 +95,11 @@ class ASTParser
       read_list do
         case read
         in 'func'
+          if peek in ID_REGEXP
+            read => ID_REGEXP => name
+          end
           repeatedly { read }
+          context = Context.new(functions: context.functions + [name], globals: context.globals)
         in 'memory'
           repeatedly { read }
         in 'table'
