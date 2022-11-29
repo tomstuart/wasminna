@@ -236,14 +236,14 @@ class ASTParser
   def parse_function(context:)
     read => 'func'
     if peek in ID_REGEXP
-      read => ID_REGEXP => name
+      read => ID_REGEXP
     end
     exported_name = parse_export
     parse_typeuse => [type_index, parameters, results]
     locals = parse_locals
     body = parse_instructions(context:)
 
-    Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
+    Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
 
   def parse_export
