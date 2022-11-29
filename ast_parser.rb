@@ -55,11 +55,15 @@ class ASTParser
     { functions: [], memory: nil, tables: [], globals: [], types: [] }
   end
 
-  Context = Data.define
+  Context = Data.define(:globals) do
+    def initialize(globals: [])
+      super
+    end
+  end
 
   def parse_text_fields
     functions, memory, tables, globals, types = [], nil, [], [], []
-    context = Context.new
+    context = Context.new(globals: [])
 
     repeatedly do
       read_list do
