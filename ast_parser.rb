@@ -99,8 +99,6 @@ class ASTParser
   end
 
   def build_initial_context
-    context = Context.new
-
     repeatedly do
       read_list do
         case read
@@ -109,24 +107,25 @@ class ASTParser
             read => ID_REGEXP => name
           end
           repeatedly { read }
-          context += Context.new(functions: [name])
+          Context.new(functions: [name])
         in 'memory'
           repeatedly { read }
+          Context.new
         in 'table'
           repeatedly { read }
+          Context.new
         in 'global'
           if peek in ID_REGEXP
             read => ID_REGEXP => name
           end
           repeatedly { read }
-          context += Context.new(globals: [name])
+          Context.new(globals: [name])
         in 'type'
           repeatedly { read }
+          Context.new
         end
       end
-    end
-
-    context
+    end.inject(Context.new, :+)
   end
 
   def parse_invoke
