@@ -63,7 +63,10 @@ class ASTParser
 
   def parse_text_fields
     functions, memory, tables, globals, types = [], nil, [], [], []
-    context = Context.new(globals: [])
+    context =
+      read_list(from: Marshal.load(Marshal.dump(s_expression))) do
+        build_initial_context
+      end
 
     repeatedly do
       read_list do
@@ -75,8 +78,6 @@ class ASTParser
         in 'table'
           tables << parse_table
         in 'global'
-          s_expression => ['global', name, *]
-          context = Context.new(globals: context.globals + [name])
           globals << parse_global(context:)
         in 'type'
           types << parse_type
@@ -85,6 +86,33 @@ class ASTParser
     end
 
     { functions:, memory:, tables:, globals:, types: }
+  end
+
+  def build_initial_context
+    context = Context.new
+
+    repeatedly do
+      read_list do
+        case read
+        in 'func'
+          repeatedly { read }
+        in 'memory'
+          repeatedly { read }
+        in 'table'
+          repeatedly { read }
+        in 'global'
+          if peek in ID_REGEXP
+            read => ID_REGEXP => name
+          end
+          repeatedly { read }
+          context = Context.new(globals: context.globals + [name])
+        in 'type'
+          repeatedly { read }
+        end
+      end
+    end
+
+    context
   end
 
   def parse_invoke
