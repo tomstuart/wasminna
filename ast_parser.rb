@@ -548,6 +548,8 @@ class ASTParser
           case opcode
           in 'global.get' | 'global.set'
             context.globals.index(index) || raise
+          in 'call'
+            context.functions.index(index) || raise
           else
             index
           end

@@ -273,7 +273,7 @@ class Interpreter
     in Nop
       # do nothing
     in Call(index:)
-      function = functions.detect { _1.name == index } || raise
+      function = functions.slice(index) || raise
       invoke_function(function)
     in CallIndirect(table_index:, type_index:)
       stack.pop(1) => [index]
