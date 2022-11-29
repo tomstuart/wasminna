@@ -61,13 +61,12 @@ class ASTParser
     end
 
     def +(other)
-      raise unless \
-        functions.intersection(other.functions).compact.empty? &&
-        globals.intersection(other.globals).compact.empty?
-
-      Context.new \
-        functions: functions + other.functions,
-        globals: globals + other.globals
+      index_spaces =
+        to_h.merge(other.to_h) do |_, left, right|
+          raise unless left.intersection(right).compact.empty?
+          left + right
+        end
+      Context.new(**index_spaces)
     end
   end
 
