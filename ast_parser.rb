@@ -59,6 +59,16 @@ class ASTParser
     def initialize(functions: [], globals: [])
       super
     end
+
+    def +(other)
+      raise unless \
+        functions.intersection(other.functions).empty? &&
+        globals.intersection(other.globals).empty?
+
+      Context.new \
+        functions: functions + other.functions,
+        globals: globals + other.globals
+    end
   end
 
   def parse_text_fields
