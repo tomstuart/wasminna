@@ -75,9 +75,9 @@ class ASTParser
         in 'table'
           tables << parse_table
         in 'global'
-          global = parse_global(context:)
-          globals << global
-          context = Context.new(globals: context.globals + [global.name])
+          s_expression => ['global', name, *]
+          context = Context.new(globals: context.globals + [name])
+          globals << parse_global(context:)
         in 'type'
           types << parse_type
         end
