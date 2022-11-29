@@ -279,8 +279,8 @@ class Interpreter
       stack.pop(1) => [index]
 
       table = tables.slice(table_index)
-      name = table.elements.slice(index)
-      function = functions.detect { _1.name == name } || raise
+      index = table.elements.slice(index)
+      function = functions.slice(index) || raise
       invoke_function(function)
     in Drop
       stack.pop(1)
