@@ -509,6 +509,16 @@ class ASTParser
     in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode
       index = parse_index
 
+      if index.is_a?(String)
+        index =
+          case opcode
+          in 'global.get' | 'global.set'
+            context.globals.index(index) || raise
+          else
+            index
+          end
+      end
+
       {
         'local.get' => LocalGet,
         'local.set' => LocalSet,
