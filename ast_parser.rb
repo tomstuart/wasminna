@@ -55,20 +55,23 @@ class ASTParser
     { functions: [], memory: nil, tables: [], globals: [], types: [] }
   end
 
+  Context = Data.define
+
   def parse_text_fields
     functions, memory, tables, globals, types = [], nil, [], [], []
+    context = Context.new
 
     repeatedly do
       read_list do
         case peek
         in 'func'
-          functions << parse_function
+          functions << parse_function(context:)
         in 'memory'
           memory = parse_memory
         in 'table'
           tables << parse_table
         in 'global'
-          globals << parse_global
+          globals << parse_global(context:)
         in 'type'
           types << parse_type
         end
@@ -81,7 +84,7 @@ class ASTParser
   def parse_invoke
     read => 'invoke'
     read => name
-    arguments = parse_instructions
+    arguments = parse_instructions(context: Context.new)
 
     Invoke.new(name:, arguments:)
   end
@@ -101,7 +104,7 @@ class ASTParser
         in 'f32.const' | 'f64.const'
           parse_float_expectation
         else
-          parse_instructions
+          parse_instructions(context: Context.new)
         end
       end
     end
@@ -192,7 +195,7 @@ class ASTParser
     end
   end
 
-  def parse_function
+  def parse_function(context:)
     read => 'func'
     if peek in ID_REGEXP
       read => ID_REGEXP => name
@@ -200,7 +203,7 @@ class ASTParser
     exported_name = parse_export
     parse_typeuse => [type_index, parameters, results]
     locals = parse_locals
-    body = parse_instructions
+    body = parse_instructions(context:)
 
     Function.new(name:, exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
@@ -282,11 +285,11 @@ class ASTParser
     end
   end
 
-  def parse_global
+  def parse_global(context:)
     read => 'global'
     read => name
     read_list(starting_with: 'mut') { read }
-    value = parse_instructions
+    value = parse_instructions(context:)
 
     Global.new(name:, value:)
   end
@@ -298,12 +301,12 @@ class ASTParser
       \z
     }x
 
-  def parse_instructions
+  def parse_instructions(context:)
     repeatedly do
       if can_read_list?
-        parse_folded_instruction
+        parse_folded_instruction(context:)
       else
-        [parse_instruction]
+        [parse_instruction(context:)]
       end
     end.flatten(1)
   end
@@ -320,52 +323,52 @@ class ASTParser
     end
   end
 
-  def parse_instruction
+  def parse_instruction(context:)
     case peek
     in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction
     in 'block' | 'loop' | 'if'
-      parse_structured_instruction
+      parse_structured_instruction(context:)
     else
-      parse_normal_instruction
+      parse_normal_instruction(context:)
     end
   end
 
-  def parse_folded_instruction
+  def parse_folded_instruction(context:)
     read_list do
       case peek
       in 'block' | 'loop' | 'if'
-        parse_folded_structured_instruction
+        parse_folded_structured_instruction(context:)
       else
-        parse_folded_plain_instruction
+        parse_folded_plain_instruction(context:)
       end
     end
   end
 
-  def parse_folded_structured_instruction
+  def parse_folded_structured_instruction(context:)
     read_labelled => [opcode, label]
     results = parse_results
 
     case opcode
     in 'block'
-      body = parse_instructions
+      body = parse_instructions(context:)
       [Block.new(label:, results:, body:)]
     in 'loop'
-      body = parse_instructions
+      body = parse_instructions(context:)
       [Loop.new(label:, results:, body:)]
     in 'if'
       condition = []
       until can_read_list?(starting_with: 'then')
-        condition.concat(parse_folded_instruction)
+        condition.concat(parse_folded_instruction(context:))
       end
       consequent =
         read_list(starting_with: 'then') do
-          parse_instructions
+          parse_instructions(context:)
         end
       alternative =
         if can_read_list?(starting_with: 'else')
           read_list(starting_with: 'else') do
-            parse_instructions
+            parse_instructions(context:)
           end
         else
           []
@@ -374,8 +377,8 @@ class ASTParser
     end
   end
 
-  def parse_folded_plain_instruction
-    parse_instructions => [first, *rest]
+  def parse_folded_plain_instruction(context:)
+    parse_instructions(context:) => [first, *rest]
     [*rest, first]
   end
 
@@ -435,22 +438,22 @@ class ASTParser
     end
   end
 
-  def parse_structured_instruction
+  def parse_structured_instruction(context:)
     read_labelled => [opcode, label]
     results = parse_results
 
     read_list(from: read_until('end')) do
       case opcode
       in 'block'
-        body = parse_instructions
+        body = parse_instructions(context:)
         Block.new(label:, results:, body:)
       in 'loop'
-        body = parse_instructions
+        body = parse_instructions(context:)
         Loop.new(label:, results:, body:)
       in 'if'
-        consequent = parse_consequent
+        consequent = parse_consequent(context:)
         read_labelled('else', label:) if peek in 'else'
-        alternative = parse_alternative
+        alternative = parse_alternative(context:)
 
         If.new(label:, results:, consequent:, alternative:)
       end
@@ -459,14 +462,14 @@ class ASTParser
     end
   end
 
-  def parse_consequent
+  def parse_consequent(context:)
     read_list(from: read_until('else')) do
-      parse_instructions
+      parse_instructions(context:)
     end
   end
 
-  def parse_alternative
-    parse_instructions
+  def parse_alternative(context:)
+    parse_instructions(context:)
   end
 
   def read_labelled(atom = nil, label: nil)
@@ -487,7 +490,7 @@ class ASTParser
     [atom, label]
   end
 
-  def parse_normal_instruction
+  def parse_normal_instruction(context:)
     case read
     in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' => opcode
       {
