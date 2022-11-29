@@ -90,7 +90,7 @@ class Interpreter
             globals.map do |global|
               evaluate_expression(global.value, locals: [])
               stack.pop(1) => [value]
-              [global.name, value]
+              value
             end
         in Invoke(name:, arguments:)
           function = self.functions.detect { |function| function.exported_name == name }
@@ -253,21 +253,10 @@ class Interpreter
         locals.slice(index)[1] = value
       end.tap { stack.push(_1) if instruction in LocalTee }
     in GlobalGet(index:)
-      case index
-      in String
-        globals.assoc(index)[1]
-      in Integer
-        globals.slice(index)[1]
-      end.tap { stack.push(_1) }
+      stack.push(globals.slice(index))
     in GlobalSet(index:)
       stack.pop(1) => [value]
-
-      case index
-      in String
-        globals.assoc(index)[1] = value
-      in Integer
-        globals.slice(index)[1] = value
-      end
+      globals[index] = value
     in Br(index:)
       throw(:branch, index)
     in BrIf(index:)
