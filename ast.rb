@@ -28,7 +28,7 @@ module AST
   Function = Data.define(:name, :exported_name, :type_index, :parameters, :results, :locals, :body)
   Memory = Data.define(:string, :minimum_size, :maximum_size)
   Table = Data.define(:name, :elements)
-  Global = Data.define(:name, :value)
+  Global = Data.define(:value)
   Module = Data.define(:functions, :memory, :tables, :globals, :types)
   Invoke = Data.define(:name, :arguments)
   AssertReturn = Data.define(:invoke, :expecteds)

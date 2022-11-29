@@ -293,11 +293,11 @@ class ASTParser
 
   def parse_global(context:)
     read => 'global'
-    read => name
+    read
     read_list(starting_with: 'mut') { read }
     value = parse_instructions(context:)
 
-    Global.new(name:, value:)
+    Global.new(value:)
   end
 
   NUMERIC_OPCODE_REGEXP =
