@@ -55,8 +55,8 @@ class ASTParser
     { functions: [], memory: nil, tables: [], globals: [], types: [] }
   end
 
-  Context = Data.define(:globals) do
-    def initialize(globals: [])
+  Context = Data.define(:functions, :globals) do
+    def initialize(functions: [], globals: [])
       super
     end
   end
@@ -105,7 +105,7 @@ class ASTParser
             read => ID_REGEXP => name
           end
           repeatedly { read }
-          context = Context.new(globals: context.globals + [name])
+          context = Context.new(functions: context.functions, globals: context.globals + [name])
         in 'type'
           repeatedly { read }
         end
