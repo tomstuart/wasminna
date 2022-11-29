@@ -76,7 +76,7 @@ class ASTParser
         in 'memory'
           memory = parse_memory
         in 'table'
-          tables << parse_table
+          tables << parse_table(context:)
         in 'global'
           globals << parse_global(context:)
         in 'type'
@@ -298,7 +298,7 @@ class ASTParser
     end
   end
 
-  def parse_table
+  def parse_table(context:)
     read => 'table'
     if peek in ID_REGEXP
       read => ID_REGEXP => name
@@ -308,12 +308,12 @@ class ASTParser
     end
 
     read => 'funcref'
-    elements = parse_elements
+    elements = parse_elements(context:)
 
     Table.new(name:, elements:)
   end
 
-  def parse_elements
+  def parse_elements(context:)
     if can_read_list?(starting_with: 'elem')
       read_list(starting_with: 'elem') do
         repeatedly { read }
