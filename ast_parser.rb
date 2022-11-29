@@ -62,8 +62,8 @@ class ASTParser
 
     def +(other)
       raise unless \
-        functions.intersection(other.functions).empty? &&
-        globals.intersection(other.globals).empty?
+        functions.intersection(other.functions).compact.empty? &&
+        globals.intersection(other.globals).compact.empty?
 
       Context.new \
         functions: functions + other.functions,
