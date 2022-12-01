@@ -81,7 +81,8 @@ class ASTParser
       read_list do
         case peek
         in 'func'
-          functions << parse_function(context:)
+          parse_function(context:) => [function, context]
+          functions << function
         in 'memory'
           memory = parse_memory
         in 'table'
@@ -267,7 +268,10 @@ class ASTParser
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
     body = parse_instructions(context: context + locals_context)
 
-    Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:)
+    [
+      Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:),
+      context
+    ]
   end
 
   def parse_export
