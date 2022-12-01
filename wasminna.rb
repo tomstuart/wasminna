@@ -184,16 +184,12 @@ class Interpreter
   end
 
   def get_parameter_names(function)
-    if function.type_index.nil?
-      function.parameters.map(&:name)
-    else
-      type = types.slice(function.type_index) || raise
+    type = types.slice(function.type_index) || raise
 
-      if function.parameters.empty?
-        type.parameters.map { nil }
-      else
-        function.parameters.map(&:name)
-      end
+    if function.parameters.empty?
+      type.parameters.map { nil }
+    else
+      function.parameters.map(&:name)
     end
   end
 
