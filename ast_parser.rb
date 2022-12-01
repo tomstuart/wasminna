@@ -62,8 +62,8 @@ class ASTParser
 
     def +(other)
       index_spaces =
-        to_h.merge(other.to_h) do |_, left, right|
-          raise unless left.intersection(right).compact.empty?
+        to_h.merge(other.to_h) do |key, left, right|
+          raise unless left.intersection(right).compact.empty? || key == :typedefs
           left + right
         end
       Context.new(**index_spaces)
