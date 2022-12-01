@@ -249,7 +249,8 @@ class ASTParser
     exported_name = parse_export
     parse_typeuse => [type_index, parameters, results]
     locals = parse_locals
-    body = parse_instructions(context:)
+    locals_context = Context.new(locals: (parameters + locals).map(&:name))
+    body = parse_instructions(context: context + locals_context)
 
     Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:)
   end
