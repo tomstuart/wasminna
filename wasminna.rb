@@ -154,13 +154,8 @@ class Interpreter
 
   using Sign::Conversion
 
-  def pretty_print(expression)
-    case expression
-    in [*expressions]
-      "(#{expressions.map { pretty_print(_1) }.join(' ')})"
-    else
-      expression
-    end
+  def pretty_print(ast)
+    ast.inspect
   end
 
   def with_current_function(function)
