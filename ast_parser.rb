@@ -256,6 +256,13 @@ class ASTParser
     end
     exported_name = parse_export
     parse_typeuse(context:) => [type_index, parameters, results]
+    if type_index.nil?
+      type_index =
+        context.typedefs.find_index do |typedef|
+          typedef.fetch(:parameters).map(&:type) == parameters.map(&:type) &&
+            typedef.fetch(:results).map(&:type) == results.map(&:type)
+        end
+    end
     locals = parse_locals
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
     body = parse_instructions(context: context + locals_context)
