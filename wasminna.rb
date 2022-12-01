@@ -169,8 +169,8 @@ class Interpreter
   end
 
   def invoke_function(function)
-    parameter_names = get_parameter_names(function)
-    argument_values = stack.pop(parameter_names.length)
+    arity = count_parameters(function)
+    argument_values = stack.pop(arity)
     locals = function.locals.map { 0 }
     locals = argument_values + locals
 
@@ -183,14 +183,9 @@ class Interpreter
     end
   end
 
-  def get_parameter_names(function)
+  def count_parameters(function)
     type = types.slice(function.type_index) || raise
-
-    if function.parameters.empty?
-      type.parameters.map { nil }
-    else
-      function.parameters.map(&:name)
-    end
+    type.parameters.length
   end
 
   def evaluate_expression(expression, locals:)
