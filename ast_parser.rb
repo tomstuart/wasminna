@@ -55,8 +55,8 @@ class ASTParser
     { functions: [], memory: nil, tables: [], globals: [], types: [] }
   end
 
-  Context = Data.define(:functions, :globals, :locals) do
-    def initialize(functions: [], globals: [], locals: [])
+  Context = Data.define(:types, :functions, :globals, :locals, :typedefs) do
+    def initialize(types: [], functions: [], globals: [], locals: [], typedefs: [])
       super
     end
 
