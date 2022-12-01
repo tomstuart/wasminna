@@ -272,6 +272,8 @@ class ASTParser
         context = context + typedefs_context
         generated_type = Type.new(name: nil, parameters:, results:)
       end
+    elsif [parameters, results].all?(&:empty?)
+      context.typedefs.slice(type_index) => { parameters:, results: }
     end
     locals = parse_locals
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
