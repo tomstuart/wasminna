@@ -71,7 +71,8 @@ class ASTParser
   end
 
   def parse_text_fields
-    functions, memory, tables, globals, types = [], nil, [], [], []
+    functions, memory, tables, globals, types, generated_types =
+      [], nil, [], [], [], []
     context =
       read_list(from: Marshal.load(Marshal.dump(s_expression))) do
         build_initial_context
@@ -81,8 +82,9 @@ class ASTParser
       read_list do
         case peek
         in 'func'
-          parse_function(context:) => [function, context]
+          parse_function(context:) => [function, context, type]
           functions << function
+          generated_types << type unless type.nil?
         in 'memory'
           memory = parse_memory
         in 'table'
@@ -95,7 +97,7 @@ class ASTParser
       end
     end
 
-    { functions:, memory:, tables:, globals:, types: }
+    { functions:, memory:, tables:, globals:, types: types + generated_types }
   end
 
   def build_initial_context
@@ -263,6 +265,8 @@ class ASTParser
           typedef.fetch(:parameters).map(&:type) == parameters.map(&:type) &&
             typedef.fetch(:results).map(&:type) == results.map(&:type)
         end
+
+      generated_type = nil
     end
     locals = parse_locals
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
@@ -270,7 +274,8 @@ class ASTParser
 
     [
       Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:),
-      context
+      context,
+      generated_type
     ]
   end
 
