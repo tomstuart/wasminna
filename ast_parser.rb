@@ -589,6 +589,8 @@ class ASTParser
       if index.is_a?(String)
         index =
           case opcode
+          in 'local.get' | 'local.set' | 'local.tee'
+            context.locals.index(index) || raise
           in 'global.get' | 'global.set'
             context.globals.index(index) || raise
           in 'call'
