@@ -246,9 +246,9 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
       read
-      [Local.new(name: name)]
+      [[name, Local.new(name: name)]]
     else
-      repeatedly { read }.map { Local.new(name: nil) }
+      repeatedly { read }.map { [nil, Local.new(name: nil)] }
     end
   end
 
@@ -275,8 +275,12 @@ class ASTParser
     elsif [parameters, results].all?(&:empty?)
       context.typedefs.slice(type_index) => { parameters:, results: }
     end
-    locals = parse_locals
-    locals_context = Context.new(locals: (parameters + locals).map(&:name))
+    local_names, locals = [], []
+    parse_locals.each do |local_name, local|
+      local_names << local_name
+      locals << local
+    end
+    locals_context = Context.new(locals: parameters.map(&:name) + local_names)
     body = parse_instructions(context: context + locals_context)
 
     [
