@@ -235,7 +235,7 @@ class ASTParser
 
   def parse_result
     read => 'result'
-    repeatedly { read }
+    repeatedly { read }.map { |type| Result.new(type:) }
   end
 
   def parse_local
