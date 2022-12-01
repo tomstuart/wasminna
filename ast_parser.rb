@@ -266,7 +266,12 @@ class ASTParser
             typedef.fetch(:results).map(&:type) == results.map(&:type)
         end
 
-      generated_type = nil
+      if type_index.nil?
+        type_index = context.typedefs.length
+        typedefs_context = Context.new(typedefs: [{ parameters:, results: }])
+        context = context + typedefs_context
+        generated_type = Type.new(name: nil, parameters:, results:)
+      end
     end
     locals = parse_locals
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
