@@ -120,8 +120,16 @@ class ASTParser
           repeatedly { read }
           Context.new(globals: [name])
         in 'type'
-          repeatedly { read }
-          Context.new
+          if peek in ID_REGEXP
+            read => ID_REGEXP => name
+          end
+          functype =
+            read_list(starting_with: 'func') do
+              parameters = parse_parameters
+              results = parse_results
+              { parameters:, results: }
+            end
+          Context.new(types: [name], typedefs: [functype])
         end
       end
     end.inject(Context.new, :+)
