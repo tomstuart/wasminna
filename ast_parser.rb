@@ -263,12 +263,12 @@ class ASTParser
 
   def parse_typeuse
     if can_read_list?(starting_with: 'type')
-      type_index = read_list(starting_with: 'type') { parse_index }
+      index = read_list(starting_with: 'type') { parse_index }
     end
     parameters = parse_parameters
     results = parse_results
 
-    [type_index, parameters, results]
+    [index, parameters, results]
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
