@@ -188,13 +188,7 @@ class Interpreter
     if function.type_index.nil?
       function.parameters.map(&:name)
     else
-      type =
-        case function.type_index
-        in String
-          types.detect { _1.name == function.type_index }
-        in Integer
-          types.slice(function.type_index)
-        end || raise
+      type = types.slice(function.type_index) || raise
 
       if function.parameters.empty?
         type.parameters.map { nil }
