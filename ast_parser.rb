@@ -255,7 +255,7 @@ class ASTParser
       read => ID_REGEXP
     end
     exported_name = parse_export
-    parse_typeuse => [type_index, parameters, results]
+    parse_typeuse(context:) => [type_index, parameters, results]
     locals = parse_locals
     locals_context = Context.new(locals: (parameters + locals).map(&:name))
     body = parse_instructions(context: context + locals_context)
@@ -269,9 +269,12 @@ class ASTParser
     end
   end
 
-  def parse_typeuse
+  def parse_typeuse(context:)
     if can_read_list?(starting_with: 'type')
       index = read_list(starting_with: 'type') { parse_index }
+      if index.is_a?(String)
+        index = context.types.index(index) || raise
+      end
     end
     parameters = parse_parameters
     results = parse_results
