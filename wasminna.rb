@@ -171,9 +171,8 @@ class Interpreter
   def invoke_function(function)
     parameter_names = get_parameter_names(function)
     argument_values = stack.pop(parameter_names.length)
-    parameters = parameter_names.zip(argument_values)
-    locals = function.locals.map(&:name).map { [_1, 0] }
-    locals = parameters + locals
+    locals = function.locals.map { 0 }
+    locals = argument_values + locals
 
     with_current_function(function) do
       catch(:return) do
@@ -225,22 +224,12 @@ class Interpreter
       stack.push(*results)
       throw(:return)
     in LocalGet(index:)
-      case index
-      in String
-        locals.assoc(index)[1]
-      in Integer
-        locals.slice(index)[1]
-      end.tap { stack.push(_1) }
+      stack.push(locals.slice(index))
     in LocalSet | LocalTee
       instruction => { index: }
       stack.pop(1) => [value]
-
-      case index
-      in String
-        locals.assoc(index)[1] = value
-      in Integer
-        locals.slice(index)[1] = value
-      end.tap { stack.push(_1) if instruction in LocalTee }
+      locals[index] = value
+      stack.push(value) if instruction in LocalTee
     in GlobalGet(index:)
       stack.push(globals.slice(index))
     in GlobalSet(index:)
