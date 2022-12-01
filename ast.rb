@@ -23,7 +23,7 @@ module AST
   GlobalSet = Data.define(:index)
   MemoryGrow = Data.define
   GlobalGet = Data.define(:index)
-  Parameter = Data.define(:name)
+  Parameter = Data.define(:name, :type)
   Local = Data.define(:name)
   Function = Data.define(:exported_name, :type_index, :parameters, :results, :locals, :body)
   Memory = Data.define(:string, :minimum_size, :maximum_size)

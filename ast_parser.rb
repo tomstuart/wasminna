@@ -226,10 +226,10 @@ class ASTParser
     read => 'param'
     if peek in ID_REGEXP
       read => ID_REGEXP => name
-      read
-      [Parameter.new(name:)]
+      read => type
+      [Parameter.new(name:, type:)]
     else
-      repeatedly { read }.map { Parameter.new(name: nil) }
+      repeatedly { read }.map { |type| Parameter.new(name: nil, type:) }
     end
   end
 
