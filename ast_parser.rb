@@ -246,9 +246,9 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
       read
-      [[name, Local.new(name: name)]]
+      [[name, Local.new]]
     else
-      repeatedly { read }.map { [nil, Local.new(name: nil)] }
+      repeatedly { read }.map { [nil, Local.new] }
     end
   end
 
