@@ -34,6 +34,6 @@ module AST
   AssertReturn = Data.define(:invoke, :expecteds)
   NanExpectation = Data.define(:nan, :bits)
   SkippedAssertion = Data.define
-  Type = Data.define(:name, :parameters, :results)
+  Type = Data.define(:parameters, :results)
   Result = Data.define(:type)
 end
