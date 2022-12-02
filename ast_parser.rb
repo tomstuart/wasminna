@@ -273,7 +273,7 @@ class ASTParser
         generated_type = Type.new(name: nil, parameters:, results:)
       end
     elsif [parameters, results].all?(&:empty?)
-      context.typedefs.slice(type_index) => { parameters:, results: }
+      context.typedefs.slice(type_index) => { parameters: }
     end
     local_names, locals = [], []
     parse_locals.each do |local_name, local|
@@ -284,7 +284,7 @@ class ASTParser
     body = parse_instructions(context: context + locals_context)
 
     [
-      Function.new(exported_name:, type_index:, parameters:, results:, locals:, body:),
+      Function.new(exported_name:, type_index:, locals:, body:),
       context,
       generated_type
     ]
