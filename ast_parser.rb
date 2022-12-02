@@ -128,7 +128,7 @@ class ASTParser
           end
           functype =
             read_list(starting_with: 'func') do
-              parameters = parse_parameters
+              parameters = parse_parameters.map { |_, parameter| parameter }
               results = parse_results
               { parameters:, results: }
             end
@@ -196,7 +196,7 @@ class ASTParser
 
     read_list do
       read => 'func'
-      parameters = parse_parameters
+      parameters = parse_parameters.map { |_, parameter| parameter }
       results = parse_results
 
       Type.new(name:, parameters:, results:)
@@ -230,9 +230,9 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
       read => type
-      [Parameter.new(name:, type:)]
+      [[name, Parameter.new(name:, type:)]]
     else
-      repeatedly { read }.map { |type| Parameter.new(name: nil, type:) }
+      repeatedly { read }.map { |type| [nil, Parameter.new(name: nil, type:)] }
     end
   end
 
@@ -258,7 +258,7 @@ class ASTParser
       read => ID_REGEXP
     end
     exported_name = parse_export
-    parse_typeuse(context:) => [type_index, parameters, results]
+    parse_typeuse(context:) => [type_index, parameter_names, parameters, results]
     if type_index.nil?
       type_index =
         context.typedefs.find_index do |typedef|
@@ -274,13 +274,14 @@ class ASTParser
       end
     elsif [parameters, results].all?(&:empty?)
       context.typedefs.slice(type_index) => { parameters: }
+      parameter_names = parameters.map { nil }
     end
     local_names, locals = [], []
     parse_locals.each do |local_name, local|
       local_names << local_name
       locals << local
     end
-    locals_context = Context.new(locals: parameters.map(&:name) + local_names)
+    locals_context = Context.new(locals: parameter_names + local_names)
     body = parse_instructions(context: context + locals_context)
 
     [
@@ -303,10 +304,14 @@ class ASTParser
         index = context.types.index(index) || raise
       end
     end
-    parameters = parse_parameters
+    parameter_names, parameters = [], []
+    parse_parameters.each do |parameter_name, parameter|
+      parameter_names << parameter_name
+      parameters << parameter
+    end
     results = parse_results
 
-    [index, parameters, results]
+    [index, parameter_names, parameters, results]
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
