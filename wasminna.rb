@@ -177,7 +177,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        with_branch_handler(label: nil, arity: type.results.length) do
+        with_branch_handler(label: nil, arity: type.results.length, jump: :forwards) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -251,22 +251,18 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, results:, body:)
-      with_branch_handler(label:, arity: results.length) do
+      with_branch_handler(label:, arity: results.length, jump: :forwards) do
         evaluate_expression(body, locals:)
       end
     in Loop(label:, results:, body:)
-      loop do
-        branched =
-          with_branch_handler(label:, arity: results.length) do
-            evaluate_expression(body, locals:)
-          end
-        break unless branched
+      with_branch_handler(label:, arity: results.length, jump: :backwards) do
+        evaluate_expression(body, locals:)
       end
     in If(label:, results:, consequent:, alternative:)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      with_branch_handler(label:, arity: results.length) do
+      with_branch_handler(label:, arity: results.length, jump: :forwards) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
@@ -285,34 +281,38 @@ class Interpreter
     end
   end
 
-  def with_branch_handler(label:, arity:)
-    stack_height = stack.length
-    result =
-      catch(:branch) do
-        yield
-        :did_not_throw
-      end
+  def with_branch_handler(label:, arity:, jump:)
+    tap do
+      stack_height = stack.length
+      result =
+        catch(:branch) do
+          yield
+          :did_not_throw
+        end
 
-    case result
-    in :did_not_throw
-      false
-    in String
-      if result == label
-        stack.pop(arity) => saved_operands
-        stack.pop(stack.length - stack_height)
-        stack.push(*saved_operands)
-        true
-      else
-        throw(:branch, result)
-      end
-    in Integer
-      if result.zero?
-        stack.pop(arity) => saved_operands
-        stack.pop(stack.length - stack_height)
-        stack.push(*saved_operands)
-        true
-      else
-        throw(:branch, result - 1)
+      case result
+      in :did_not_throw
+        false
+      in String
+        if result == label
+          stack.pop(arity) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+          redo if jump == :backwards
+          true
+        else
+          throw(:branch, result)
+        end
+      in Integer
+        if result.zero?
+          stack.pop(arity) => saved_operands
+          stack.pop(stack.length - stack_height)
+          stack.push(*saved_operands)
+          redo if jump == :backwards
+          true
+        else
+          throw(:branch, result - 1)
+        end
       end
     end
   end
