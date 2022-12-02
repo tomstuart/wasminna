@@ -177,7 +177,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        as_branch_target(label: nil, arity: type.results.length) do
+        with_branch_handler(label: nil, arity: type.results.length) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -251,13 +251,13 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, results:, body:)
-      as_branch_target(label:, arity: results.length) do
+      with_branch_handler(label:, arity: results.length) do
         evaluate_expression(body, locals:)
       end
     in Loop(label:, results:, body:)
       loop do
         branched =
-          as_branch_target(label:, arity: results.length) do
+          with_branch_handler(label:, arity: results.length) do
             evaluate_expression(body, locals:)
           end
         break unless branched
@@ -266,7 +266,7 @@ class Interpreter
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      as_branch_target(label:, arity: results.length) do
+      with_branch_handler(label:, arity: results.length) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
@@ -285,7 +285,7 @@ class Interpreter
     end
   end
 
-  def as_branch_target(label:, arity:)
+  def with_branch_handler(label:, arity:)
     stack_height = stack.length
     result =
       catch(:branch) do
