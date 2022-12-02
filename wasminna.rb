@@ -292,14 +292,12 @@ class Interpreter
 
       case result
       in :did_not_throw
-        false
       in String
         if result == label
           stack.pop(arity) => saved_operands
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
           redo if jump == :backwards
-          true
         else
           throw(:branch, result)
         end
@@ -309,7 +307,6 @@ class Interpreter
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
           redo if jump == :backwards
-          true
         else
           throw(:branch, result - 1)
         end
