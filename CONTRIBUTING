@@ -1,0 +1,14 @@
+This project is free software but not conventional open source: its primary
+output is video, not code, so the goal is to record myself writing everything
+rather than collect community contributions.
+
+Issues and pull requests are welcome as a rich, async alternative to the
+stream’s live chat. I won’t merge PRs because I don’t want to break the streak
+of “every line of code was written on the stream”, but I’m happy to receive
+issues & PRs which report bugs, make suggestions or show examples of how the
+code might be improved.
+
+When writing a PR, bear in mind that I might only read the description, not the
+code, to avoid “spoilers”.
+
+I’m grateful for all audience participation, so thank you in advance!
