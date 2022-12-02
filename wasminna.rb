@@ -177,7 +177,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        with_branch_handler(label: nil, arity: type.results.length, jump: :forwards) do
+        with_branch_handler(label: nil, arity: type.results.length) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -251,18 +251,18 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, results:, body:)
-      with_branch_handler(label:, arity: results.length, jump: :forwards) do
+      with_branch_handler(label:, arity: results.length) do
         evaluate_expression(body, locals:)
       end
     in Loop(label:, results:, body:)
-      with_branch_handler(label:, arity: results.length, jump: :backwards) do
+      with_branch_handler(label:, arity: results.length, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
     in If(label:, results:, consequent:, alternative:)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      with_branch_handler(label:, arity: results.length, jump: :forwards) do
+      with_branch_handler(label:, arity: results.length) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
@@ -281,7 +281,7 @@ class Interpreter
     end
   end
 
-  def with_branch_handler(label:, arity:, jump:)
+  def with_branch_handler(label:, arity:, redo_on_branch: false)
     tap do
       stack_height = stack.length
       result =
@@ -297,7 +297,7 @@ class Interpreter
           stack.pop(arity) => saved_operands
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
-          redo if jump == :backwards
+          redo if redo_on_branch
         else
           throw(:branch, result)
         end
@@ -306,7 +306,7 @@ class Interpreter
           stack.pop(arity) => saved_operands
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
-          redo if jump == :backwards
+          redo if redo_on_branch
         else
           throw(:branch, result - 1)
         end
