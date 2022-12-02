@@ -177,7 +177,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        as_branch_target(label: nil, arity: function.results.length) do
+        as_branch_target(label: nil, arity: type.results.length) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -206,7 +206,8 @@ class Interpreter
     in UnaryOp(type: :float) | BinaryOp(type: :float)
       evaluate_float_instruction(instruction)
     in Return
-      stack.pop(function.results.length) => results
+      type = types.slice(function.type_index) || raise
+      stack.pop(type.results.length) => results
       stack.pop until stack.empty? # TODO stop at activation frame
       stack.push(*results)
       throw(:return)
