@@ -126,13 +126,13 @@ class ASTParser
           if peek in ID_REGEXP
             read => ID_REGEXP => name
           end
-          functype =
+          type =
             read_list(starting_with: 'func') do
               parameters = parse_parameters.map { |_, parameter| parameter }
               results = parse_results
-              { parameters:, results: }
+              Type.new(parameters:, results:)
             end
-          Context.new(types: [name], typedefs: [functype])
+          Context.new(types: [name], typedefs: [type])
         end
       end
     end.inject(Context.new, :+)
@@ -261,14 +261,14 @@ class ASTParser
     parse_typeuse(context:) => [type_index, parameter_names, parameters, results]
     if type_index.nil?
       type_index =
-        context.typedefs.find_index do |typedef|
-          typedef.fetch(:parameters).map(&:type) == parameters.map(&:type) &&
-            typedef.fetch(:results).map(&:type) == results.map(&:type)
+        context.typedefs.find_index do |type|
+          type.parameters.map(&:type) == parameters.map(&:type) &&
+            type.results.map(&:type) == results.map(&:type)
         end
 
       if type_index.nil?
         type_index = context.typedefs.length
-        typedefs_context = Context.new(typedefs: [{ parameters:, results: }])
+        typedefs_context = Context.new(typedefs: [Type.new(parameters:, results:)])
         context = context + typedefs_context
         generated_type = Type.new(parameters:, results:)
       end
