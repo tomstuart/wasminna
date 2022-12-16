@@ -14,7 +14,7 @@ class ASTParser
 
   private
 
-  attr_accessor :s_expression
+  attr_accessor :s_expression, :context
 
   def parse_commands
     repeatedly { parse_command }
@@ -386,6 +386,14 @@ class ASTParser
         [parse_instruction(context:)]
       end
     end.flatten(1)
+  end
+
+  def with_context(context)
+    previous_context, self.context = self.context, context
+
+    yield.tap do
+      self.context = previous_context
+    end
   end
 
   def read_list(from: read, starting_with: nil)
