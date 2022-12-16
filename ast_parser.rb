@@ -258,23 +258,7 @@ class ASTParser
       read => ID_REGEXP
     end
     exported_name = parse_export
-    parse_typeuse(context:) => [type_index, parameter_names, parameters, results]
-    if type_index.nil?
-      type_index =
-        context.typedefs.find_index do |type|
-          type.parameters.map(&:type) == parameters.map(&:type) &&
-            type.results.map(&:type) == results.map(&:type)
-        end
-
-      if type_index.nil?
-        generated_type = Type.new(parameters:, results:)
-        type_index = context.typedefs.length
-        context = context + Context.new(typedefs: [generated_type])
-      end
-    elsif [parameters, results].all?(&:empty?)
-      context.typedefs.slice(type_index) => { parameters: }
-      parameter_names = parameters.map { nil }
-    end
+    parse_typeuse(context:) => [type_index, parameter_names, context, generated_type]
     local_names, locals = [], []
     parse_locals.each do |local_name, local|
       local_names << local_name
@@ -310,7 +294,24 @@ class ASTParser
     end
     results = parse_results
 
-    [index, parameter_names, parameters, results]
+    if index.nil?
+      index =
+        context.typedefs.find_index do |type|
+          type.parameters.map(&:type) == parameters.map(&:type) &&
+            type.results.map(&:type) == results.map(&:type)
+        end
+
+      if index.nil?
+        generated_type = Type.new(parameters:, results:)
+        index = context.typedefs.length
+        context = context + Context.new(typedefs: [generated_type])
+      end
+    elsif [parameters, results].all?(&:empty?)
+      context.typedefs.slice(index) => { parameters: }
+      parameter_names = parameters.map { nil }
+    end
+
+    [index, parameter_names, context, generated_type]
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
