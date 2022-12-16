@@ -267,10 +267,10 @@ class ASTParser
         end
 
       if type_index.nil?
-        type_index = context.typedefs.length
-        typedefs_context = Context.new(typedefs: [Type.new(parameters:, results:)])
-        context = context + typedefs_context
         generated_type = Type.new(parameters:, results:)
+        type_index = context.typedefs.length
+        typedefs_context = Context.new(typedefs: [generated_type])
+        context = context + typedefs_context
       end
     elsif [parameters, results].all?(&:empty?)
       context.typedefs.slice(type_index) => { parameters: }
