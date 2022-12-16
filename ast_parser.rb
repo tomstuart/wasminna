@@ -430,15 +430,15 @@ class ASTParser
 
   def parse_folded_structured_instruction
     read_labelled => [opcode, label]
-    results = parse_results
+    type = Type.new(parameters: [], results: parse_results)
 
     case opcode
     in 'block'
       body = parse_instructions
-      [Block.new(label:, results:, body:)]
+      [Block.new(label:, type:, body:)]
     in 'loop'
       body = parse_instructions
-      [Loop.new(label:, results:, body:)]
+      [Loop.new(label:, type:, body:)]
     in 'if'
       condition = []
       until can_read_list?(starting_with: 'then')
@@ -456,7 +456,7 @@ class ASTParser
         else
           []
         end
-      [*condition, If.new(label:, results:, consequent:, alternative:)]
+      [*condition, If.new(label:, type:, consequent:, alternative:)]
     end
   end
 
@@ -523,22 +523,22 @@ class ASTParser
 
   def parse_structured_instruction
     read_labelled => [opcode, label]
-    results = parse_results
+    type = Type.new(parameters: [], results: parse_results)
 
     read_list(from: read_until('end')) do
       case opcode
       in 'block'
         body = parse_instructions
-        Block.new(label:, results:, body:)
+        Block.new(label:, type:, body:)
       in 'loop'
         body = parse_instructions
-        Loop.new(label:, results:, body:)
+        Loop.new(label:, type:, body:)
       in 'if'
         consequent = parse_consequent
         read_labelled('else', label:) if peek in 'else'
         alternative = parse_alternative
 
-        If.new(label:, results:, consequent:, alternative:)
+        If.new(label:, type:, consequent:, alternative:)
       end
     end.tap do
       read_labelled('end', label:)

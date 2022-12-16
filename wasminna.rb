@@ -250,19 +250,19 @@ class Interpreter
       invoke_function(function)
     in Drop
       stack.pop(1)
-    in Block(label:, results:, body:)
-      with_branch_handler(label:, arity: results.length) do
+    in Block(label:, type:, body:)
+      with_branch_handler(label:, arity: type.results.length) do
         evaluate_expression(body, locals:)
       end
-    in Loop(label:, results:, body:)
-      with_branch_handler(label:, arity: results.length, redo_on_branch: true) do
+    in Loop(label:, type:, body:)
+      with_branch_handler(label:, arity: type.results.length, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
-    in If(label:, results:, consequent:, alternative:)
+    in If(label:, type:, consequent:, alternative:)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      with_branch_handler(label:, arity: results.length) do
+      with_branch_handler(label:, arity: type.results.length) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
