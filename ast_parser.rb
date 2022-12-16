@@ -71,8 +71,7 @@ class ASTParser
   end
 
   def parse_text_fields
-    functions, memory, tables, globals, types, generated_types =
-      [], nil, [], [], [], []
+    functions, memory, tables, globals = [], nil, [], []
     context =
       read_list(from: Marshal.load(Marshal.dump(s_expression))) do
         build_initial_context
@@ -84,7 +83,6 @@ class ASTParser
         in 'func'
           parse_function(context:) => [function, context, type]
           functions << function
-          generated_types << type unless type.nil?
         in 'memory'
           memory = parse_memory
         in 'table'
@@ -92,7 +90,7 @@ class ASTParser
         in 'global'
           globals << parse_global(context:)
         in 'type'
-          types << parse_type
+          parse_type
         end
       end
     end
