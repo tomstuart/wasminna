@@ -284,14 +284,10 @@ class ASTParser
     results = parse_results
 
     if index.nil?
-      index =
-        context.typedefs.find_index do |type|
-          type.parameters.map(&:type) == parameters.map(&:type) &&
-            type.results.map(&:type) == results.map(&:type)
-        end
+      generated_type = Type.new(parameters:, results:)
+      index = context.typedefs.find_index(generated_type)
 
       if index.nil?
-        generated_type = Type.new(parameters:, results:)
         index = context.typedefs.length
         context = context + Context.new(typedefs: [generated_type])
       end
