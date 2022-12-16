@@ -256,7 +256,7 @@ class ASTParser
       read => ID_REGEXP
     end
     exported_name = parse_export
-    parse_typeuse(context:) => [type_index, parameter_names, context, generated_type]
+    parse_typeuse(context:) => [type_index, parameter_names, context]
     local_names, locals = unzip_pairs(parse_locals)
     locals_context = Context.new(locals: parameter_names + local_names)
     body = parse_instructions(context: context + locals_context)
@@ -300,7 +300,7 @@ class ASTParser
       parameter_names = parameters.map { nil }
     end
 
-    [index, parameter_names, context, generated_type]
+    [index, parameter_names, context]
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
