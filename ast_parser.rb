@@ -72,30 +72,31 @@ class ASTParser
 
   def parse_text_fields
     functions, memory, tables, globals = [], nil, [], []
-    context =
+    initial_context =
       read_list(from: Marshal.load(Marshal.dump(s_expression))) do
         build_initial_context
       end
 
-    repeatedly do
-      read_list do
-        case peek
-        in 'func'
-          parse_function(context:) => [function, context]
-          functions << function
-        in 'memory'
-          memory = parse_memory
-        in 'table'
-          tables << parse_table(context:)
-        in 'global'
-          globals << parse_global(context:)
-        in 'type'
-          parse_type
+    with_context(initial_context) do
+      repeatedly do
+        read_list do
+          case peek
+          in 'func'
+            functions << parse_function
+          in 'memory'
+            memory = parse_memory
+          in 'table'
+            tables << parse_table
+          in 'global'
+            globals << parse_global
+          in 'type'
+            parse_type
+          end
         end
       end
-    end
 
-    { functions:, memory:, tables:, globals:, types: context.typedefs }
+      { functions:, memory:, tables:, globals:, types: context.typedefs }
+    end
   end
 
   def build_initial_context
@@ -139,7 +140,7 @@ class ASTParser
   def parse_invoke
     read => 'invoke'
     read => name
-    arguments = parse_instructions(context: Context.new)
+    arguments = with_context(Context.new) { parse_instructions }
 
     Invoke.new(name:, arguments:)
   end
@@ -159,7 +160,7 @@ class ASTParser
         in 'f32.const' | 'f64.const'
           parse_float_expectation
         else
-          parse_instructions(context: Context.new)
+          with_context(Context.new) { parse_instructions }
         end
       end
     end
@@ -250,21 +251,18 @@ class ASTParser
     end
   end
 
-  def parse_function(context:)
+  def parse_function
     read => 'func'
     if peek in ID_REGEXP
       read => ID_REGEXP
     end
     exported_name = parse_export
-    parse_typeuse(context:) => [type_index, parameter_names, context]
+    parse_typeuse => [type_index, parameter_names]
     local_names, locals = unzip_pairs(parse_locals)
     locals_context = Context.new(locals: parameter_names + local_names)
-    body = parse_instructions(context: context + locals_context)
+    body = with_context(context + locals_context) { parse_instructions }
 
-    [
-      Function.new(exported_name:, type_index:, locals:, body:),
-      context
-    ]
+    Function.new(exported_name:, type_index:, locals:, body:)
   end
 
   def parse_export
@@ -273,7 +271,7 @@ class ASTParser
     end
   end
 
-  def parse_typeuse(context:)
+  def parse_typeuse
     if can_read_list?(starting_with: 'type')
       index = read_list(starting_with: 'type') { parse_index }
       if index.is_a?(String)
@@ -289,14 +287,14 @@ class ASTParser
 
       if index.nil?
         index = context.typedefs.length
-        context = context + Context.new(typedefs: [generated_type])
+        self.context = context + Context.new(typedefs: [generated_type])
       end
     elsif [parameters, results].all?(&:empty?)
       context.typedefs.slice(index) => { parameters: }
       parameter_names = parameters.map { nil }
     end
 
-    [index, parameter_names, context]
+    [index, parameter_names]
   end
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
@@ -335,7 +333,7 @@ class ASTParser
     end
   end
 
-  def parse_table(context:)
+  def parse_table
     read => 'table'
     if peek in ID_REGEXP
       read => ID_REGEXP => name
@@ -345,12 +343,12 @@ class ASTParser
     end
 
     read => 'funcref'
-    elements = parse_elements(context:)
+    elements = parse_elements
 
     Table.new(name:, elements:)
   end
 
-  def parse_elements(context:)
+  def parse_elements
     if can_read_list?(starting_with: 'elem')
       read_list(starting_with: 'elem') do
         repeatedly { context.functions.index(read) }
@@ -360,13 +358,13 @@ class ASTParser
     end
   end
 
-  def parse_global(context:)
+  def parse_global
     read => 'global'
     if peek in ID_REGEXP
       read => ID_REGEXP
     end
     read_list(starting_with: 'mut') { read }
-    value = parse_instructions(context:)
+    value = parse_instructions
 
     Global.new(value:)
   end
@@ -378,12 +376,12 @@ class ASTParser
       \z
     }x
 
-  def parse_instructions(context:)
+  def parse_instructions
     repeatedly do
       if can_read_list?
-        parse_folded_instruction(context:)
+        parse_folded_instruction
       else
-        [parse_instruction(context:)]
+        [parse_instruction]
       end
     end.flatten(1)
   end
@@ -408,52 +406,52 @@ class ASTParser
     end
   end
 
-  def parse_instruction(context:)
+  def parse_instruction
     case peek
     in NUMERIC_OPCODE_REGEXP
       parse_numeric_instruction
     in 'block' | 'loop' | 'if'
-      parse_structured_instruction(context:)
+      parse_structured_instruction
     else
-      parse_normal_instruction(context:)
+      parse_normal_instruction
     end
   end
 
-  def parse_folded_instruction(context:)
+  def parse_folded_instruction
     read_list do
       case peek
       in 'block' | 'loop' | 'if'
-        parse_folded_structured_instruction(context:)
+        parse_folded_structured_instruction
       else
-        parse_folded_plain_instruction(context:)
+        parse_folded_plain_instruction
       end
     end
   end
 
-  def parse_folded_structured_instruction(context:)
+  def parse_folded_structured_instruction
     read_labelled => [opcode, label]
     results = parse_results
 
     case opcode
     in 'block'
-      body = parse_instructions(context:)
+      body = parse_instructions
       [Block.new(label:, results:, body:)]
     in 'loop'
-      body = parse_instructions(context:)
+      body = parse_instructions
       [Loop.new(label:, results:, body:)]
     in 'if'
       condition = []
       until can_read_list?(starting_with: 'then')
-        condition.concat(parse_folded_instruction(context:))
+        condition.concat(parse_folded_instruction)
       end
       consequent =
         read_list(starting_with: 'then') do
-          parse_instructions(context:)
+          parse_instructions
         end
       alternative =
         if can_read_list?(starting_with: 'else')
           read_list(starting_with: 'else') do
-            parse_instructions(context:)
+            parse_instructions
           end
         else
           []
@@ -462,8 +460,8 @@ class ASTParser
     end
   end
 
-  def parse_folded_plain_instruction(context:)
-    parse_instructions(context:) => [first, *rest]
+  def parse_folded_plain_instruction
+    parse_instructions => [first, *rest]
     [*rest, first]
   end
 
@@ -523,22 +521,22 @@ class ASTParser
     end
   end
 
-  def parse_structured_instruction(context:)
+  def parse_structured_instruction
     read_labelled => [opcode, label]
     results = parse_results
 
     read_list(from: read_until('end')) do
       case opcode
       in 'block'
-        body = parse_instructions(context:)
+        body = parse_instructions
         Block.new(label:, results:, body:)
       in 'loop'
-        body = parse_instructions(context:)
+        body = parse_instructions
         Loop.new(label:, results:, body:)
       in 'if'
-        consequent = parse_consequent(context:)
+        consequent = parse_consequent
         read_labelled('else', label:) if peek in 'else'
-        alternative = parse_alternative(context:)
+        alternative = parse_alternative
 
         If.new(label:, results:, consequent:, alternative:)
       end
@@ -547,14 +545,14 @@ class ASTParser
     end
   end
 
-  def parse_consequent(context:)
+  def parse_consequent
     read_list(from: read_until('else')) do
-      parse_instructions(context:)
+      parse_instructions
     end
   end
 
-  def parse_alternative(context:)
-    parse_instructions(context:)
+  def parse_alternative
+    parse_instructions
   end
 
   def read_labelled(atom = nil, label: nil)
@@ -575,7 +573,7 @@ class ASTParser
     [atom, label]
   end
 
-  def parse_normal_instruction(context:)
+  def parse_normal_instruction
     case read
     in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' => opcode
       {
