@@ -128,7 +128,7 @@ class ASTParser
           end
           type =
             read_list(starting_with: 'func') do
-              parameters = parse_parameters.map { |_, parameter| parameter }
+              _, parameters = unzip_pairs(parse_parameters)
               results = parse_results
               Type.new(parameters:, results:)
             end
@@ -196,7 +196,7 @@ class ASTParser
 
     read_list do
       read => 'func'
-      parameters = parse_parameters.map { |_, parameter| parameter }
+      _, parameters = unzip_pairs(parse_parameters)
       results = parse_results
 
       Type.new(parameters:, results:)
@@ -259,11 +259,7 @@ class ASTParser
     end
     exported_name = parse_export
     parse_typeuse(context:) => [type_index, parameter_names, context, generated_type]
-    local_names, locals = [], []
-    parse_locals.each do |local_name, local|
-      local_names << local_name
-      locals << local
-    end
+    local_names, locals = unzip_pairs(parse_locals)
     locals_context = Context.new(locals: parameter_names + local_names)
     body = parse_instructions(context: context + locals_context)
 
@@ -287,11 +283,7 @@ class ASTParser
         index = context.types.index(index) || raise
       end
     end
-    parameter_names, parameters = [], []
-    parse_parameters.each do |parameter_name, parameter|
-      parameter_names << parameter_name
-      parameters << parameter
-    end
+    parameter_names, parameters = unzip_pairs(parse_parameters)
     results = parse_results
 
     if index.nil?
