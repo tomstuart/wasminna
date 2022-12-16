@@ -97,7 +97,7 @@ class ASTParser
       end
     end
 
-    { functions:, memory:, tables:, globals:, types: types + generated_types }
+    { functions:, memory:, tables:, globals:, types: context.typedefs }
   end
 
   def build_initial_context
