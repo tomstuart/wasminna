@@ -713,6 +713,16 @@ class ASTParser
       force_encoding(encoding)
   end
 
+  def unzip_pairs(pairs)
+    pairs.transpose.then do |unzipped|
+      if unzipped.empty?
+        [[], []]
+      else
+        unzipped
+      end
+    end
+  end
+
   def repeatedly(**kwargs)
     terminator = kwargs[:until]
 
