@@ -177,7 +177,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        with_branch_handler(label: nil, arity: type.results.length) do
+        with_branch_handler(label: nil, type:) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -252,12 +252,12 @@ class Interpreter
       stack.pop(1)
     in Block(label:, type:, body:)
       type = expand_blocktype(type)
-      with_branch_handler(label:, arity: type.results.length) do
+      with_branch_handler(label:, type:) do
         evaluate_expression(body, locals:)
       end
     in Loop(label:, type:, body:)
       type = expand_blocktype(type)
-      with_branch_handler(label:, arity: type.results.length, redo_on_branch: true) do
+      with_branch_handler(label:, type:, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
     in If(label:, type:, consequent:, alternative:)
@@ -265,7 +265,7 @@ class Interpreter
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      with_branch_handler(label:, arity: type.results.length) do
+      with_branch_handler(label:, type:) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
@@ -293,7 +293,7 @@ class Interpreter
     end
   end
 
-  def with_branch_handler(label:, arity:, redo_on_branch: false)
+  def with_branch_handler(label:, type:, redo_on_branch: false)
     tap do
       stack_height = stack.length
       result =
@@ -306,7 +306,7 @@ class Interpreter
       in :did_not_throw
       in String
         if result == label
-          stack.pop(arity) => saved_operands
+          stack.pop(type.results.length) => saved_operands
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
           redo if redo_on_branch
@@ -315,7 +315,7 @@ class Interpreter
         end
       in Integer
         if result.zero?
-          stack.pop(arity) => saved_operands
+          stack.pop(type.results.length) => saved_operands
           stack.pop(stack.length - stack_height)
           stack.push(*saved_operands)
           redo if redo_on_branch
