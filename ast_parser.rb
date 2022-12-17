@@ -551,9 +551,24 @@ class ASTParser
   end
 
   def parse_blocktype
-    parse_typeuse => [type_index, parameter_names]
+    updated_typedefs = nil
+    type_index, parameter_names =
+      with_context(context) do
+        parse_typeuse.tap { updated_typedefs = context.typedefs }
+      end
     raise unless parameter_names.all?(&:nil?)
-    type_index # TODO check for special case of single or null result
+
+    type = updated_typedefs.slice(type_index)
+    if (
+      type.parameters.none? &&
+      (type.results.none? || type.results.one?) &&
+      context.typedefs.find_index(type).nil?
+    )
+      type.results.map(&:type)
+    else
+      self.context = Context.new(**context.to_h, typedefs: updated_typedefs)
+      type_index
+    end
   end
 
   def parse_consequent

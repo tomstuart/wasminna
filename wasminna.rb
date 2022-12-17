@@ -285,7 +285,12 @@ class Interpreter
   end
 
   def expand_blocktype(blocktype)
-    types.slice(blocktype) || raise
+    case blocktype
+    in Integer
+      types.slice(blocktype) || raise
+    in Array
+      Type.new(parameters: [], results: blocktype)
+    end
   end
 
   def with_branch_handler(label:, arity:, redo_on_branch: false)
