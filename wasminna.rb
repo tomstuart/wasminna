@@ -251,17 +251,17 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(label:, type_index:, body:)
-      type = types.slice(type_index) || raise
+      type = expand_blocktype(type_index)
       with_branch_handler(label:, arity: type.results.length) do
         evaluate_expression(body, locals:)
       end
     in Loop(label:, type_index:, body:)
-      type = types.slice(type_index) || raise
+      type = expand_blocktype(type_index)
       with_branch_handler(label:, arity: type.results.length, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
     in If(label:, type_index:, consequent:, alternative:)
-      type = types.slice(type_index) || raise
+      type = expand_blocktype(type_index)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
@@ -282,6 +282,10 @@ class Interpreter
       stack.push(@memory.size_in_pages)
       @memory.grow_by(pages:)
     end
+  end
+
+  def expand_blocktype(blocktype)
+    types.slice(blocktype) || raise
   end
 
   def with_branch_handler(label:, arity:, redo_on_branch: false)
