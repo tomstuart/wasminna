@@ -295,7 +295,7 @@ class Interpreter
 
   def with_branch_handler(label:, type:, redo_on_branch: false)
     tap do
-      stack_height = stack.length
+      stack_height = stack.length - type.parameters.length
       result =
         catch(:branch) do
           yield
