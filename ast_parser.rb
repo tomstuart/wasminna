@@ -260,10 +260,10 @@ class ASTParser
     parse_typeuse => [type_index, parameter_names]
     local_names, locals = unzip_pairs(parse_locals)
     locals_context = Context.new(locals: parameter_names + local_names)
-    updated_typedefs = nil
-    body =
+    body, updated_typedefs =
       with_context(context + locals_context) do
-        parse_instructions.tap { updated_typedefs = context.typedefs }
+        body = parse_instructions
+        [body, context.typedefs]
       end
     self.context = Context.new(**context.to_h, typedefs: updated_typedefs)
 
@@ -551,10 +551,10 @@ class ASTParser
   end
 
   def parse_blocktype
-    updated_typedefs = nil
-    type_index, parameter_names =
+    type_index, parameter_names, updated_typedefs =
       with_context(context) do
-        parse_typeuse.tap { updated_typedefs = context.typedefs }
+        parse_typeuse => [type_index, parameter_names]
+        [type_index, parameter_names, context.typedefs]
       end
     raise unless parameter_names.all?(&:nil?)
 
