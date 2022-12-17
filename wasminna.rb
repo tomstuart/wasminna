@@ -250,15 +250,18 @@ class Interpreter
       invoke_function(function)
     in Drop
       stack.pop(1)
-    in Block(label:, type:, body:)
+    in Block(label:, type_index:, body:)
+      type = types.slice(type_index) || raise
       with_branch_handler(label:, arity: type.results.length) do
         evaluate_expression(body, locals:)
       end
-    in Loop(label:, type:, body:)
+    in Loop(label:, type_index:, body:)
+      type = types.slice(type_index) || raise
       with_branch_handler(label:, arity: type.results.length, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
-    in If(label:, type:, consequent:, alternative:)
+    in If(label:, type_index:, consequent:, alternative:)
+      type = types.slice(type_index) || raise
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 

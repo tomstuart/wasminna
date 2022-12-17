@@ -435,15 +435,15 @@ class ASTParser
 
   def parse_folded_structured_instruction
     read_labelled => [opcode, label]
-    type = parse_blocktype
+    type_index = parse_blocktype
 
     case opcode
     in 'block'
       body = parse_instructions
-      [Block.new(label:, type:, body:)]
+      [Block.new(label:, type_index:, body:)]
     in 'loop'
       body = parse_instructions
-      [Loop.new(label:, type:, body:)]
+      [Loop.new(label:, type_index:, body:)]
     in 'if'
       condition = []
       until can_read_list?(starting_with: 'then')
@@ -461,7 +461,7 @@ class ASTParser
         else
           []
         end
-      [*condition, If.new(label:, type:, consequent:, alternative:)]
+      [*condition, If.new(label:, type_index:, consequent:, alternative:)]
     end
   end
 
@@ -528,22 +528,22 @@ class ASTParser
 
   def parse_structured_instruction
     read_labelled => [opcode, label]
-    type = parse_blocktype
+    type_index = parse_blocktype
 
     read_list(from: read_until('end')) do
       case opcode
       in 'block'
         body = parse_instructions
-        Block.new(label:, type:, body:)
+        Block.new(label:, type_index:, body:)
       in 'loop'
         body = parse_instructions
-        Loop.new(label:, type:, body:)
+        Loop.new(label:, type_index:, body:)
       in 'if'
         consequent = parse_consequent
         read_labelled('else', label:) if peek in 'else'
         alternative = parse_alternative
 
-        If.new(label:, type:, consequent:, alternative:)
+        If.new(label:, type_index:, consequent:, alternative:)
       end
     end.tap do
       read_labelled('end', label:)
@@ -553,7 +553,7 @@ class ASTParser
   def parse_blocktype
     parse_typeuse => [type_index, parameter_names]
     raise unless parameter_names.all?(&:nil?)
-    context.typedefs.slice(type_index)
+    type_index # TODO check for special case of single or null result
   end
 
   def parse_consequent
