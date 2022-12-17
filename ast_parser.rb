@@ -430,7 +430,7 @@ class ASTParser
 
   def parse_folded_structured_instruction
     read_labelled => [opcode, label]
-    type = Type.new(parameters: [], results: parse_results)
+    type = parse_blocktype
 
     case opcode
     in 'block'
@@ -523,7 +523,7 @@ class ASTParser
 
   def parse_structured_instruction
     read_labelled => [opcode, label]
-    type = Type.new(parameters: [], results: parse_results)
+    type = parse_blocktype
 
     read_list(from: read_until('end')) do
       case opcode
@@ -543,6 +543,10 @@ class ASTParser
     end.tap do
       read_labelled('end', label:)
     end
+  end
+
+  def parse_blocktype
+    Type.new(parameters: [], results: parse_results)
   end
 
   def parse_consequent
