@@ -503,6 +503,16 @@ class ASTParser
 
       case operation
       in 'load' | 'load8_s'
+        storage_size =
+          operation.slice(%r{\d+}).then do |storage_size|
+            if storage_size.nil?
+              bits
+            else
+              storage_size.to_i(10)
+            end
+          end
+        sign_extension_mode = operation.end_with?('_s') ? :signed : :unsigned
+
         Load.new(type:, bits:, offset:)
       in 'store' | 'store8' | 'store16'
         Store.new(type:, bits:, offset:)
