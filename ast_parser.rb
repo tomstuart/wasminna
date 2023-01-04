@@ -623,10 +623,10 @@ class ASTParser
             context.locals.index(index) || raise
           in 'global.get' | 'global.set'
             context.globals.index(index) || raise
+          in 'br' | 'br_if'
+            context.labels.index(index) || raise
           in 'call'
             context.functions.index(index) || raise
-          else
-            index
           end
       end
 
@@ -644,6 +644,13 @@ class ASTParser
       indexes =
         repeatedly(until: -> { can_read_list? || !INDEX_REGEXP.match(_1) }) do
           parse_index
+        end.map do |index|
+          case index
+          in Integer
+            index
+          in String
+            context.labels.index(index) || raise
+          end
         end
       indexes => [*target_indexes, default_index]
 
