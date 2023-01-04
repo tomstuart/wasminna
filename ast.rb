@@ -23,7 +23,6 @@ module AST
   GlobalSet = Data.define(:index)
   MemoryGrow = Data.define
   GlobalGet = Data.define(:index)
-  Parameter = Data.define(:type)
   Local = Data.define
   Function = Data.define(:exported_name, :type_index, :locals, :body)
   Memory = Data.define(:string, :minimum_size, :maximum_size)
@@ -35,5 +34,4 @@ module AST
   NanExpectation = Data.define(:nan, :bits)
   SkippedAssertion = Data.define
   Type = Data.define(:parameters, :results)
-  Result = Data.define(:type)
 end
