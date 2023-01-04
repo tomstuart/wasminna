@@ -513,7 +513,7 @@ class ASTParser
           end
         sign_extension_mode = operation.end_with?('_s') ? :signed : :unsigned
 
-        Load.new(type:, bits:, offset:)
+        Load.new(type:, bits:, storage_size:, sign_extension_mode:, offset:)
       in 'store' | 'store8' | 'store16'
         Store.new(type:, bits:, offset:)
       end

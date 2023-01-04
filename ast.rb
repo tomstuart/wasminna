@@ -12,7 +12,7 @@ module AST
   Loop = Data.define(:type, :body)
   If = Data.define(:type, :consequent, :alternative)
   Const = Data.define(:type, :bits, :number)
-  Load = Data.define(:type, :bits, :offset)
+  Load = Data.define(:type, :bits, :storage_size, :sign_extension_mode, :offset)
   Store = Data.define(:type, :bits, :offset)
   UnaryOp = Data.define(:type, :bits, :operation)
   BinaryOp = Data.define(:type, :bits, :operation)
