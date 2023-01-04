@@ -304,9 +304,7 @@ class Interpreter
           :did_not_throw
         end
 
-      case result
-      in :did_not_throw
-      in Integer
+      unless result == :did_not_throw
         if result.zero?
           stack.pop(branch_arity) => branch_values
           stack.pop(stack.length - stack_height)
