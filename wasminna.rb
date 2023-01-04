@@ -306,15 +306,6 @@ class Interpreter
 
       case result
       in :did_not_throw
-      in String
-        if result == label
-          stack.pop(branch_arity) => branch_values
-          stack.pop(stack.length - stack_height)
-          stack.push(*branch_values)
-          redo if redo_on_branch
-        else
-          throw(:branch, result)
-        end
       in Integer
         if result.zero?
           stack.pop(branch_arity) => branch_values
