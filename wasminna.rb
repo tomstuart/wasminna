@@ -308,40 +308,18 @@ class Interpreter
       in :did_not_throw
       in String
         if result == label
-          if redo_on_branch
-            stack.pop(branch_arity) => parameter_values
-          else
-            stack.pop(branch_arity) => result_values
-          end
-
+          stack.pop(branch_arity) => branch_values
           stack.pop(stack.length - stack_height)
-
-          if redo_on_branch
-            stack.push(*parameter_values)
-          else
-            stack.push(*result_values)
-          end
-
+          stack.push(*branch_values)
           redo if redo_on_branch
         else
           throw(:branch, result)
         end
       in Integer
         if result.zero?
-          if redo_on_branch
-            stack.pop(branch_arity) => parameter_values
-          else
-            stack.pop(branch_arity) => result_values
-          end
-
+          stack.pop(branch_arity) => branch_values
           stack.pop(stack.length - stack_height)
-
-          if redo_on_branch
-            stack.push(*parameter_values)
-          else
-            stack.push(*result_values)
-          end
-
+          stack.push(*branch_values)
           redo if redo_on_branch
         else
           throw(:branch, result - 1)
