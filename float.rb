@@ -190,7 +190,7 @@ module Wasminna
       end
 
       def with_sign(sign)
-        self.class.new(**to_h, sign:)
+        with(sign:)
       end
 
       def encode(format:)
@@ -209,7 +209,7 @@ module Wasminna
       end
 
       def with_sign(sign)
-        self.class.new(**to_h, sign:)
+        with(sign:)
       end
 
       def encode(format:)
@@ -229,7 +229,7 @@ module Wasminna
       end
 
       def with_sign(sign)
-        self.class.new(**to_h, sign:)
+        with(sign:)
       end
 
       def encode(format:)
@@ -252,7 +252,7 @@ module Wasminna
       end
 
       def with_sign(sign)
-        self.class.new(**to_h, rational: rational.abs * sign)
+        with(rational: rational.abs * sign)
       end
 
       def encode(format:)
