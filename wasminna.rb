@@ -296,6 +296,8 @@ class Interpreter
   def with_branch_handler(label:, type:, redo_on_branch: false)
     tap do
       stack_height = stack.length - type.parameters.length
+      branch_arity =
+        redo_on_branch ? type.parameters.length : type.results.length
       result =
         catch(:branch) do
           yield
@@ -307,9 +309,9 @@ class Interpreter
       in String
         if result == label
           if redo_on_branch
-            stack.pop(type.parameters.length) => parameter_values
+            stack.pop(branch_arity) => parameter_values
           else
-            stack.pop(type.results.length) => result_values
+            stack.pop(branch_arity) => result_values
           end
 
           stack.pop(stack.length - stack_height)
@@ -327,9 +329,9 @@ class Interpreter
       in Integer
         if result.zero?
           if redo_on_branch
-            stack.pop(type.parameters.length) => parameter_values
+            stack.pop(branch_arity) => parameter_values
           else
-            stack.pop(type.results.length) => result_values
+            stack.pop(branch_arity) => result_values
           end
 
           stack.pop(stack.length - stack_height)
