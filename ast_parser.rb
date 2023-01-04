@@ -265,7 +265,7 @@ class ASTParser
         body = parse_instructions
         [body, context.typedefs]
       end
-    self.context = Context.new(**context.to_h, typedefs: updated_typedefs)
+    self.context = context.with(typedefs: updated_typedefs)
 
     Function.new(exported_name:, type_index:, locals:, body:)
   end
@@ -566,7 +566,7 @@ class ASTParser
     )
       type.results.map(&:type)
     else
-      self.context = Context.new(**context.to_h, typedefs: updated_typedefs)
+      self.context = context.with(typedefs: updated_typedefs)
       type_index
     end
   end
