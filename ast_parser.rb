@@ -437,31 +437,33 @@ class ASTParser
     read_labelled => [opcode, label]
     type = parse_blocktype
 
-    case opcode
-    in 'block'
-      body = parse_instructions
-      [Block.new(label:, type:, body:)]
-    in 'loop'
-      body = parse_instructions
-      [Loop.new(label:, type:, body:)]
-    in 'if'
-      condition = []
-      until can_read_list?(starting_with: 'then')
-        condition.concat(parse_folded_instruction)
-      end
-      consequent =
-        read_list(starting_with: 'then') do
-          parse_instructions
+    with_context(Context.new(labels: [label]) + context) do
+      case opcode
+      in 'block'
+        body = parse_instructions
+        [Block.new(label:, type:, body:)]
+      in 'loop'
+        body = parse_instructions
+        [Loop.new(label:, type:, body:)]
+      in 'if'
+        condition = []
+        until can_read_list?(starting_with: 'then')
+          condition.concat(parse_folded_instruction)
         end
-      alternative =
-        if can_read_list?(starting_with: 'else')
-          read_list(starting_with: 'else') do
+        consequent =
+          read_list(starting_with: 'then') do
             parse_instructions
           end
-        else
-          []
-        end
-      [*condition, If.new(label:, type:, consequent:, alternative:)]
+        alternative =
+          if can_read_list?(starting_with: 'else')
+            read_list(starting_with: 'else') do
+              parse_instructions
+            end
+          else
+            []
+          end
+        [*condition, If.new(label:, type:, consequent:, alternative:)]
+      end
     end
   end
 
@@ -531,19 +533,21 @@ class ASTParser
     type = parse_blocktype
 
     read_list(from: read_until('end')) do
-      case opcode
-      in 'block'
-        body = parse_instructions
-        Block.new(label:, type:, body:)
-      in 'loop'
-        body = parse_instructions
-        Loop.new(label:, type:, body:)
-      in 'if'
-        consequent = parse_consequent
-        read_labelled('else', label:) if peek in 'else'
-        alternative = parse_alternative
+      with_context(Context.new(labels: [label]) + context) do
+        case opcode
+        in 'block'
+          body = parse_instructions
+          Block.new(label:, type:, body:)
+        in 'loop'
+          body = parse_instructions
+          Loop.new(label:, type:, body:)
+        in 'if'
+          consequent = parse_consequent
+          read_labelled('else', label:) if peek in 'else'
+          alternative = parse_alternative
 
-        If.new(label:, type:, consequent:, alternative:)
+          If.new(label:, type:, consequent:, alternative:)
+        end
       end
     end.tap do
       read_labelled('end', label:)
