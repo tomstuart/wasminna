@@ -250,17 +250,17 @@ class Interpreter
       invoke_function(function)
     in Drop
       stack.pop(1)
-    in Block(label:, type:, body:)
+    in Block(type:, body:)
       type = expand_blocktype(type)
       with_branch_handler(type:) do
         evaluate_expression(body, locals:)
       end
-    in Loop(label:, type:, body:)
+    in Loop(type:, body:)
       type = expand_blocktype(type)
       with_branch_handler(type:, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
-    in If(label:, type:, consequent:, alternative:)
+    in If(type:, consequent:, alternative:)
       type = expand_blocktype(type)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
