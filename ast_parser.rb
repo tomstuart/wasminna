@@ -229,15 +229,15 @@ class ASTParser
     if peek in ID_REGEXP
       read => ID_REGEXP => name
       read => type
-      [[name, Parameter.new(type:)]]
+      [[name, type]]
     else
-      repeatedly { read }.map { |type| [nil, Parameter.new(type:)] }
+      repeatedly { read }.map { |type| [nil, type] }
     end
   end
 
   def parse_result
     read => 'result'
-    repeatedly { read }.map { |type| Result.new(type:) }
+    repeatedly { read }
   end
 
   def parse_local
@@ -568,7 +568,7 @@ class ASTParser
       (type.results.none? || type.results.one?) &&
       context.typedefs.find_index(type).nil?
     )
-      type.results.map(&:type)
+      type.results
     else
       self.context = context.with(typedefs: updated_typedefs)
       type_index
