@@ -501,13 +501,12 @@ class ASTParser
           0
         end
 
-      {
-        'load' => Load,
-        'load8_s' => Load,
-        'store' => Store,
-        'store8' => Store,
-        'store16' => Store
-      }.fetch(operation).new(type:, bits:, offset:)
+      case operation
+      in 'load' | 'load8_s'
+        Load.new(type:, bits:, offset:)
+      in 'store' | 'store8' | 'store16'
+        Store.new(type:, bits:, offset:)
+      end
     else
       case type
       in :integer
