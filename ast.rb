@@ -8,9 +8,9 @@ module AST
   Nop = Data.define
   Call = Data.define(:index)
   Drop = Data.define
-  Block = Data.define(:label, :type, :body)
-  Loop = Data.define(:label, :type, :body)
-  If = Data.define(:label, :type, :consequent, :alternative)
+  Block = Data.define(:type, :body)
+  Loop = Data.define(:type, :body)
+  If = Data.define(:type, :consequent, :alternative)
   Const = Data.define(:type, :bits, :number)
   Load = Data.define(:type, :bits, :offset)
   Store = Data.define(:type, :bits, :offset)

@@ -441,10 +441,10 @@ class ASTParser
       case opcode
       in 'block'
         body = parse_instructions
-        [Block.new(label:, type:, body:)]
+        [Block.new(type:, body:)]
       in 'loop'
         body = parse_instructions
-        [Loop.new(label:, type:, body:)]
+        [Loop.new(type:, body:)]
       in 'if'
         condition = []
         until can_read_list?(starting_with: 'then')
@@ -462,7 +462,7 @@ class ASTParser
           else
             []
           end
-        [*condition, If.new(label:, type:, consequent:, alternative:)]
+        [*condition, If.new(type:, consequent:, alternative:)]
       end
     end
   end
@@ -537,16 +537,16 @@ class ASTParser
         case opcode
         in 'block'
           body = parse_instructions
-          Block.new(label:, type:, body:)
+          Block.new(type:, body:)
         in 'loop'
           body = parse_instructions
-          Loop.new(label:, type:, body:)
+          Loop.new(type:, body:)
         in 'if'
           consequent = parse_consequent
           read_labelled('else', label:) if peek in 'else'
           alternative = parse_alternative
 
-          If.new(label:, type:, consequent:, alternative:)
+          If.new(type:, consequent:, alternative:)
         end
       end
     end.tap do
