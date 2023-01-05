@@ -502,7 +502,7 @@ class ASTParser
         end
 
       Const.new(type:, bits:, number:)
-    in 'load' | 'load8_s' | 'store' | 'store8' | 'store16'
+    in 'load' | 'load8_s' | 'load8_u' | 'load16_s' | 'load16_u' | 'load32_s' | 'load32_u' | 'store' | 'store8' | 'store16' | 'store32'
       offset =
         if peek in %r{\Aoffset=\d+\z}
           read => %r{\Aoffset=\d+\z} => offset
@@ -513,7 +513,7 @@ class ASTParser
         end
 
       case operation
-      in 'load' | 'load8_s'
+      in 'load' | 'load8_s' | 'load8_u' | 'load16_s' | 'load16_u' | 'load32_s' | 'load32_u'
         storage_size =
           operation.slice(%r{\d+}).then do |storage_size|
             if storage_size.nil?
@@ -525,7 +525,7 @@ class ASTParser
         sign_extension_mode = operation.end_with?('_s') ? :signed : :unsigned
 
         Load.new(type:, bits:, storage_size:, sign_extension_mode:, offset:)
-      in 'store' | 'store8' | 'store16'
+      in 'store' | 'store8' | 'store16' | 'store32'
         Store.new(type:, bits:, offset:)
       end
     else
