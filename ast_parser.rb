@@ -52,7 +52,7 @@ class ASTParser
     # TODO
     repeatedly { read }
 
-    { functions: [], memory: nil, tables: [], globals: [], types: [] }
+    { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [] }
   end
 
   Context = Data.define(:types, :functions, :globals, :locals, :labels, :typedefs) do
@@ -71,7 +71,7 @@ class ASTParser
   end
 
   def parse_text_fields
-    functions, memory, tables, globals = [], nil, [], []
+    functions, memory, tables, globals, datas = [], nil, [], [], []
     initial_context =
       read_list(from: Marshal.load(Marshal.dump(s_expression))) do
         build_initial_context
@@ -92,12 +92,12 @@ class ASTParser
           in 'type'
             parse_type
           in 'data'
-            parse_data
+            datas << parse_data
           end
         end
       end
 
-      { functions:, memory:, tables:, globals:, types: context.typedefs }
+      { functions:, memory:, tables:, globals:, datas:, types: context.typedefs }
     end
   end
 
