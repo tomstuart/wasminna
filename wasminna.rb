@@ -194,9 +194,17 @@ class Interpreter
     case instruction
     in Const(type:, bits:, number:)
       stack.push(number)
-    in Load(type:, bits:, offset: static_offset)
+    in Load(type:, bits:, storage_size:, sign_extension_mode:, offset: static_offset)
       stack.pop(1) => [offset]
-      value = @memory.load(offset: offset + static_offset, bits:)
+      value =
+        @memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
+          case sign_extension_mode
+          in :unsigned
+            value
+          in :signed
+            unsigned(signed(value, bits: storage_size), bits:)
+          end
+        end
       stack.push(value)
     in Store(type:, bits:, offset: static_offset)
       stack.pop(2) => [offset, value]
