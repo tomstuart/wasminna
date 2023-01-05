@@ -511,6 +511,14 @@ class ASTParser
         else
           0
         end
+      align =
+        if peek in %r{\Aalign=\d+\z}
+          read => %r{\Aalign=\d+\z} => align
+          align.split('=') => [_, align]
+          align.to_i(10)
+        else
+          0
+        end
 
       case operation
       in 'load' | 'load8_s' | 'load8_u' | 'load16_s' | 'load16_u' | 'load32_s' | 'load32_u'
