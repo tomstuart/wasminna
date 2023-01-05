@@ -91,6 +91,8 @@ class ASTParser
             globals << parse_global
           in 'type'
             parse_type
+          in 'data'
+            parse_data
           end
         end
       end
@@ -330,6 +332,12 @@ class ASTParser
   def parse_memory_data
     read => 'data'
     repeatedly { parse_string }.join
+  end
+
+  def parse_data
+    read => 'data'
+    repeatedly { read }
+    MemoryData.new
   end
 
   def parse_memory_sizes
