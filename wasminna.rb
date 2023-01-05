@@ -70,7 +70,7 @@ class Interpreter
     script.each do |command|
       begin
         case command
-        in Module(functions:, tables:, memory:, globals:, types:)
+        in Module(functions:, tables:, memory:, globals:, types:, datas:)
           self.functions = functions
           self.tables = tables
           self.types = types
@@ -84,6 +84,14 @@ class Interpreter
               else
                 Memory.from_string(string: memory.string)
               end
+
+            datas.each do |data|
+              evaluate_instruction(data.offset, locals: [])
+              stack.pop(1) => [offset]
+              data.string.each_byte.with_index do |value, index|
+                @memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+              end
+            end
           end
 
           self.globals =
