@@ -289,6 +289,8 @@ class Interpreter
       stack.pop(1) => [pages]
       stack.push(@memory.size_in_pages)
       @memory.grow_by(pages:)
+    in MemorySize
+      stack.push(@memory.size_in_pages)
     end
   end
 
