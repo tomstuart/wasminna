@@ -34,4 +34,5 @@ module AST
   NanExpectation = Data.define(:nan, :bits)
   SkippedAssertion = Data.define
   Type = Data.define(:parameters, :results)
+  MemorySize = Data.define
 end

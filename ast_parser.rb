@@ -614,13 +614,14 @@ class ASTParser
 
   def parse_normal_instruction
     case read
-    in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' => opcode
+    in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' => opcode
       {
         'return' => Return,
         'nop' => Nop,
         'drop' => Drop,
         'unreachable' => Unreachable,
-        'memory.grow' => MemoryGrow
+        'memory.grow' => MemoryGrow,
+        'memory.size' => MemorySize
       }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode
       index = parse_index
