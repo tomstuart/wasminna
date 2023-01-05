@@ -132,6 +132,9 @@ class ASTParser
               Type.new(parameters:, results:)
             end
           Context.new(types: [name], typedefs: [type])
+        in 'data'
+          repeatedly { read }
+          Context.new
         end
       end
     end.inject(Context.new, :+)
