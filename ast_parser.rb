@@ -336,8 +336,10 @@ class ASTParser
 
   def parse_data
     read => 'data'
-    repeatedly { read }
-    MemoryData.new
+    offset = read_list { parse_instruction }
+    string = repeatedly { parse_string }.join
+
+    MemoryData.new(offset:, string:)
   end
 
   def parse_memory_sizes

@@ -35,5 +35,5 @@ module AST
   SkippedAssertion = Data.define
   Type = Data.define(:parameters, :results)
   MemorySize = Data.define
-  MemoryData = Data.define
+  MemoryData = Data.define(:offset, :string)
 end
