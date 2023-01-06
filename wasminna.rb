@@ -317,13 +317,15 @@ class Interpreter
       redo_on_branch ? type.parameters.length : type.results.length
 
     tap do
+      branched = true
       result =
         catch(:branch) do
-          yield
-          :did_not_throw
+          yield.tap do
+            branched = false
+          end
         end
 
-      unless result == :did_not_throw
+      if branched
         if result.zero?
           stack.pop(branch_arity) => branch_values
           stack.pop(stack.length - stack_height)
