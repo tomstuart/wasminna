@@ -216,7 +216,7 @@ class ASTParser
   end
 
   def parse_parameters
-    read_lists(starting_with: 'param') { parse_parameter }
+    read_lists(starting_with: 'param') { parse_parameter_or_local }
   end
 
   def parse_results
@@ -224,7 +224,7 @@ class ASTParser
   end
 
   def parse_locals
-    read_lists(starting_with: 'local') { parse_local }
+    read_lists(starting_with: 'local') { parse_parameter_or_local }
   end
 
   def read_lists(starting_with:)
@@ -237,8 +237,8 @@ class ASTParser
     end
   end
 
-  def parse_parameter
-    read => 'param'
+  def parse_parameter_or_local
+    read => 'param' | 'local'
     if peek in ID_REGEXP
       read => ID_REGEXP => name
       read => type
@@ -251,17 +251,6 @@ class ASTParser
   def parse_result
     read => 'result'
     repeatedly { read }
-  end
-
-  def parse_local
-    read => 'local'
-    if peek in ID_REGEXP
-      read => ID_REGEXP => name
-      read => type
-      [[name, type]]
-    else
-      repeatedly { read }.map { |type| [nil, type] }
-    end
   end
 
   def parse_function
