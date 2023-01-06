@@ -185,7 +185,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        with_branch_handler(type:) do
+        as_block(type:) do
           evaluate_expression(function.body, locals:)
         end
       end
@@ -268,12 +268,12 @@ class Interpreter
       stack.pop(1)
     in Block(type:, body:)
       type = expand_blocktype(type)
-      with_branch_handler(type:) do
+      as_block(type:) do
         evaluate_expression(body, locals:)
       end
     in Loop(type:, body:)
       type = expand_blocktype(type)
-      with_branch_handler(type:, redo_on_branch: true) do
+      as_block(type:, redo_on_branch: true) do
         evaluate_expression(body, locals:)
       end
     in If(type:, consequent:, alternative:)
@@ -281,7 +281,7 @@ class Interpreter
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
 
-      with_branch_handler(type:) do
+      as_block(type:) do
         evaluate_expression(body, locals:)
       end
     in BrTable(target_indexes:, default_index:)
@@ -311,7 +311,7 @@ class Interpreter
     end
   end
 
-  def with_branch_handler(type:, redo_on_branch: false)
+  def as_block(type:, redo_on_branch: false)
     stack_height = stack.length - type.parameters.length
     branch_arity =
       redo_on_branch ? type.parameters.length : type.results.length
