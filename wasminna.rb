@@ -184,8 +184,17 @@ class Interpreter
     locals = argument_values + locals
 
     with_current_function(function) do
+      returned = true
       catch(:return) do
         evaluate_block(function.body, type: function.type_index, locals:)
+        returned = false
+      end
+
+      if returned
+        type = types.slice(function.type_index) || raise
+        stack.pop(type.results.length) => results
+        stack.pop until stack.empty? # TODO stop at activation frame
+        stack.push(*results)
       end
     end
   end
@@ -220,10 +229,6 @@ class Interpreter
     in UnaryOp(type: :float) | BinaryOp(type: :float)
       evaluate_float_instruction(instruction)
     in Return
-      type = types.slice(function.type_index) || raise
-      stack.pop(type.results.length) => results
-      stack.pop until stack.empty? # TODO stop at activation frame
-      stack.push(*results)
       throw(:return)
     in LocalGet(index:)
       stack.push(locals.slice(index))
