@@ -173,6 +173,8 @@ class Interpreter
     locals = function.locals.map { 0 }
     locals = argument_values + locals
 
+    stack_height = stack.length
+
     returned = true
     catch(:return) do
       evaluate_block(function.body, type: function.type_index, locals:)
@@ -181,7 +183,7 @@ class Interpreter
 
     if returned
       stack.pop(type.results.length) => results
-      stack.pop until stack.empty? # TODO stop at activation frame
+      stack.pop(stack.length - stack_height)
       stack.push(*results)
     end
   end
