@@ -185,9 +185,7 @@ class Interpreter
 
     with_current_function(function) do
       catch(:return) do
-        as_block(type:) do
-          evaluate_expression(function.body, locals:)
-        end
+        evaluate_block(function.body, type: function.type_index, locals:)
       end
     end
   end
@@ -267,23 +265,13 @@ class Interpreter
     in Drop
       stack.pop(1)
     in Block(type:, body:)
-      type = expand_blocktype(type)
-      as_block(type:) do
-        evaluate_expression(body, locals:)
-      end
+      evaluate_block(body, type:, locals:)
     in Loop(type:, body:)
-      type = expand_blocktype(type)
-      as_block(type:, redo_on_branch: true) do
-        evaluate_expression(body, locals:)
-      end
+      evaluate_block(body, type:, locals:, redo_on_branch: true)
     in If(type:, consequent:, alternative:)
-      type = expand_blocktype(type)
       stack.pop(1) => [condition]
       body = condition.zero? ? alternative : consequent
-
-      as_block(type:) do
-        evaluate_expression(body, locals:)
-      end
+      evaluate_block(body, type:, locals:)
     in BrTable(target_indexes:, default_index:)
       stack.pop(1) => [table_index]
       index =
@@ -335,6 +323,12 @@ class Interpreter
           throw(:branch, result - 1)
         end
       end
+    end
+  end
+
+  def evaluate_block(expression, type:, locals:, redo_on_branch: false)
+    as_block(type: expand_blocktype(type), redo_on_branch:) do
+      evaluate_expression(expression, locals:)
     end
   end
 
