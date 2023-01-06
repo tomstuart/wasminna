@@ -61,7 +61,7 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :functions, :function, :tables, :globals, :types
+  attr_accessor :stack, :functions, :tables, :globals, :types
 
   def evaluate_script(script)
     @memory = nil
@@ -164,16 +164,6 @@ class Interpreter
 
   def pretty_print(ast)
     ast.inspect
-  end
-
-  def with_current_function(function)
-    previous_function, self.function = self.function, function
-
-    begin
-      yield
-    ensure
-      self.function = previous_function
-    end
   end
 
   def invoke_function(function)
