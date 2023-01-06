@@ -62,11 +62,19 @@ class ASTParser
 
     def +(other)
       index_spaces =
-        to_h.merge(other.to_h) do |key, left, right|
-          raise unless left.intersection(right).compact.empty? || [:typedefs, :labels].include?(key)
+        to_h.merge(other.to_h) do |_, left, right|
           left + right
         end
-      Context.new(**index_spaces)
+      Context.new(**index_spaces).tap do |result|
+        raise unless result.well_formed?
+      end
+    end
+
+    def well_formed?
+      to_h
+        .reject { |key, _| [:typedefs, :labels].include?(key) }
+        .values.map(&:compact)
+        .all? { |value| value.uniq.length == value.length }
     end
   end
 
