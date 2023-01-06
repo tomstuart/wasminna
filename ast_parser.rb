@@ -65,9 +65,7 @@ class ASTParser
         to_h.merge(other.to_h) do |_, left, right|
           left + right
         end
-      Context.new(**index_spaces).tap do |result|
-        raise unless result.well_formed?
-      end
+      Context.new(**index_spaces)
     end
 
     def well_formed?
