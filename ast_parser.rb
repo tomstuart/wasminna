@@ -292,10 +292,7 @@ class ASTParser
 
   def parse_typeuse
     if can_read_list?(starting_with: 'type')
-      index = read_list(starting_with: 'type') { parse_index }
-      if index.is_a?(String)
-        index = context.types.index(index) || raise
-      end
+      index = read_list(starting_with: 'type') { parse_index(context.types) }
     end
     parameter_names, parameters = unzip_pairs(parse_parameters)
     results = parse_results
@@ -319,10 +316,10 @@ class ASTParser
 
   INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
 
-  def parse_index
+  def parse_index(index_space)
     read => INDEX_REGEXP => index
     if index.start_with?('$')
-      index
+      index_space.index(index) || raise
     else
       index.to_i(10)
     end
@@ -655,21 +652,18 @@ class ASTParser
         'memory.size' => MemorySize
       }.fetch(opcode).new
     in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' => opcode
-      index = parse_index
-
-      if index.is_a?(String)
-        index =
-          case opcode
-          in 'local.get' | 'local.set' | 'local.tee'
-            context.locals.index(index) || raise
-          in 'global.get' | 'global.set'
-            context.globals.index(index) || raise
-          in 'br' | 'br_if'
-            context.labels.index(index) || raise
-          in 'call'
-            context.functions.index(index) || raise
-          end
-      end
+      index_space =
+        case opcode
+        in 'local.get' | 'local.set' | 'local.tee'
+          context.locals
+        in 'global.get' | 'global.set'
+          context.globals
+        in 'br' | 'br_if'
+          context.labels
+        in 'call'
+          context.functions
+        end
+      index = parse_index(index_space)
 
       {
         'local.get' => LocalGet,
@@ -684,14 +678,7 @@ class ASTParser
     in 'br_table'
       indexes =
         repeatedly(until: -> { can_read_list? || !INDEX_REGEXP.match(_1) }) do
-          parse_index
-        end.map do |index|
-          case index
-          in Integer
-            index
-          in String
-            context.labels.index(index) || raise
-          end
+          parse_index(context.labels)
         end
       indexes => [*target_indexes, default_index]
 
@@ -699,14 +686,14 @@ class ASTParser
     in 'call_indirect'
       table_index =
         if peek in INDEX_REGEXP
-          parse_index
+          parse_index(nil) # TODO context.tables
         else
           0
         end
       type_index =
         if can_read_list?(starting_with: 'type')
           read_list(starting_with: 'type') do
-            parse_index
+            parse_index(context.types)
           end
         end
       while can_read_list?(starting_with: 'param')
