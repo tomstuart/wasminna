@@ -180,7 +180,6 @@ class Interpreter
     end
 
     if returned
-      type = types.slice(function.type_index) || raise
       stack.pop(type.results.length) => results
       stack.pop until stack.empty? # TODO stop at activation frame
       stack.push(*results)
