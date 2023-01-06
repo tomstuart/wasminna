@@ -147,7 +147,9 @@ class ASTParser
           Context.new
         end
       end
-    end.inject(Context.new, :+)
+    end.inject(Context.new, :+).tap do |context|
+      raise unless context.well_formed?
+    end
   end
 
   def parse_invoke
@@ -273,6 +275,7 @@ class ASTParser
     parse_typeuse => [type_index, parameter_names]
     local_names, locals = unzip_pairs(parse_locals)
     locals_context = Context.new(locals: parameter_names + local_names)
+    raise unless locals_context.well_formed?
     body, updated_typedefs =
       with_context(context + locals_context) do
         body = parse_instructions
@@ -312,6 +315,7 @@ class ASTParser
       parameter_names = parameters.map { nil }
     end
 
+    raise unless Context.new(locals: parameter_names).well_formed?
     [index, parameter_names]
   end
 
