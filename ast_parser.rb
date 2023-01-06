@@ -70,7 +70,7 @@ class ASTParser
 
     def well_formed?
       to_h
-        .reject { |key, _| [:typedefs, :labels].include?(key) }
+        .reject { |key, _| key == :typedefs }
         .values.map(&:compact)
         .all? { |value| value.uniq.length == value.length }
     end
