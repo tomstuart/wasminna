@@ -168,23 +168,19 @@ class Interpreter
 
   def invoke_function(function)
     type = types.slice(function.type_index) || raise
-    arity = type.parameters.length
-    argument_values = stack.pop(arity)
-    locals = function.locals.map { 0 }
-    locals = argument_values + locals
 
-    stack_height = stack.length
+    as_block(type:, redo_on_branch: false) do
+      argument_values = stack.pop(type.parameters.length)
+      locals = function.locals.map { 0 }
+      locals = argument_values + locals
 
-    returned = true
-    catch(:return) do
-      evaluate_block(function.body, type: function.type_index, locals:)
-      returned = false
-    end
+      returned = true
+      catch(:return) do
+        evaluate_block(function.body, type: function.type_index, locals:)
+        returned = false
+      end
 
-    if returned
-      stack.pop(type.results.length) => results
-      stack.pop(stack.length - stack_height)
-      stack.push(*results)
+      throw(:branch, 0) if returned
     end
   end
 
