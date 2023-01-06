@@ -299,7 +299,7 @@ class Interpreter
     end
   end
 
-  def as_block(type:, redo_on_branch: false)
+  def as_block(type:, redo_on_branch:)
     stack_height = stack.length - type.parameters.length
     branch_arity =
       redo_on_branch ? type.parameters.length : type.results.length
