@@ -5,7 +5,7 @@ require 'wasminna/sign'
 
 module Wasminna
   module Float
-    Finite = Data.define(:rational) do
+    class Finite < Data.define(:rational)
       include Helpers::Mask
       using Sign::Conversion
 
@@ -48,46 +48,46 @@ module Wasminna
 
         [approximation.quotient, approximation.exponent]
       end
-    end
 
-    Approximation = Struct.new(:rational, :exponent) do
-      def fit_within(quotients:, exponents:)
-        scale_within(quotients:, exponents:)
-        round_within(quotients:, exponents:)
-      end
+      Approximation = Struct.new(:rational, :exponent) do
+        def fit_within(quotients:, exponents:)
+          scale_within(quotients:, exponents:)
+          round_within(quotients:, exponents:)
+        end
 
-      def quotient
-        rational.numerator / rational.denominator
-      end
+        def quotient
+          rational.numerator / rational.denominator
+        end
 
-      private
+        private
 
-      def scale_within(quotients:, exponents:)
-        loop do
-          quotient = rational.numerator / rational.denominator
+        def scale_within(quotients:, exponents:)
+          loop do
+            quotient = rational.numerator / rational.denominator
 
-          if quotient < quotients.min && exponents.include?(exponent - 1)
-            self.rational *= 2
-            self.exponent -= 1
-          elsif quotient > quotients.max && exponents.include?(exponent + 1)
-            self.rational /= 2
-            self.exponent += 1
-          else
-            break
+            if quotient < quotients.min && exponents.include?(exponent - 1)
+              self.rational *= 2
+              self.exponent -= 1
+            elsif quotient > quotients.max && exponents.include?(exponent + 1)
+              self.rational /= 2
+              self.exponent += 1
+            else
+              break
+            end
           end
         end
-      end
 
-      def round_within(quotients:, exponents:)
-        quotient, remainder = rational.numerator.divmod(rational.denominator)
-        return if remainder.zero?
+        def round_within(quotients:, exponents:)
+          quotient, remainder = rational.numerator.divmod(rational.denominator)
+          return if remainder.zero?
 
-        if (
-          remainder > rational.denominator / 2 ||
-          (remainder == rational.denominator / 2 && quotient.odd?)
-        )
-          self.rational = Rational(quotient + 1)
-          scale_within(quotients:, exponents:)
+          if (
+            remainder > rational.denominator / 2 ||
+            (remainder == rational.denominator / 2 && quotient.odd?)
+          )
+            self.rational = Rational(quotient + 1)
+            scale_within(quotients:, exponents:)
+          end
         end
       end
     end
