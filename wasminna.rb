@@ -61,10 +61,10 @@ class Interpreter
     end
   end
 
-  attr_accessor :stack, :functions, :tables, :globals, :types
+  attr_accessor :memory, :stack, :functions, :tables, :globals, :types
 
   def evaluate_script(script)
-    @memory = nil
+    self.memory = nil
     self.stack = []
 
     script.each do |command|
@@ -76,7 +76,7 @@ class Interpreter
           self.types = types
 
           unless memory.nil?
-            @memory =
+            self.memory =
               if memory.string.nil?
                 Memory.from_limits \
                   minimum_size: memory.minimum_size,
@@ -89,7 +89,7 @@ class Interpreter
               evaluate_instruction(data.offset, locals: [])
               stack.pop(1) => [offset]
               data.string.each_byte.with_index do |value, index|
-                @memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+                self.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
               end
             end
           end
@@ -197,7 +197,7 @@ class Interpreter
     in Load(type:, bits:, storage_size:, sign_extension_mode:, offset: static_offset)
       stack.pop(1) => [offset]
       value =
-        @memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
+        memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
           case sign_extension_mode
           in :unsigned
             value
@@ -208,7 +208,7 @@ class Interpreter
       stack.push(value)
     in Store(type:, bits:, offset: static_offset)
       stack.pop(2) => [offset, value]
-      @memory.store(value:, offset: offset + static_offset, bits:)
+      memory.store(value:, offset: offset + static_offset, bits:)
     in UnaryOp(type: :integer) | BinaryOp(type: :integer)
       evaluate_integer_instruction(instruction)
     in UnaryOp(type: :float) | BinaryOp(type: :float)
@@ -273,10 +273,10 @@ class Interpreter
       throw(:branch, index)
     in MemoryGrow
       stack.pop(1) => [pages]
-      stack.push(@memory.size_in_pages)
-      @memory.grow_by(pages:)
+      stack.push(memory.size_in_pages)
+      memory.grow_by(pages:)
     in MemorySize
-      stack.push(@memory.size_in_pages)
+      stack.push(memory.size_in_pages)
     end
   end
 
