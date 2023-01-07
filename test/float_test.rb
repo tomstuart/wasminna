@@ -1,4 +1,5 @@
 require 'wasminna/float'
+require 'wasminna/float/finite'
 require 'wasminna/float/format'
 require 'wasminna/float/zero'
 require 'wasminna/sign'
