@@ -365,7 +365,7 @@ class ASTParser
   def parse_elements
     if can_read_list?(starting_with: 'elem')
       read_list(starting_with: 'elem') do
-        repeatedly { context.functions.index(read) }
+        repeatedly { parse_index(context.functions) }
       end
     else
       []
