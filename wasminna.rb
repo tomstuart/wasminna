@@ -61,16 +61,18 @@ class Interpreter
     end
   end
 
-  attr_accessor :memory, :stack, :functions, :tables, :globals, :types
+  attr_accessor :current_module, :stack
+
+  Module = Data.define(:functions, :tables, :memory, :globals, :types)
 
   def evaluate_script(script)
-    self.memory = nil
+    self.current_module = nil
     self.stack = []
 
     script.each do |command|
       begin
         case command
-        in Module => mod
+        in AST::Module => mod
           functions = mod.functions
           tables = mod.tables
           types = mod.types
@@ -101,13 +103,10 @@ class Interpreter
               value
             end
 
-          self.functions = functions
-          self.memory = memory
-          self.tables = tables
-          self.globals = globals
-          self.types = types
+          self.current_module =
+            Module.new(functions:, memory:, tables:, globals:, types:)
         in Invoke(name:, arguments:)
-          function = self.functions.detect { |function| function.exported_name == name }
+          function = current_module.functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
             puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -117,7 +116,7 @@ class Interpreter
           evaluate_expression(arguments, locals: [])
           invoke_function(function)
         in AssertReturn(invoke: Invoke(name:, arguments:), expecteds:)
-          function = self.functions.detect { |function| function.exported_name == name }
+          function = current_module.functions.detect { |function| function.exported_name == name }
           if function.nil?
             puts
             puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -173,7 +172,7 @@ class Interpreter
   end
 
   def invoke_function(function)
-    type = types.slice(function.type_index) || raise
+    type = current_module.types.slice(function.type_index) || raise
 
     as_block(type:, redo_on_branch: false) do
       argument_values = stack.pop(type.parameters.length)
@@ -203,7 +202,7 @@ class Interpreter
     in Load(type:, bits:, storage_size:, sign_extension_mode:, offset: static_offset)
       stack.pop(1) => [offset]
       value =
-        memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
+        current_module.memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
           case sign_extension_mode
           in :unsigned
             value
@@ -214,7 +213,7 @@ class Interpreter
       stack.push(value)
     in Store(type:, bits:, offset: static_offset)
       stack.pop(2) => [offset, value]
-      memory.store(value:, offset: offset + static_offset, bits:)
+      current_module.memory.store(value:, offset: offset + static_offset, bits:)
     in UnaryOp(type: :integer) | BinaryOp(type: :integer)
       evaluate_integer_instruction(instruction)
     in UnaryOp(type: :float) | BinaryOp(type: :float)
@@ -229,10 +228,10 @@ class Interpreter
       locals[index] = value
       stack.push(value) if instruction in LocalTee
     in GlobalGet(index:)
-      stack.push(globals.slice(index))
+      stack.push(current_module.globals.slice(index))
     in GlobalSet(index:)
       stack.pop(1) => [value]
-      globals[index] = value
+      current_module.globals[index] = value
     in Br(index:)
       throw(:branch, index)
     in BrIf(index:)
@@ -249,14 +248,14 @@ class Interpreter
     in Nop
       # do nothing
     in Call(index:)
-      function = functions.slice(index) || raise
+      function = current_module.functions.slice(index) || raise
       invoke_function(function)
     in CallIndirect(table_index:, type_index:)
       stack.pop(1) => [index]
 
-      table = tables.slice(table_index)
+      table = current_module.tables.slice(table_index)
       index = table.elements.slice(index)
-      function = functions.slice(index) || raise
+      function = current_module.functions.slice(index) || raise
       invoke_function(function)
     in Drop
       stack.pop(1)
@@ -279,17 +278,17 @@ class Interpreter
       throw(:branch, index)
     in MemoryGrow
       stack.pop(1) => [pages]
-      stack.push(memory.size_in_pages)
-      memory.grow_by(pages:)
+      stack.push(current_module.memory.size_in_pages)
+      current_module.memory.grow_by(pages:)
     in MemorySize
-      stack.push(memory.size_in_pages)
+      stack.push(current_module.memory.size_in_pages)
     end
   end
 
   def expand_blocktype(blocktype)
     case blocktype
     in Integer
-      types.slice(blocktype) || raise
+      current_module.types.slice(blocktype) || raise
     in Array
       Type.new(parameters: [], results: blocktype)
     end
