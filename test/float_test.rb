@@ -1,5 +1,5 @@
-require 'float'
-require 'sign'
+require 'wasminna/float'
+require 'wasminna/sign'
 
 def main
   assert_float_encoding 0x4049_0fdb, 3141592653589793r / 10 ** 15, bits: 32

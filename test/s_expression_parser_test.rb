@@ -1,4 +1,4 @@
-require 's_expression_parser'
+require 'wasminna/s_expression_parser'
 
 input = 'hello'
 expected = ['hello']

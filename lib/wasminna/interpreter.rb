@@ -1,7 +1,7 @@
-require 'ast'
-require 'float'
-require 'helpers'
-require 'sign'
+require 'wasminna/ast'
+require 'wasminna/float'
+require 'wasminna/helpers'
+require 'wasminna/sign'
 
 class Interpreter
   include AST

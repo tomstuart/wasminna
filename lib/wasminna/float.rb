@@ -1,5 +1,5 @@
-require 'helpers'
-require 'sign'
+require 'wasminna/helpers'
+require 'wasminna/sign'
 
 module Wasminna
   module Float

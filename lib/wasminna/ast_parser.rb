@@ -1,6 +1,6 @@
-require 'ast'
-require 'float'
-require 'helpers'
+require 'wasminna/ast'
+require 'wasminna/float'
+require 'wasminna/helpers'
 
 class ASTParser
   include AST
