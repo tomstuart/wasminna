@@ -1,5 +1,6 @@
 require 'wasminna/ast'
 require 'wasminna/float'
+require 'wasminna/float/format'
 require 'wasminna/helpers'
 
 module Wasminna

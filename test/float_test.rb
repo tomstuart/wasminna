@@ -1,4 +1,5 @@
 require 'wasminna/float'
+require 'wasminna/float/format'
 require 'wasminna/sign'
 
 def main
