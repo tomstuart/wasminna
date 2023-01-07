@@ -70,32 +70,32 @@ class Interpreter
     script.each do |command|
       begin
         case command
-        in Module(functions:, tables:, memory:, globals:, types:, datas:)
-          self.functions = functions
-          self.tables = tables
-          self.types = types
+        in Module => mod
+          self.functions = mod.functions
+          self.tables = mod.tables
+          self.types = mod.types
 
-          unless memory.nil?
+          unless mod.memory.nil?
             self.memory =
-              if memory.string.nil?
+              if mod.memory.string.nil?
                 Memory.from_limits \
-                  minimum_size: memory.minimum_size,
-                  maximum_size: memory.maximum_size
+                  minimum_size: mod.memory.minimum_size,
+                  maximum_size: mod.memory.maximum_size
               else
-                Memory.from_string(string: memory.string)
+                Memory.from_string(string: mod.memory.string)
               end
 
-            datas.each do |data|
+            mod.datas.each do |data|
               evaluate_instruction(data.offset, locals: [])
               stack.pop(1) => [offset]
               data.string.each_byte.with_index do |value, index|
-                self.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+                memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
               end
             end
           end
 
           self.globals =
-            globals.map do |global|
+            mod.globals.map do |global|
               evaluate_expression(global.value, locals: [])
               stack.pop(1) => [value]
               value
