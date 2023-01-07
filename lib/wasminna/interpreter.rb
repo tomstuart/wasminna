@@ -1,6 +1,7 @@
 require 'wasminna/ast'
 require 'wasminna/float'
 require 'wasminna/float/format'
+require 'wasminna/float/nan'
 require 'wasminna/helpers'
 require 'wasminna/sign'
 
