@@ -744,8 +744,8 @@ module Wasminna
     end
 
     def parse_float(bits:)
-      format = Wasminna::Float::Format.for(bits:)
-      Wasminna::Float.parse(read).encode(format:)
+      format = Float::Format.for(bits:)
+      Float.parse(read).encode(format:)
     end
 
     def parse_string

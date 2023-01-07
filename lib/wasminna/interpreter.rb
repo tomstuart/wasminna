@@ -124,8 +124,8 @@ module Wasminna
               case expected
               in NanExpectation(nan:, bits:)
                 expected_value = nan
-                format = Wasminna::Float::Format.for(bits:)
-                float = Wasminna::Float.decode(actual_value, format:).to_f
+                format = Float::Format.for(bits:)
+                float = Float.decode(actual_value, format:).to_f
                 success = float.nan? # TODO check whether canonical or arithmetic
               else
                 evaluate_expression(expected, locals: [])
@@ -422,8 +422,8 @@ module Wasminna
           float_bits = operation.slice(%r{\d+}).to_i(10)
           signed_input = operation.end_with?('_s')
           saturating = operation.include?('_sat')
-          format = Wasminna::Float::Format.for(bits: float_bits)
-          result = Wasminna::Float.decode(value, format:).to_f
+          format = Float::Format.for(bits: float_bits)
+          result = Float.decode(value, format:).to_f
 
           result =
             if saturating && result.nan?
@@ -455,7 +455,7 @@ module Wasminna
     end
 
     def evaluate_float_instruction(instruction)
-      format = Wasminna::Float::Format.for(bits: instruction.bits)
+      format = Float::Format.for(bits: instruction.bits)
 
       case instruction
       in BinaryOp(bits:, operation:)
@@ -486,11 +486,11 @@ module Wasminna
           end
         in 'copysign'
           left, right =
-            [left, right].map { Wasminna::Float.decode(_1, format:) }
+            [left, right].map { Float.decode(_1, format:) }
           left.with_sign(right.sign).encode(format:)
         in 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
           left, right =
-            [left, right].map { Wasminna::Float.decode(_1, format:).to_f }
+            [left, right].map { Float.decode(_1, format:).to_f }
           operation =
             {
               'eq' => '==', 'ne' => '!=',
@@ -538,36 +538,36 @@ module Wasminna
             end
           end
         in 'abs'
-          value = Wasminna::Float.decode(value, format:)
+          value = Float.decode(value, format:)
           value.with_sign(Sign::PLUS).encode(format:)
         in 'neg'
-          value = Wasminna::Float.decode(value, format:)
+          value = Float.decode(value, format:)
           value.with_sign(!value.sign).encode(format:)
         in 'convert_i32_s' | 'convert_i64_s'
           integer_bits = operation.slice(%r{\d+}).to_i(10)
           integer = signed(value, bits: integer_bits)
-          Wasminna::Float.from_integer(integer).encode(format:)
+          Float.from_integer(integer).encode(format:)
         in 'convert_i32_u' | 'convert_i64_u'
-          Wasminna::Float.from_integer(value).encode(format:)
+          Float.from_integer(value).encode(format:)
         in 'promote_f32'
           raise unless bits == 64
-          input_format = Wasminna::Float::Format.for(bits: 32)
-          float = Wasminna::Float.decode(value, format: input_format)
+          input_format = Float::Format.for(bits: 32)
+          float = Float.decode(value, format: input_format)
 
           case float
-          in Wasminna::Float::Nan
-            Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
+          in Float::Nan
+            Float::Nan.new(payload: 0, sign: float.sign)
           else
             float
           end.encode(format:)
         in 'demote_f64'
           raise unless bits == 32
-          input_format = Wasminna::Float::Format.for(bits: 64)
-          float = Wasminna::Float.decode(value, format: input_format)
+          input_format = Float::Format.for(bits: 64)
+          float = Float.decode(value, format: input_format)
 
           case float
-          in Wasminna::Float::Nan
-            Wasminna::Float::Nan.new(payload: 0, sign: float.sign)
+          in Float::Nan
+            Float::Nan.new(payload: 0, sign: float.sign)
           else
             float
           end.encode(format:)
@@ -586,9 +586,9 @@ module Wasminna
     end
 
     def with_float(*integer_args, format:)
-      float_args = integer_args.map { |arg| Wasminna::Float.decode(arg, format:).to_f }
+      float_args = integer_args.map { |arg| Float.decode(arg, format:).to_f }
       float_result = yield *float_args
-      Wasminna::Float.from_float(float_result).encode(format:)
+      Float.from_float(float_result).encode(format:)
     end
 
     def divide(dividend, divisor)
