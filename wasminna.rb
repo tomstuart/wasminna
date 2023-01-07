@@ -71,12 +71,12 @@ class Interpreter
       begin
         case command
         in Module => mod
-          self.functions = mod.functions
-          self.tables = mod.tables
-          self.types = mod.types
+          functions = mod.functions
+          tables = mod.tables
+          types = mod.types
 
           unless mod.memory.nil?
-            self.memory =
+            memory =
               if mod.memory.string.nil?
                 Memory.from_limits \
                   minimum_size: mod.memory.minimum_size,
@@ -94,12 +94,18 @@ class Interpreter
             end
           end
 
-          self.globals =
+          globals =
             mod.globals.map do |global|
               evaluate_expression(global.value, locals: [])
               stack.pop(1) => [value]
               value
             end
+
+          self.functions = functions
+          self.memory = memory
+          self.tables = tables
+          self.globals = globals
+          self.types = types
         in Invoke(name:, arguments:)
           function = self.functions.detect { |function| function.exported_name == name }
           if function.nil?
