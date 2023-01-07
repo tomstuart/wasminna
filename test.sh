@@ -3,6 +3,10 @@
 set -e
 
 WASMINNA_PATH=$(dirname "$0")
+if [ -z "$WASM_SPEC_PATH" ]; then
+  WASM_SPEC_PATH="$WASMINNA_PATH"/../spec
+  printf "\e[33mno WASM_SPEC_PATH set, guessing %s\e[0m\n" "$WASM_SPEC_PATH"
+fi
 
 for test in s_expression_parser_test float_test
 do
