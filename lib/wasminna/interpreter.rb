@@ -297,8 +297,12 @@ module Wasminna
         throw(tags.slice(index))
       in MemoryGrow
         stack.pop(1) => [pages]
-        stack.push(current_module.memory.size_in_pages)
-        current_module.memory.grow_by(pages:)
+        previous_size = current_module.memory.size_in_pages
+        if current_module.memory.grow_by(pages:)
+          stack.push(previous_size)
+        else
+          stack.push(unsigned(-1, bits: 32))
+        end
       in MemorySize
         stack.push(current_module.memory.size_in_pages)
       end
