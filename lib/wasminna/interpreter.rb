@@ -295,29 +295,36 @@ module Wasminna
       end
     end
 
-    def as_block(type:, redo_on_branch:)
+    def as_block(type:, redo_on_branch:, &)
       stack_height = stack.length - type.parameters.length
       branch_arity =
         redo_on_branch ? type.parameters.length : type.results.length
-      branched = nil
 
       begin
-        catch do |tag|
-          tags.unshift(tag)
-
-          branched = true
-          yield
-          branched = false
-        ensure
-          tags.shift
-        end
-
-        if branched
-          stack.pop(branch_arity) => branch_values
-          stack.pop(stack.length - stack_height)
-          stack.push(*branch_values)
-        end
+        branched = with_branch_handler(stack_height:, arity: branch_arity, &)
       end while branched && redo_on_branch
+    end
+
+    def with_branch_handler(stack_height:, arity:)
+      branched = nil
+
+      catch do |tag|
+        tags.unshift(tag)
+
+        branched = true
+        yield
+        branched = false
+      ensure
+        tags.shift
+      end
+
+      if branched
+        stack.pop(arity) => values
+        stack.pop(stack.length - stack_height)
+        stack.push(*values)
+      end
+
+      branched
     end
 
     def evaluate_block(expression, type:, locals:, redo_on_branch: false)
