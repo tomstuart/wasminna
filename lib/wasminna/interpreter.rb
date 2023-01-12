@@ -263,7 +263,9 @@ module Wasminna
       in Block(type:, body:)
         evaluate_block(body, type:, locals:)
       in Loop(type:, body:)
-        evaluate_block(body, type:, locals:, redo_on_branch: true)
+        as_loop(type: expand_blocktype(type)) do
+          evaluate_expression(body, locals:)
+        end
       in If(type:, consequent:, alternative:)
         stack.pop(1) => [condition]
         body = condition.zero? ? alternative : consequent
@@ -302,6 +304,13 @@ module Wasminna
       begin
         branched = with_branch_handler(type:, arity: branch_arity, &)
       end while branched && redo_on_branch
+    end
+
+    def as_loop(type:, &)
+      begin
+        branched =
+          with_branch_handler(type:, arity: type.parameters.length, &)
+      end while branched
     end
 
     def with_branch_handler(type:, arity:)
