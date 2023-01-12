@@ -212,9 +212,9 @@ module Wasminna
             end
           end
         stack.push(value)
-      in Store(type:, bits:, offset: static_offset)
+      in Store(type:, bits:, storage_size:, offset: static_offset)
         stack.pop(2) => [offset, value]
-        current_module.memory.store(value:, offset: offset + static_offset, bits:)
+        current_module.memory.store(value:, offset: offset + static_offset, bits: storage_size)
       in UnaryOp(type: :integer) | BinaryOp(type: :integer)
         evaluate_integer_instruction(instruction)
       in UnaryOp(type: :float) | BinaryOp(type: :float)
