@@ -299,11 +299,13 @@ module Wasminna
       stack_height = stack.length - type.parameters.length
       branch_arity =
         redo_on_branch ? type.parameters.length : type.results.length
+      branched = nil
 
       begin
-        branched = true
         catch do |tag|
           tags.unshift(tag)
+
+          branched = true
           yield
           branched = false
         ensure
