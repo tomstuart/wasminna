@@ -173,7 +173,7 @@ module Wasminna
 
         returned = true
         catch(:return) do
-          evaluate_block(function.body, type: function.type_index, locals:)
+          evaluate_expression(function.body, locals:)
           returned = false
         end
 
