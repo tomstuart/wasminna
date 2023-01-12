@@ -300,7 +300,7 @@ module Wasminna
       branch_arity =
         redo_on_branch ? type.parameters.length : type.results.length
 
-      tap do
+      loop do
         branched = true
         catch do |tag|
           tags.unshift(tag)
@@ -315,8 +315,9 @@ module Wasminna
           stack.pop(branch_arity) => branch_values
           stack.pop(stack.length - stack_height)
           stack.push(*branch_values)
-          redo if redo_on_branch
         end
+
+        break unless branched && redo_on_branch
       end
     end
 
