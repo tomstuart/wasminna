@@ -296,16 +296,16 @@ module Wasminna
     end
 
     def as_block(type:, redo_on_branch:, &)
-      stack_height = stack.length - type.parameters.length
       branch_arity =
         redo_on_branch ? type.parameters.length : type.results.length
 
       begin
-        branched = with_branch_handler(stack_height:, arity: branch_arity, &)
+        branched = with_branch_handler(type:, arity: branch_arity, &)
       end while branched && redo_on_branch
     end
 
-    def with_branch_handler(stack_height:, arity:)
+    def with_branch_handler(type:, arity:)
+      stack_height = stack.length - type.parameters.length
       branched = nil
 
       catch do |tag|
