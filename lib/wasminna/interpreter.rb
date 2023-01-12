@@ -54,6 +54,9 @@ module Wasminna
       def grow_by(pages:)
         if maximum_size.nil? || size_in_pages + pages <= maximum_size
           bytes << "\0" * (pages * BYTES_PER_PAGE)
+          true
+        else
+          false
         end
       end
 
