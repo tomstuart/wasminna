@@ -114,10 +114,12 @@ module Wasminna
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
               next
             end
+            type = current_module.types.slice(function.type_index) || raise
 
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
-            actual_values = stack.pop(expecteds.length)
+            actual_values = stack.pop(type.results.length)
+            raise unless expecteds.length == actual_values.length
             raise unless stack.empty?
 
             expecteds.zip(actual_values).each do |expected, actual_value|
