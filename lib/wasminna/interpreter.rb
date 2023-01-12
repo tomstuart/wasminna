@@ -167,20 +167,32 @@ module Wasminna
     end
 
     def invoke_function(function)
-      type = current_module.types.slice(function.type_index) || raise
+      with_tags([]) do
+        type = current_module.types.slice(function.type_index) || raise
 
-      as_block(type:, redo_on_branch: false) do
-        argument_values = stack.pop(type.parameters.length)
-        locals = function.locals.map { 0 }
-        locals = argument_values + locals
+        as_block(type:, redo_on_branch: false) do
+          argument_values = stack.pop(type.parameters.length)
+          locals = function.locals.map { 0 }
+          locals = argument_values + locals
 
-        returned = true
-        catch(:return) do
-          evaluate_expression(function.body, locals:)
-          returned = false
+          returned = true
+          catch(:return) do
+            evaluate_expression(function.body, locals:)
+            returned = false
+          end
+
+          throw(tags.first) if returned
         end
+      end
+    end
 
-        throw(tags.first) if returned
+    def with_tags(tags)
+      previous_tags, self.tags = self.tags, tags
+
+      begin
+        yield
+      ensure
+        self.tags = previous_tags
       end
     end
 
