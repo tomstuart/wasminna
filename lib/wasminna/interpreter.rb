@@ -302,15 +302,14 @@ module Wasminna
 
       tap do
         branched = true
-        result =
-          catch do |tag|
-            tags.unshift(tag)
-            yield.tap do
-              branched = false
-            end
-          ensure
-            tags.shift
+        catch do |tag|
+          tags.unshift(tag)
+          yield.tap do
+            branched = false
           end
+        ensure
+          tags.shift
+        end
 
         if branched
           stack.pop(branch_arity) => branch_values
