@@ -53,13 +53,14 @@ module Wasminna
       end
     end
 
-    attr_accessor :current_module, :stack
+    attr_accessor :current_module, :stack, :tags
 
     Module = Data.define(:functions, :tables, :memory, :globals, :types)
 
     def evaluate_script(script)
       self.current_module = nil
       self.stack = []
+      self.tags = []
 
       script.each do |command|
         begin
@@ -179,7 +180,7 @@ module Wasminna
           returned = false
         end
 
-        throw(:branch, 0) if returned
+        throw(tags.first) if returned
       end
     end
 
@@ -227,10 +228,10 @@ module Wasminna
         stack.pop(1) => [value]
         current_module.globals[index] = value
       in Br(index:)
-        throw(:branch, index)
+        throw(tags.slice(index))
       in BrIf(index:)
         stack.pop(1) => [condition]
-        throw(:branch, index) unless condition.zero?
+        throw(tags.slice(index)) unless condition.zero?
       in Select
         stack.pop(3) => [value_1, value_2, condition]
 
@@ -269,7 +270,7 @@ module Wasminna
           else
             default_index
           end
-        throw(:branch, index)
+        throw(tags.slice(index))
       in MemoryGrow
         stack.pop(1) => [pages]
         stack.push(current_module.memory.size_in_pages)
@@ -296,21 +297,20 @@ module Wasminna
       tap do
         branched = true
         result =
-          catch(:branch) do
+          catch do |tag|
+            tags.unshift(tag)
             yield.tap do
               branched = false
             end
+          ensure
+            tags.shift
           end
 
         if branched
-          if result.zero?
-            stack.pop(branch_arity) => branch_values
-            stack.pop(stack.length - stack_height)
-            stack.push(*branch_values)
-            redo if redo_on_branch
-          else
-            throw(:branch, result - 1)
-          end
+          stack.pop(branch_arity) => branch_values
+          stack.pop(stack.length - stack_height)
+          stack.push(*branch_values)
+          redo if redo_on_branch
         end
       end
     end
