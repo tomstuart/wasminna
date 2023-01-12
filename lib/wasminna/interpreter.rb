@@ -175,13 +175,7 @@ module Wasminna
           locals = function.locals.map { 0 }
           locals = argument_values + locals
 
-          returned = true
-          catch(:return) do
-            evaluate_expression(function.body, locals:)
-            returned = false
-          end
-
-          throw(tags.first) if returned
+          evaluate_expression(function.body, locals:)
         end
       end
     end
@@ -226,7 +220,7 @@ module Wasminna
       in UnaryOp(type: :float) | BinaryOp(type: :float)
         evaluate_float_instruction(instruction)
       in Return
-        throw(:return)
+        throw(tags.last)
       in LocalGet(index:)
         stack.push(locals.slice(index))
       in LocalSet | LocalTee
