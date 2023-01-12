@@ -14,7 +14,7 @@ module Wasminna
     If = Data.define(:type, :consequent, :alternative)
     Const = Data.define(:type, :bits, :number)
     Load = Data.define(:type, :bits, :storage_size, :sign_extension_mode, :offset)
-    Store = Data.define(:type, :bits, :offset)
+    Store = Data.define(:type, :bits, :storage_size, :offset)
     UnaryOp = Data.define(:type, :bits, :operation)
     BinaryOp = Data.define(:type, :bits, :operation)
     Unreachable = Data.define
