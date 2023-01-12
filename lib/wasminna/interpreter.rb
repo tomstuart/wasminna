@@ -261,7 +261,9 @@ module Wasminna
       in Drop
         stack.pop(1)
       in Block(type:, body:)
-        evaluate_block(body, type:, locals:)
+        as_block(type: expand_blocktype(type)) do
+          evaluate_expression(body, locals:)
+        end
       in Loop(type:, body:)
         as_loop(type: expand_blocktype(type)) do
           evaluate_expression(body, locals:)
@@ -269,7 +271,9 @@ module Wasminna
       in If(type:, consequent:, alternative:)
         stack.pop(1) => [condition]
         body = condition.zero? ? alternative : consequent
-        evaluate_block(body, type:, locals:)
+        as_block(type: expand_blocktype(type)) do
+          evaluate_expression(body, locals:)
+        end
       in BrTable(target_indexes:, default_index:)
         stack.pop(1) => [table_index]
         index =
@@ -329,12 +333,6 @@ module Wasminna
       end
 
       branched
-    end
-
-    def evaluate_block(expression, type:, locals:)
-      as_block(type: expand_blocktype(type)) do
-        evaluate_expression(expression, locals:)
-      end
     end
 
     def evaluate_integer_instruction(instruction)
