@@ -170,7 +170,7 @@ module Wasminna
       with_tags([]) do
         type = current_module.types.slice(function.type_index) || raise
 
-        as_block(type:, redo_on_branch: false) do
+        as_block(type:) do
           argument_values = stack.pop(type.parameters.length)
           locals = function.locals.map { 0 }
           locals = argument_values + locals
@@ -297,13 +297,8 @@ module Wasminna
       end
     end
 
-    def as_block(type:, redo_on_branch:, &)
-      branch_arity =
-        redo_on_branch ? type.parameters.length : type.results.length
-
-      begin
-        branched = with_branch_handler(type:, arity: branch_arity, &)
-      end while branched && redo_on_branch
+    def as_block(type:, &)
+      with_branch_handler(type:, arity: type.results.length, &)
     end
 
     def as_loop(type:, &)
@@ -336,8 +331,8 @@ module Wasminna
       branched
     end
 
-    def evaluate_block(expression, type:, locals:, redo_on_branch: false)
-      as_block(type: expand_blocktype(type), redo_on_branch:) do
+    def evaluate_block(expression, type:, locals:)
+      as_block(type: expand_blocktype(type)) do
         evaluate_expression(expression, locals:)
       end
     end
