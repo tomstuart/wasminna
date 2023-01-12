@@ -10,7 +10,7 @@ module Wasminna
     include AST
     include Helpers::Mask
 
-    class Memory < Data.define(:bytes)
+    class Memory < Data.define(:bytes, :maximum_size)
       include Helpers::Mask
       include Helpers::SizeOf
       extend Helpers::SizeOf
@@ -22,12 +22,12 @@ module Wasminna
         size_in_pages = size_of(string.bytesize, in: BYTES_PER_PAGE)
         bytes = "\0" * (size_in_pages * BYTES_PER_PAGE)
         bytes[0, string.length] = string
-        new(bytes:)
+        new(bytes:, maximum_size: nil)
       end
 
       def self.from_limits(minimum_size:, maximum_size:)
         bytes = "\0" * (minimum_size * BYTES_PER_PAGE)
-        new(bytes:)
+        new(bytes:, maximum_size:)
       end
 
       def load(offset:, bits:)
