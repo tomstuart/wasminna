@@ -304,9 +304,8 @@ module Wasminna
         branched = true
         catch do |tag|
           tags.unshift(tag)
-          yield.tap do
-            branched = false
-          end
+          yield
+          branched = false
         ensure
           tags.shift
         end
