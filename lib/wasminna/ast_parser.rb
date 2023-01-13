@@ -457,6 +457,8 @@ module Wasminna
             [:global, parse_index(context.globals)]
           in 'table'
             [:table, read] # TODO parse_index(context.tables)
+          in 'memory'
+            [:memory, read] # TODO parse_index(context.memories)
           end
         end
 
