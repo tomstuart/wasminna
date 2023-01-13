@@ -384,7 +384,12 @@ module Wasminna
         read_list(starting_with: 'import') { repeatedly { read } }
       end
 
-      read_list(starting_with: 'mut') { read }
+      if can_read_list?(starting_with: 'mut')
+        read_list(starting_with: 'mut') { read }
+      else
+        read
+      end
+
       value = parse_instructions
 
       Global.new(value:)
