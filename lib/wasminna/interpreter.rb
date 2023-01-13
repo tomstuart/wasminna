@@ -16,7 +16,7 @@ module Wasminna
       extend Helpers::SizeOf
 
       BITS_PER_BYTE = 8
-      BYTES_PER_PAGE = 0xffff
+      BYTES_PER_PAGE = 0x10000
       MAXIMUM_PAGES = 0x10000
 
       def self.from_string(string:)
