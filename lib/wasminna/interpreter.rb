@@ -140,6 +140,10 @@ module Wasminna
               invoke_function(function)
               actual_values = stack.pop(type.results.length)
               raise unless stack.empty?
+            in Get(module_name:, name:)
+              self.current_module = find_module(module_name)
+              global = find_global(name) || raise
+              actual_values = [global]
             end
 
             raise unless expecteds.length == actual_values.length
@@ -211,6 +215,20 @@ module Wasminna
       end
 
       function
+    end
+
+    def find_global(name)
+      # TODO check globals’ exported names first
+
+      export = current_module.exports.detect do |export|
+        export in { kind: :global, name: ^name }
+      end
+
+      unless export.nil?
+        global = current_module.globals.slice(export.index) || raise
+      end
+
+      global
     end
 
     def invoke_function(function)
