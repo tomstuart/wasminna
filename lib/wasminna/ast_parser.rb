@@ -176,12 +176,29 @@ module Wasminna
       Invoke.new(module_name:, name:, arguments:)
     end
 
+    def parse_get
+      read => 'get'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => module_name
+      end
+      read => name
+
+      Get.new(module_name:, name:)
+    end
+
     def parse_assert_return
       read => 'assert_return'
-      invoke = read_list { parse_invoke }
+      action =
+        if can_read_list?(starting_with: 'invoke')
+          read_list { parse_invoke }
+        elsif can_read_list?(starting_with: 'get')
+          read_list { parse_get }
+        else
+          raise
+        end
       expecteds = parse_expecteds
 
-      AssertReturn.new(invoke:, expecteds:)
+      AssertReturn.new(action:, expecteds:)
     end
 
     def parse_expecteds

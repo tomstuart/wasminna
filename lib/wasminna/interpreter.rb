@@ -120,7 +120,7 @@ module Wasminna
 
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
-          in AssertReturn(invoke: Invoke(name:, arguments:), expecteds:)
+          in AssertReturn(action: Invoke(name:, arguments:), expecteds:)
             function = current_module.functions.detect { |function| function.exported_names.include?(name) }
             if function.nil?
               puts
