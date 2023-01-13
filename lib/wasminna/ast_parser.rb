@@ -387,6 +387,12 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => name
       end
+
+      exported_names = []
+      while can_read_list?(starting_with: 'export')
+        exported_names << read_list(starting_with: 'export') { read }
+      end
+
       repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
         parse_integer(bits: 32)
       end
