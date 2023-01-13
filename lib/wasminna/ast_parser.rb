@@ -90,7 +90,12 @@ module Wasminna
           read_list do
             case peek
             in 'func'
-              functions << parse_function
+              parse_function.each do |result|
+                case result
+                in Function
+                  functions << result
+                end
+              end
             in 'memory'
               memory = parse_memory
             in 'table'
@@ -270,21 +275,24 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      while can_read_list?(starting_with: 'export')
-        exported_name = read_list(starting_with: 'export') { read }
-      end
-      parse_typeuse => [type_index, parameter_names]
-      local_names, locals = unzip_pairs(parse_locals)
-      locals_context = Context.new(locals: parameter_names + local_names)
-      raise unless locals_context.well_formed?
-      body, updated_typedefs =
-        with_context(context + locals_context) do
-          body = parse_instructions
-          [body, context.typedefs]
-        end
-      self.context = context.with(typedefs: updated_typedefs)
 
-      Function.new(exported_name:, type_index:, locals:, body:)
+      [].tap do |results|
+        while can_read_list?(starting_with: 'export')
+          exported_name = read_list(starting_with: 'export') { read }
+        end
+        parse_typeuse => [type_index, parameter_names]
+        local_names, locals = unzip_pairs(parse_locals)
+        locals_context = Context.new(locals: parameter_names + local_names)
+        raise unless locals_context.well_formed?
+        body, updated_typedefs =
+          with_context(context + locals_context) do
+            body = parse_instructions
+            [body, context.typedefs]
+          end
+        self.context = context.with(typedefs: updated_typedefs)
+
+        results << Function.new(exported_name:, type_index:, locals:, body:)
+      end
     end
 
     def parse_typeuse
