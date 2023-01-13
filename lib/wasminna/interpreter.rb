@@ -65,12 +65,13 @@ module Wasminna
       end
     end
 
-    attr_accessor :current_module, :stack, :tags
+    attr_accessor :current_module, :modules, :stack, :tags
 
     Module = Data.define(:functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
       self.current_module = nil
+      self.modules = []
       self.stack = []
       self.tags = []
 
@@ -109,8 +110,9 @@ module Wasminna
                 value
               end
 
-            self.current_module =
+            self.modules <<
               Module.new(functions:, memory:, tables:, globals:, types:, exports:)
+            self.current_module = modules.last
           in Invoke(name:, arguments:)
             function = find_function(name)
             if function.nil?
