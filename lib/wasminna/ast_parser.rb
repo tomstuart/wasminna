@@ -101,6 +101,8 @@ module Wasminna
               parse_type
             in 'data'
               datas << parse_data
+            in 'export'
+              repeatedly { read }
             end
           end
         end
@@ -143,6 +145,9 @@ module Wasminna
               end
             Context.new(types: [name], typedefs: [type])
           in 'data'
+            repeatedly { read }
+            Context.new
+          in 'export'
             repeatedly { read }
             Context.new
           end
