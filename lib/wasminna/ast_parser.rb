@@ -351,6 +351,10 @@ module Wasminna
 
     def parse_memory
       read => 'memory'
+      if peek in ID_REGEXP
+        read => ID_REGEXP
+      end
+
       if can_read_list?(starting_with: 'data')
         string = read_list { parse_memory_data }
       else
