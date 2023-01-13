@@ -392,6 +392,8 @@ module Wasminna
 
       if can_read_list?(starting_with: 'import')
         read_list(starting_with: 'import') { repeatedly { read } }
+      elsif can_read_list?(starting_with: 'export')
+        read_list(starting_with: 'export') { repeatedly { read } }
       end
 
       if can_read_list?(starting_with: 'mut')
