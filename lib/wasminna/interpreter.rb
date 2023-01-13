@@ -124,22 +124,25 @@ module Wasminna
 
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
-          in AssertReturn(action: Invoke(module_name:, name:, arguments:), expecteds:)
-            self.current_module = find_module(module_name)
-            function = find_function(name)
-            if function.nil?
-              puts
-              puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
-              next
+          in AssertReturn(action:, expecteds:)
+            case action
+            in Invoke(module_name:, name:, arguments:)
+              self.current_module = find_module(module_name)
+              function = find_function(name)
+              if function.nil?
+                puts
+                puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
+                next
+              end
+              type = current_module.types.slice(function.type_index) || raise
+
+              evaluate_expression(arguments, locals: [])
+              invoke_function(function)
+              actual_values = stack.pop(type.results.length)
+              raise unless stack.empty?
             end
-            type = current_module.types.slice(function.type_index) || raise
 
-            evaluate_expression(arguments, locals: [])
-            invoke_function(function)
-            actual_values = stack.pop(type.results.length)
             raise unless expecteds.length == actual_values.length
-            raise unless stack.empty?
-
             expecteds.zip(actual_values).each do |expected, actual_value|
               case expected
               in NanExpectation(nan:, bits:)
