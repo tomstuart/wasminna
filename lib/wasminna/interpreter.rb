@@ -111,7 +111,7 @@ module Wasminna
             self.current_module =
               Module.new(functions:, memory:, tables:, globals:, types:)
           in Invoke(name:, arguments:)
-            function = current_module.functions.detect { |function| function.exported_name == name }
+            function = current_module.functions.detect { |function| function.exported_names.include?(name) }
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -121,7 +121,7 @@ module Wasminna
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
           in AssertReturn(invoke: Invoke(name:, arguments:), expecteds:)
-            function = current_module.functions.detect { |function| function.exported_name == name }
+            function = current_module.functions.detect { |function| function.exported_names.include?(name) }
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
