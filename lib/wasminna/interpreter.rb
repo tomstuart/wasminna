@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :stack, :tags
 
-    Module = Data.define(:functions, :tables, :memory, :globals, :types)
+    Module = Data.define(:functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -81,6 +81,7 @@ module Wasminna
             functions = mod.functions
             tables = mod.tables
             types = mod.types
+            exports = mod.exports
 
             unless mod.memory.nil?
               memory =
@@ -109,7 +110,7 @@ module Wasminna
               end
 
             self.current_module =
-              Module.new(functions:, memory:, tables:, globals:, types:)
+              Module.new(functions:, memory:, tables:, globals:, types:, exports:)
           in Invoke(name:, arguments:)
             function = find_function(name)
             if function.nil?
