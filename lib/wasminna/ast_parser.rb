@@ -379,6 +379,11 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
+
+      if can_read_list?(starting_with: 'import')
+        read_list(starting_with: 'import') { repeatedly { read } }
+      end
+
       read_list(starting_with: 'mut') { read }
       value = parse_instructions
 
