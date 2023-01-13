@@ -39,6 +39,9 @@ module Wasminna
 
     def parse_module
       read => 'module'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => name
+      end
       fields =
         case peek
         in 'binary'
@@ -47,7 +50,7 @@ module Wasminna
           parse_text_fields
         end
 
-      Module.new(**fields)
+      Module.new(name:, **fields)
     end
 
     def parse_binary_fields
