@@ -113,8 +113,8 @@ module Wasminna
 
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
-            self.current_module = modules.last
-          in Invoke(name:, arguments:)
+          in Invoke(module_name:, name:, arguments:)
+            self.current_module = find_module(module_name)
             function = find_function(name)
             if function.nil?
               puts
@@ -124,7 +124,8 @@ module Wasminna
 
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
-          in AssertReturn(action: Invoke(name:, arguments:), expecteds:)
+          in AssertReturn(action: Invoke(module_name:, name:, arguments:), expecteds:)
+            self.current_module = find_module(module_name)
             function = find_function(name)
             if function.nil?
               puts
@@ -180,6 +181,14 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def find_module(name)
+      if name.nil?
+        modules.last
+      else
+        modules.detect { |mod| mod.name == name }
+      end
     end
 
     def find_function(name)
