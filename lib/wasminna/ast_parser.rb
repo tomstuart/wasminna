@@ -103,6 +103,8 @@ module Wasminna
               datas << parse_data
             in 'export'
               repeatedly { read }
+            in 'import'
+              repeatedly { read }
             end
           end
         end
@@ -148,6 +150,9 @@ module Wasminna
             repeatedly { read }
             Context.new
           in 'export'
+            repeatedly { read }
+            Context.new
+          in 'import'
             repeatedly { read }
             Context.new
           end
