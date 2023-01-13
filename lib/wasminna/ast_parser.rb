@@ -438,6 +438,8 @@ module Wasminna
           case read
           in 'func'
             [:func, parse_index(context.functions)]
+          in 'global'
+            [:global, parse_index(context.globals)]
           end
         end
 
