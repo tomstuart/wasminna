@@ -15,7 +15,7 @@ do
   ruby -I"$WASMINNA_PATH"/lib "$WASMINNA_PATH"/test/$file
 done
 
-for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp f64 f64_bitwise f64_cmp float_memory float_exprs float_misc const local_set local_get store br labels return br_if call local_tee stack nop func comments if block loop load memory endianness fac forward unwind left-to-right memory_size memory_grow
+for script in int_literals i32 i64 int_exprs float_literals conversions f32 f32_bitwise f32_cmp f64 f64_bitwise f64_cmp float_memory float_exprs float_misc const local_set local_get store br labels return br_if call local_tee stack nop func comments if block loop load memory endianness fac forward unwind left-to-right memory_size memory_grow address align
 do
   file=$script.wast
   printf "\e[1m%s\e[0m: " "$file"
