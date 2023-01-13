@@ -36,5 +36,6 @@ module Wasminna
     Type = Data.define(:parameters, :results)
     MemorySize = Data.define
     MemoryData = Data.define(:offset, :string)
+    RefNull = Data.define
   end
 end

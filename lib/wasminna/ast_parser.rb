@@ -726,6 +726,9 @@ module Wasminna
         end
 
         Select.new
+      in 'ref.null'
+        read
+        RefNull.new
       end
     end
 
