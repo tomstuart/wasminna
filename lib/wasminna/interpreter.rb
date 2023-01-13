@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
-    Module = Data.define(:functions, :tables, :memory, :globals, :types, :exports)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -79,6 +79,7 @@ module Wasminna
         begin
           case command
           in AST::Module => mod
+            name = mod.name
             functions = mod.functions
             tables = mod.tables
             types = mod.types
@@ -111,7 +112,7 @@ module Wasminna
               end
 
             self.modules <<
-              Module.new(functions:, memory:, tables:, globals:, types:, exports:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
             self.current_module = modules.last
           in Invoke(name:, arguments:)
             function = find_function(name)
