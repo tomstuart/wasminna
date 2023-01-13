@@ -111,7 +111,7 @@ module Wasminna
             self.current_module =
               Module.new(functions:, memory:, tables:, globals:, types:)
           in Invoke(name:, arguments:)
-            function = current_module.functions.detect { |function| function.exported_names.include?(name) }
+            function = find_function(name)
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -121,7 +121,7 @@ module Wasminna
             evaluate_expression(arguments, locals: [])
             invoke_function(function)
           in AssertReturn(action: Invoke(name:, arguments:), expecteds:)
-            function = current_module.functions.detect { |function| function.exported_names.include?(name) }
+            function = find_function(name)
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -176,6 +176,10 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def find_function(name)
+      current_module.functions.detect { |function| function.exported_names.include?(name) }
     end
 
     def invoke_function(function)
