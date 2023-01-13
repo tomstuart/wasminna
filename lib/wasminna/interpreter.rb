@@ -180,7 +180,22 @@ module Wasminna
     end
 
     def find_function(name)
-      current_module.functions.detect { |function| function.exported_names.include?(name) }
+      function =
+        current_module.functions.detect do |function|
+          function.exported_names.include?(name)
+        end
+
+      if function.nil?
+        export = current_module.exports.detect do |export|
+          export in { kind: :func, name: ^name }
+        end
+
+        unless export.nil?
+          function = current_module.functions.slice(export.index) || raise
+        end
+      end
+
+      function
     end
 
     def invoke_function(function)
