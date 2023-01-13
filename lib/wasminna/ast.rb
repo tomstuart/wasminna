@@ -28,7 +28,7 @@ module Wasminna
     Memory = Data.define(:string, :minimum_size, :maximum_size)
     Table = Data.define(:name, :elements)
     Global = Data.define(:value)
-    Module = Data.define(:name, :functions, :memory, :tables, :globals, :types, :datas)
+    Module = Data.define(:name, :functions, :memory, :tables, :globals, :types, :datas, :exports)
     Invoke = Data.define(:module_name, :name, :arguments)
     AssertReturn = Data.define(:action, :expecteds)
     NanExpectation = Data.define(:nan, :bits)
@@ -39,5 +39,6 @@ module Wasminna
     RefNull = Data.define
     RefExtern = Data.define
     Get = Data.define(:module_name, :name)
+    Export = Data.define(:name, :kind, :index)
   end
 end
