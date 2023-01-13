@@ -167,10 +167,13 @@ module Wasminna
 
     def parse_invoke
       read => 'invoke'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => module_name
+      end
       read => name
       arguments = with_context(Context.new) { parse_instructions }
 
-      Invoke.new(name:, arguments:)
+      Invoke.new(module_name:, name:, arguments:)
     end
 
     def parse_assert_return
