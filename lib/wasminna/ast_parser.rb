@@ -446,6 +446,8 @@ module Wasminna
             [:func, parse_index(context.functions)]
           in 'global'
             [:global, parse_index(context.globals)]
+          in 'table'
+            [:table, read] # TODO parse_index(context.tables)
           end
         end
 
