@@ -37,5 +37,6 @@ module Wasminna
     MemorySize = Data.define
     MemoryData = Data.define(:offset, :string)
     RefNull = Data.define
+    RefExtern = Data.define
   end
 end

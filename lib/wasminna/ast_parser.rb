@@ -729,6 +729,9 @@ module Wasminna
       in 'ref.null'
         read
         RefNull.new
+      in 'ref.extern'
+        read
+        RefExtern.new
       end
     end
 
