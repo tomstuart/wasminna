@@ -270,7 +270,9 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      exported_name = parse_export
+      while can_read_list?(starting_with: 'export')
+        exported_name = read_list(starting_with: 'export') { read }
+      end
       parse_typeuse => [type_index, parameter_names]
       local_names, locals = unzip_pairs(parse_locals)
       locals_context = Context.new(locals: parameter_names + local_names)
@@ -283,12 +285,6 @@ module Wasminna
       self.context = context.with(typedefs: updated_typedefs)
 
       Function.new(exported_name:, type_index:, locals:, body:)
-    end
-
-    def parse_export
-      if can_read_list?(starting_with: 'export')
-        read_list(starting_with: 'export') { read }
-      end
     end
 
     def parse_typeuse
