@@ -355,6 +355,11 @@ module Wasminna
         read => ID_REGEXP
       end
 
+      exported_names = []
+      while can_read_list?(starting_with: 'export')
+        exported_names << read_list(starting_with: 'export') { read }
+      end
+
       if can_read_list?(starting_with: 'data')
         string = read_list { parse_memory_data }
       else
