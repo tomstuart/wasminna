@@ -437,15 +437,18 @@ module Wasminna
         read_list(starting_with: 'import') { repeatedly { read } }
       end
 
+      parse_globaltype
+      value = parse_instructions
+
+      Global.new(value:)
+    end
+
+    def parse_globaltype
       if can_read_list?(starting_with: 'mut')
         read_list(starting_with: 'mut') { read }
       else
         read
       end
-
-      value = parse_instructions
-
-      Global.new(value:)
     end
 
     def parse_export
