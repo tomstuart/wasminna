@@ -435,10 +435,11 @@ module Wasminna
 
       if can_read_list?(starting_with: 'import')
         read_list(starting_with: 'import') { repeatedly { read } }
+        parse_globaltype
+      else
+        parse_globaltype
+        value = parse_instructions
       end
-
-      parse_globaltype
-      value = parse_instructions
 
       Global.new(value:)
     end
