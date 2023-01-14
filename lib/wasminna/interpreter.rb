@@ -365,6 +365,8 @@ module Wasminna
         end
       in MemorySize
         stack.push(current_module.memory.size_in_pages)
+      in RefNull
+        stack.push(nil)
       end
     end
 
