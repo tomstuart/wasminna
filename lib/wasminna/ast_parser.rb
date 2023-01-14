@@ -434,14 +434,18 @@ module Wasminna
       end
 
       if can_read_list?(starting_with: 'import')
-        read_list(starting_with: 'import') { repeatedly { read } }
+        import_module_name, import_name =
+          read_list(starting_with: 'import') do
+            [read, read]
+          end
+        import = [import_module_name, import_name]
         parse_globaltype
       else
         parse_globaltype
         value = parse_instructions
       end
 
-      Global.new(value:)
+      Global.new(import:, value:)
     end
 
     def parse_globaltype
