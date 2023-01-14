@@ -106,9 +106,14 @@ module Wasminna
 
             globals =
               mod.globals.map do |global|
-                evaluate_expression(global.value, locals: [])
-                stack.pop(1) => [value]
-                value
+                if global.import.nil?
+                  evaluate_expression(global.value, locals: [])
+                  stack.pop(1) => [value]
+                  value
+                else
+                  module_name, name = global.import
+                  nil # TODO import from another module
+                end
               end
 
             self.modules <<
