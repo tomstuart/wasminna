@@ -104,20 +104,22 @@ module Wasminna
               end
             end
 
-            globals =
-              mod.globals.map do |global|
-                if global.import.nil?
-                  evaluate_expression(global.value, locals: [])
-                  stack.pop(1) => [value]
-                  value
-                else
-                  module_name, name = global.import
-                  nil # TODO import from another module
-                end
-              end
+            globals = mod.globals.map { nil }
 
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
+            self.current_module = modules.last
+
+            mod.globals.each.with_index do |global, index|
+              if global.import.nil?
+                evaluate_expression(global.value, locals: [])
+                stack.pop(1) => [value]
+                current_module.globals[index] = value
+              else
+                module_name, name = global.import
+                current_module.globals[index] = nil # TODO import from another module
+              end
+            end
           in Invoke(module_name:, name:, arguments:)
             self.current_module = find_module(module_name)
             function = find_function(name)
