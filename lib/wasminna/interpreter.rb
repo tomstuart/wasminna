@@ -373,6 +373,8 @@ module Wasminna
         stack.push(current_module.memory.size_in_pages)
       in RefNull
         stack.push(nil)
+      in RefExtern
+        stack.push(:externref)
       end
     end
 
