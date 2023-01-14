@@ -428,10 +428,13 @@ module Wasminna
         read => ID_REGEXP
       end
 
+      exported_names = []
+      while can_read_list?(starting_with: 'export')
+        exported_names << read_list(starting_with: 'export') { read }
+      end
+
       if can_read_list?(starting_with: 'import')
         read_list(starting_with: 'import') { repeatedly { read } }
-      elsif can_read_list?(starting_with: 'export')
-        read_list(starting_with: 'export') { repeatedly { read } }
       end
 
       if can_read_list?(starting_with: 'mut')
