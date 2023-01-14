@@ -117,7 +117,13 @@ module Wasminna
                 current_module.globals[index] = value
               else
                 module_name, name = global.import
-                current_module.globals[index] = nil # TODO import from another module
+                current_module.globals[index] =
+                  case module_name
+                  in '"spectest"'
+                    666
+                  else
+                    nil # TODO import from another module
+                  end
               end
             end
           in Invoke(module_name:, name:, arguments:)
