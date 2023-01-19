@@ -222,7 +222,7 @@ module Wasminna
           export in { kind: :func, name: ^name }
         end
 
-        unless export.nil?
+        unless export.nil? # TODO remove once binary format is supported
           function = function_at(index: export.index)
         end
       end
@@ -241,7 +241,7 @@ module Wasminna
         export in { kind: :global, name: ^name }
       end
 
-      unless export.nil?
+      unless export.nil? # TODO remove once binary format is supported
         global = current_module.globals.slice(export.index) || raise
       end
 
