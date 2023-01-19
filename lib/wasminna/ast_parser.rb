@@ -157,6 +157,7 @@ module Wasminna
             repeatedly { read }
             Context.new
           in 'import'
+            # TODO add imported func/table/memory/global name to context
             repeatedly { read }
             Context.new
           end
