@@ -300,16 +300,25 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { read }
       end
 
-      parse_typeuse => [type_index, parameter_names]
-      local_names, locals = unzip_pairs(parse_locals)
-      locals_context = Context.new(locals: parameter_names + local_names)
-      raise unless locals_context.well_formed?
-      body, updated_typedefs =
-        with_context(context + locals_context) do
-          body = parse_instructions
-          [body, context.typedefs]
-        end
-      self.context = context.with(typedefs: updated_typedefs)
+      if can_read_list?(starting_with: 'import')
+        import_module_name, import_name =
+          read_list(starting_with: 'import') do
+            [read, read]
+          end
+        import = [import_module_name, import_name]
+        parse_typeuse => [type_index, _]
+      else
+        parse_typeuse => [type_index, parameter_names]
+        local_names, locals = unzip_pairs(parse_locals)
+        locals_context = Context.new(locals: parameter_names + local_names)
+        raise unless locals_context.well_formed?
+        body, updated_typedefs =
+          with_context(context + locals_context) do
+            body = parse_instructions
+            [body, context.typedefs]
+          end
+        self.context = context.with(typedefs: updated_typedefs)
+      end
 
       Function.new(exported_names:, type_index:, locals:, body:)
     end
