@@ -486,8 +486,27 @@ module Wasminna
     end
 
     def parse_import
-      # TODO
-      repeatedly { read }
+      read => 'import'
+      read => module_name
+      read => name
+      kind, type =
+        read_list do
+          case read
+          in 'func'
+            if peek in ID_REGEXP
+              read => ID_REGEXP
+            end
+            parse_typeuse => [type_index, _]
+            [:func, type_index]
+          in 'global'
+            if peek in ID_REGEXP
+              read => ID_REGEXP
+            end
+            [:global, parse_globaltype]
+          end
+        end
+
+      Import.new(module_name:, name:, kind:, type:)
     end
 
     NUMERIC_OPCODE_REGEXP =
