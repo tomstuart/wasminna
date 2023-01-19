@@ -232,7 +232,16 @@ module Wasminna
     end
 
     def function_at(index:)
-      current_module.functions.slice(index) || raise
+      function_imports =
+        current_module.imports.select do |import|
+          import in { kind: :func }
+        end
+
+      if index < function_imports.length
+        function_imports.slice(index)
+      else
+        current_module.functions.slice(index - function_imports.length) || raise
+      end
     end
 
     def find_global(name)
