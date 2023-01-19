@@ -320,7 +320,7 @@ module Wasminna
         self.context = context.with(typedefs: updated_typedefs)
       end
 
-      Function.new(exported_names:, type_index:, locals:, body:)
+      Function.new(exported_names:, import:, type_index:, locals:, body:)
     end
 
     def parse_typeuse
