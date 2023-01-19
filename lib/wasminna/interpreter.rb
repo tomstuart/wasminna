@@ -223,11 +223,15 @@ module Wasminna
         end
 
         unless export.nil?
-          function = current_module.functions.slice(export.index) || raise
+          function = function_at(index: export.index)
         end
       end
 
       function
+    end
+
+    def function_at(index:)
+      current_module.functions.slice(index) || raise
     end
 
     def find_global(name)
@@ -327,14 +331,14 @@ module Wasminna
       in Nop
         # do nothing
       in Call(index:)
-        function = current_module.functions.slice(index) || raise
+        function = function_at(index:)
         invoke_function(function)
       in CallIndirect(table_index:, type_index:)
         stack.pop(1) => [index]
 
         table = current_module.tables.slice(table_index)
         index = table.elements.slice(index)
-        function = current_module.functions.slice(index) || raise
+        function = function_at(index:)
         invoke_function(function)
       in Drop
         stack.pop(1)
