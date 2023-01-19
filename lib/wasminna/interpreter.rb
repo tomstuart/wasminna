@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :imports)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -84,6 +84,7 @@ module Wasminna
             tables = mod.tables
             types = mod.types
             exports = mod.exports
+            imports = mod.imports
 
             unless mod.memory.nil?
               memory =
@@ -107,7 +108,7 @@ module Wasminna
             globals = mod.globals.map { nil }
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, imports:)
             self.current_module = modules.last
 
             mod.globals.each.with_index do |global, index|
