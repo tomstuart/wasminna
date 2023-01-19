@@ -259,16 +259,22 @@ module Wasminna
     end
 
     def invoke_function(function)
-      with_tags([]) do
-        type = current_module.types.slice(function.type_index) || raise
+      case function
+      in Function
+        with_tags([]) do
+          type = current_module.types.slice(function.type_index) || raise
 
-        as_block(type:) do
-          argument_values = stack.pop(type.parameters.length)
-          locals = function.locals.map { 0 }
-          locals = argument_values + locals
+          as_block(type:) do
+            argument_values = stack.pop(type.parameters.length)
+            locals = function.locals.map { 0 }
+            locals = argument_values + locals
 
-          evaluate_expression(function.body, locals:)
+            evaluate_expression(function.body, locals:)
+          end
         end
+      in Import(module_name: '"spectest"', name: '"print_i32"', kind: :func)
+        type = current_module.types.slice(function.type) || raise
+        stack.pop(type.parameters.length)
       end
     end
 
