@@ -260,7 +260,7 @@ module Wasminna
 
     def invoke_function(function)
       case function
-      in Function
+      in Function(import: nil)
         with_tags([]) do
           type = current_module.types.slice(function.type_index) || raise
 
@@ -272,6 +272,9 @@ module Wasminna
             evaluate_expression(function.body, locals:)
           end
         end
+      in Function(import: ['"spectest"', '"print_i32"'])
+        type = current_module.types.slice(function.type_index) || raise
+        stack.pop(type.parameters.length)
       in Import(module_name: '"spectest"', name: '"print_i32"', kind: :func)
         type = current_module.types.slice(function.type) || raise
         stack.pop(type.parameters.length)
