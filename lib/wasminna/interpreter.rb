@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :imports) do
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports) do
       def find_function(name)
         function =
           functions.detect do |function|
@@ -121,7 +121,6 @@ module Wasminna
             tables = mod.tables
             types = mod.types
             exports = mod.exports
-            imports = mod.imports
 
             unless mod.memory.nil?
               memory =
@@ -145,7 +144,7 @@ module Wasminna
             globals = mod.globals.map { nil }
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, imports:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
             self.current_module = modules.last
 
             mod.globals.each.with_index do |global, index|
