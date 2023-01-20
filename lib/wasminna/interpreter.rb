@@ -121,15 +121,7 @@ module Wasminna
               end
             end
 
-            globals =
-              mod.globals.map do |global|
-                if global.import.nil?
-                  Global.new
-                else
-                  module_name, name = global.import
-                  find_module(module_name).exports.fetch(name)
-                end
-              end
+            globals = build_globals(globals: mod.globals)
             exports = build_exports(functions:, globals:, exports: mod.exports)
 
             self.modules <<
@@ -213,6 +205,17 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def build_globals(globals:)
+      globals.map do |global|
+        if global.import.nil?
+          Global.new
+        else
+          module_name, name = global.import
+          find_module(module_name).exports.fetch(name)
+        end
+      end
     end
 
     def build_exports(functions:, globals:, exports:)
