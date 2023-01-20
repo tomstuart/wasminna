@@ -97,7 +97,11 @@ module Wasminna
             name = mod.name
 
             function_imports =
-              mod.imports.select { |import| import in { kind: :func } }
+              mod.imports.select { |import| import in { kind: :func } }.
+                map do |import|
+                  import => { module_name:, name: }
+                  find_module(module_name).exports.fetch(name)
+                end
             functions = function_imports + mod.functions
 
             tables = mod.tables
@@ -227,7 +231,7 @@ module Wasminna
             function.exported_names.each do |name|
               result[name] = function
             end
-          in Import
+          in Proc
             # TODO remove when `functions` contains only runtime functions
           end
         end
@@ -272,9 +276,8 @@ module Wasminna
       in Function(import: ['"spectest"', '"print_i32"'])
         type = current_module.types.slice(function.type_index) || raise
         stack.pop(type.parameters.length)
-      in Import(module_name: '"spectest"', name: '"print_i32"', kind: :func)
-        type = current_module.types.slice(function.type) || raise
-        stack.pop(type.parameters.length)
+      in Proc
+        function.call(stack)
       end
     end
 
