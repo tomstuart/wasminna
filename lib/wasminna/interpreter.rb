@@ -99,6 +99,20 @@ module Wasminna
           functions.slice(index - function_imports.length) || raise
         end
       end
+
+      def find_global(name)
+        # TODO check globals’ exported names first
+
+        export = exports.detect do |export|
+          export in { kind: :global, name: ^name }
+        end
+
+        unless export.nil? # TODO remove once binary format is supported
+          global = globals.slice(export.index) || raise
+        end
+
+        global
+      end
     end
 
     def evaluate_script(script)
@@ -190,7 +204,7 @@ module Wasminna
               raise unless stack.empty?
             in Get(module_name:, name:)
               self.current_module = find_module(module_name)
-              global = find_global(name) || raise
+              global = current_module.find_global(name) || raise
               actual_values = [global]
             end
 
@@ -244,20 +258,6 @@ module Wasminna
       else
         modules.detect { |mod| mod.name == name }
       end
-    end
-
-    def find_global(name)
-      # TODO check globals’ exported names first
-
-      export = current_module.exports.detect do |export|
-        export in { kind: :global, name: ^name }
-      end
-
-      unless export.nil? # TODO remove once binary format is supported
-        global = current_module.globals.slice(export.index) || raise
-      end
-
-      global
     end
 
     def invoke_function(function)
