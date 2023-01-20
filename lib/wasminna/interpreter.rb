@@ -68,11 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :stack, :tags
 
     Global = Struct.new(:value)
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
-      def find_global(name)
-        exports_hash.fetch(name)
-      end
-    end
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -160,7 +156,7 @@ module Wasminna
               actual_values = stack.pop(type.results.length)
               raise unless stack.empty?
             in Get(module_name:, name:)
-              global = find_module(module_name).find_global(name) || raise
+              global = find_module(module_name).exports_hash.fetch(name)
               actual_values = [global.value]
             end
 
