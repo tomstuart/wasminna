@@ -102,7 +102,16 @@ module Wasminna
                   import => { module_name:, name: }
                   find_module(module_name).exports.fetch(name)
                 end
-            functions = function_imports + mod.functions
+            functions =
+              function_imports +
+              mod.functions.map do |function|
+                if function.import.nil?
+                  function
+                else
+                  module_name, name = function.import
+                  find_module(module_name).exports.fetch(name)
+                end
+              end
 
             tables = mod.tables
             types = mod.types
@@ -261,7 +270,7 @@ module Wasminna
 
     def invoke_function(function)
       case function
-      in Function(import: nil)
+      in Function
         with_tags([]) do
           type = current_module.types.slice(function.type_index) || raise
 
@@ -273,9 +282,6 @@ module Wasminna
             evaluate_expression(function.body, locals:)
           end
         end
-      in Function(import: ['"spectest"', '"print_i32"'])
-        type = current_module.types.slice(function.type_index) || raise
-        stack.pop(type.parameters.length)
       in Proc
         function.call(stack)
       end
