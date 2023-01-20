@@ -203,8 +203,7 @@ module Wasminna
               actual_values = stack.pop(type.results.length)
               raise unless stack.empty?
             in Get(module_name:, name:)
-              self.current_module = find_module(module_name)
-              global = current_module.find_global(name) || raise
+              global = find_module(module_name).find_global(name) || raise
               actual_values = [global]
             end
 
