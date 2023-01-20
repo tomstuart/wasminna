@@ -121,7 +121,15 @@ module Wasminna
               end
             end
 
-            globals = mod.globals.map { Global.new }
+            globals =
+              mod.globals.map do |global|
+                if global.import.nil?
+                  Global.new
+                else
+                  module_name, name = global.import
+                  find_module(module_name).exports.fetch(name)
+                end
+              end
             exports = build_exports(functions:, globals:, exports: mod.exports)
 
             self.modules <<
@@ -133,15 +141,6 @@ module Wasminna
                 evaluate_expression(global.value, locals: [])
                 stack.pop(1) => [value]
                 current_module.globals.slice(index).value = value
-              else
-                module_name, name = global.import
-                current_module.globals.slice(index).value =
-                  case module_name
-                  in '"spectest"'
-                    666
-                  else
-                    nil # TODO import from another module
-                  end
               end
             end
           in Invoke(module_name:, name:, arguments:)
