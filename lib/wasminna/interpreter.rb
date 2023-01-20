@@ -72,7 +72,20 @@ module Wasminna
 
     def evaluate_script(script)
       self.current_module = nil
-      self.modules = []
+      self.modules = [
+        Module.new(
+          name: '"spectest"',
+          functions: nil,
+          tables: nil,
+          memory: nil,
+          globals: nil,
+          types: nil,
+          exports: {
+            '"global_i32"' => Global.new(value: 666),
+            '"global_i64"' => Global.new(value: 666)
+          }
+        )
+      ]
       self.stack = []
       self.tags = []
 
