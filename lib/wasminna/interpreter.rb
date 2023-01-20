@@ -71,7 +71,7 @@ module Wasminna
       def find_function(name)
         function =
           functions.detect do |function|
-            function.exported_names.include?(name)
+            function.is_a?(Function) && function.exported_names.include?(name)
           end
 
         if function.nil?
@@ -88,16 +88,7 @@ module Wasminna
       end
 
       def function_at(index:)
-        function_imports =
-          imports.select do |import|
-            import in { kind: :func }
-          end
-
-        if index < function_imports.length
-          function_imports.slice(index)
-        else
-          functions.slice(index - function_imports.length) || raise
-        end
+        functions.slice(index) || raise
       end
 
       def find_global(name)
@@ -126,7 +117,11 @@ module Wasminna
           case command
           in AST::Module => mod
             name = mod.name
-            functions = mod.functions
+
+            function_imports =
+              mod.imports.select { |import| import in { kind: :func } }
+            functions = function_imports + mod.functions
+
             tables = mod.tables
             types = mod.types
             exports = mod.exports
