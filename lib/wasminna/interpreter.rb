@@ -68,10 +68,6 @@ module Wasminna
     attr_accessor :current_module, :modules, :stack, :tags
 
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
-      def find_function(name)
-        exports_hash.fetch(name)
-      end
-
       def find_global(name)
         # TODO check globals’ exported names first
 
@@ -151,7 +147,7 @@ module Wasminna
             end
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
-            function = mod.find_function(name)
+            function = mod.exports_hash.fetch(name)
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -169,7 +165,7 @@ module Wasminna
                 next
               end
               mod = find_module(module_name)
-              function = mod.find_function(name)
+              function = mod.exports_hash.fetch(name)
               if function.nil?
                 puts
                 puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
