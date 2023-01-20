@@ -69,22 +69,7 @@ module Wasminna
 
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
       def find_function(name)
-        function =
-          functions.detect do |function|
-            function.is_a?(Function) && function.exported_names.include?(name)
-          end
-
-        if function.nil?
-          export = exports.detect do |export|
-            export in { kind: :func, name: ^name }
-          end
-
-          unless export.nil? # TODO remove once binary format is supported
-            function = functions.slice(export.index)
-          end
-        end
-
-        function
+        exports_hash.fetch(name, nil) # TODO remove nil once binary format is supported
       end
 
       def find_global(name)
