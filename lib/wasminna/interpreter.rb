@@ -204,12 +204,12 @@ module Wasminna
     end
 
     def build_exports(functions:, globals:, exports:)
-      {}.tap do |exports_hash|
+      {}.tap do |result|
         functions.each do |function|
           case function
           in Function
             function.exported_names.each do |name|
-              exports_hash[name] = function
+              result[name] = function
             end
           in Import
             # TODO remove when `functions` contains only runtime functions
@@ -221,9 +221,9 @@ module Wasminna
         exports.each do |export|
           case export
           in { name:, kind: :func, index: }
-            exports_hash[name] = functions.slice(index)
+            result[name] = functions.slice(index)
           in { name:, kind: :global, index: }
-            exports_hash[name] = globals.slice(index)
+            result[name] = globals.slice(index)
           in { kind: :table | :memory }
             # TODO
           end
