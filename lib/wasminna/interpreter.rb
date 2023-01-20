@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports) do
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
       def find_function(name)
         function =
           functions.detect do |function|
@@ -142,9 +142,10 @@ module Wasminna
             end
 
             globals = mod.globals.map { nil }
+            exports_hash = build_exports_hash(functions:, exports:)
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, exports_hash:)
             self.current_module = modules.last
 
             mod.globals.each.with_index do |global, index|
@@ -239,6 +240,27 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def build_exports_hash(functions:, exports:)
+      {}.tap do |exports_hash|
+        functions.each do |function|
+          case function
+          in Function
+            function.exported_names.each do |name|
+              exports_hash[name] = function
+            end
+          in Import
+            # TODO remove when `functions` contains only runtime functions
+          end
+        end
+
+        exports.each do |export|
+          if export in { name:, kind: :func, index: }
+            exports_hash[name] = functions.slice(index)
+          end
+        end
+      end
     end
 
     def find_module(name)
