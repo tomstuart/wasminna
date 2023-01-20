@@ -68,7 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :stack, :tags
 
     Global = Struct.new(:value)
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports_hash)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -88,7 +88,6 @@ module Wasminna
 
             tables = mod.tables
             types = mod.types
-            exports = mod.exports
 
             unless mod.memory.nil?
               memory =
@@ -110,10 +109,10 @@ module Wasminna
             end
 
             globals = mod.globals.map { Global.new }
-            exports_hash = build_exports_hash(functions:, globals:, exports:)
+            exports = build_exports_hash(functions:, globals:, exports: mod.exports)
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports_hash:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
             self.current_module = modules.last
 
             mod.globals.each.with_index do |global, index|
@@ -134,7 +133,7 @@ module Wasminna
             end
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
-            function = mod.exports_hash.fetch(name)
+            function = mod.exports.fetch(name)
 
             evaluate_expression(arguments, locals: [])
             self.current_module = mod
@@ -147,7 +146,7 @@ module Wasminna
                 next
               end
               mod = find_module(module_name)
-              function = mod.exports_hash.fetch(name)
+              function = mod.exports.fetch(name)
               type = mod.types.slice(function.type_index) || raise
 
               evaluate_expression(arguments, locals: [])
@@ -156,7 +155,7 @@ module Wasminna
               actual_values = stack.pop(type.results.length)
               raise unless stack.empty?
             in Get(module_name:, name:)
-              global = find_module(module_name).exports_hash.fetch(name)
+              global = find_module(module_name).exports.fetch(name)
               actual_values = [global.value]
             end
 
