@@ -148,11 +148,6 @@ module Wasminna
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports_hash.fetch(name)
-            if function.nil?
-              puts
-              puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
-              next
-            end
 
             evaluate_expression(arguments, locals: [])
             self.current_module = mod
@@ -166,11 +161,6 @@ module Wasminna
               end
               mod = find_module(module_name)
               function = mod.exports_hash.fetch(name)
-              if function.nil?
-                puts
-                puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
-                next
-              end
               type = mod.types.slice(function.type_index) || raise
 
               evaluate_expression(arguments, locals: [])
