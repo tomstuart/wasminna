@@ -68,7 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :stack, :tags
 
     Global = Struct.new(:value)
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports_hash)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -113,7 +113,7 @@ module Wasminna
             exports_hash = build_exports_hash(functions:, globals:, exports:)
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, exports_hash:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports_hash:)
             self.current_module = modules.last
 
             mod.globals.each.with_index do |global, index|
