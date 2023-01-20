@@ -109,7 +109,7 @@ module Wasminna
             end
 
             globals = mod.globals.map { Global.new }
-            exports = build_exports_hash(functions:, globals:, exports: mod.exports)
+            exports = build_exports(functions:, globals:, exports: mod.exports)
 
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
@@ -203,7 +203,7 @@ module Wasminna
       ast.inspect
     end
 
-    def build_exports_hash(functions:, globals:, exports:)
+    def build_exports(functions:, globals:, exports:)
       {}.tap do |exports_hash|
         functions.each do |function|
           case function
