@@ -160,8 +160,8 @@ module Wasminna
               end
             end
           in Invoke(module_name:, name:, arguments:)
-            self.current_module = find_module(module_name)
-            function = current_module.find_function(name)
+            mod = find_module(module_name)
+            function = mod.find_function(name)
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -169,20 +169,22 @@ module Wasminna
             end
 
             evaluate_expression(arguments, locals: [])
+            self.current_module = mod
             invoke_function(function)
           in AssertReturn(action:, expecteds:)
             case action
             in Invoke(module_name:, name:, arguments:)
-              self.current_module = find_module(module_name)
-              function = current_module.find_function(name)
+              mod = find_module(module_name)
+              function = mod.find_function(name)
               if function.nil?
                 puts
                 puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
                 next
               end
-              type = current_module.types.slice(function.type_index) || raise
+              type = mod.types.slice(function.type_index) || raise
 
               evaluate_expression(arguments, locals: [])
+              self.current_module = mod
               invoke_function(function)
               actual_values = stack.pop(type.results.length)
               raise unless stack.empty?
