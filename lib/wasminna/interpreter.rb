@@ -82,7 +82,8 @@ module Wasminna
           types: nil,
           exports: {
             '"global_i32"' => Global.new(value: 666),
-            '"global_i64"' => Global.new(value: 666)
+            '"global_i64"' => Global.new(value: 666),
+            '"print_i32"' => -> stack { stack.pop(1) }
           }
         )
       ]
