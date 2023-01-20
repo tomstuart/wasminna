@@ -67,6 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
+    Global = Struct.new(:value)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
       def find_global(name)
         # TODO check globals’ exported names first
@@ -122,7 +123,7 @@ module Wasminna
               end
             end
 
-            globals = mod.globals.map { nil }
+            globals = mod.globals.map { Global.new }
             exports_hash = build_exports_hash(functions:, exports:)
 
             self.modules <<
@@ -133,10 +134,10 @@ module Wasminna
               if global.import.nil?
                 evaluate_expression(global.value, locals: [])
                 stack.pop(1) => [value]
-                current_module.globals[index] = value
+                current_module.globals.slice(index).value = value
               else
                 module_name, name = global.import
-                current_module.globals[index] =
+                current_module.globals.slice(index).value =
                   case module_name
                   in '"spectest"'
                     666
@@ -170,7 +171,7 @@ module Wasminna
               raise unless stack.empty?
             in Get(module_name:, name:)
               global = find_module(module_name).find_global(name) || raise
-              actual_values = [global]
+              actual_values = [global.value]
             end
 
             raise unless expecteds.length == actual_values.length
@@ -318,10 +319,10 @@ module Wasminna
         locals[index] = value
         stack.push(value) if instruction in LocalTee
       in GlobalGet(index:)
-        stack.push(current_module.globals.slice(index))
+        stack.push(current_module.globals.slice(index).value)
       in GlobalSet(index:)
         stack.pop(1) => [value]
-        current_module.globals[index] = value
+        current_module.globals.slice(index).value = value
       in Br(index:)
         throw(tags.slice(index))
       in BrIf(index:)
