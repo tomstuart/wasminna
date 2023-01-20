@@ -67,7 +67,39 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :stack, :tags
 
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :imports)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :imports) do
+      def find_function(name)
+        function =
+          functions.detect do |function|
+            function.exported_names.include?(name)
+          end
+
+        if function.nil?
+          export = exports.detect do |export|
+            export in { kind: :func, name: ^name }
+          end
+
+          unless export.nil? # TODO remove once binary format is supported
+            function = function_at(index: export.index)
+          end
+        end
+
+        function
+      end
+
+      def function_at(index:)
+        function_imports =
+          imports.select do |import|
+            import in { kind: :func }
+          end
+
+        if index < function_imports.length
+          function_imports.slice(index)
+        else
+          functions.slice(index - function_imports.length) || raise
+        end
+      end
+    end
 
     def evaluate_script(script)
       self.current_module = nil
@@ -129,7 +161,7 @@ module Wasminna
             end
           in Invoke(module_name:, name:, arguments:)
             self.current_module = find_module(module_name)
-            function = find_function(name)
+            function = current_module.find_function(name)
             if function.nil?
               puts
               puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -142,7 +174,7 @@ module Wasminna
             case action
             in Invoke(module_name:, name:, arguments:)
               self.current_module = find_module(module_name)
-              function = find_function(name)
+              function = current_module.find_function(name)
               if function.nil?
                 puts
                 puts "\e[33mWARNING: couldn’t find function #{name} (could be binary?), skipping\e[0m"
@@ -209,38 +241,6 @@ module Wasminna
         modules.last
       else
         modules.detect { |mod| mod.name == name }
-      end
-    end
-
-    def find_function(name)
-      function =
-        current_module.functions.detect do |function|
-          function.exported_names.include?(name)
-        end
-
-      if function.nil?
-        export = current_module.exports.detect do |export|
-          export in { kind: :func, name: ^name }
-        end
-
-        unless export.nil? # TODO remove once binary format is supported
-          function = function_at(index: export.index)
-        end
-      end
-
-      function
-    end
-
-    def function_at(index:)
-      function_imports =
-        current_module.imports.select do |import|
-          import in { kind: :func }
-        end
-
-      if index < function_imports.length
-        function_imports.slice(index)
-      else
-        current_module.functions.slice(index - function_imports.length) || raise
       end
     end
 
@@ -350,14 +350,14 @@ module Wasminna
       in Nop
         # do nothing
       in Call(index:)
-        function = function_at(index:)
+        function = current_module.function_at(index:)
         invoke_function(function)
       in CallIndirect(table_index:, type_index:)
         stack.pop(1) => [index]
 
         table = current_module.tables.slice(table_index)
         index = table.elements.slice(index)
-        function = function_at(index:)
+        function = current_module.function_at(index:)
         invoke_function(function)
       in Drop
         stack.pop(1)
