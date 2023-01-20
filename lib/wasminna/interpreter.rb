@@ -70,7 +70,7 @@ module Wasminna
     Global = Struct.new(:value)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :exports_hash) do
       def find_global(name)
-        exports_hash.fetch(name, nil) # TODO remove once binary format is supported
+        exports_hash.fetch(name)
       end
     end
 
