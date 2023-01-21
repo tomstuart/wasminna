@@ -99,26 +99,7 @@ module Wasminna
               build_functions(imports: mod.imports, functions: mod.functions)
             tables = mod.tables
             types = mod.types
-
-            unless mod.memory.nil?
-              memory =
-                if mod.memory.string.nil?
-                  Memory.from_limits \
-                    minimum_size: mod.memory.minimum_size,
-                    maximum_size: mod.memory.maximum_size
-                else
-                  Memory.from_string(string: mod.memory.string)
-                end
-
-              mod.datas.each do |data|
-                evaluate_instruction(data.offset, locals: [])
-                stack.pop(1) => [offset]
-                data.string.each_byte.with_index do |value, index|
-                  memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
-                end
-              end
-            end
-
+            memory = build_memory(memory: mod.memory, datas: mod.datas)
             globals = build_globals(globals: mod.globals)
             exports = build_exports(functions:, globals:, exports: mod.exports)
 
@@ -222,6 +203,29 @@ module Wasminna
             find_module(module_name).exports.fetch(name)
           end
         end
+    end
+
+    def build_memory(memory:, datas:)
+      unless memory.nil?
+        result =
+          if memory.string.nil?
+            Memory.from_limits \
+              minimum_size: memory.minimum_size,
+              maximum_size: memory.maximum_size
+          else
+            Memory.from_string(string: memory.string)
+          end
+
+        datas.each do |data|
+          evaluate_instruction(data.offset, locals: [])
+          stack.pop(1) => [offset]
+          data.string.each_byte.with_index do |value, index|
+            result.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+          end
+        end
+
+        result
+      end
     end
 
     def build_globals(globals:)
