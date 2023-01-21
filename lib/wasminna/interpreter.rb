@@ -106,14 +106,7 @@ module Wasminna
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
             self.current_module = modules.last
-
-            mod.globals.each.with_index do |global, index|
-              if global.import.nil?
-                evaluate_expression(global.value, locals: [])
-                stack.pop(1) => [value]
-                current_module.globals.slice(index).value = value
-              end
-            end
+            initialise_globals(globals: mod.globals)
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports.fetch(name)
@@ -263,6 +256,16 @@ module Wasminna
           in { kind: :table | :memory }
             # TODO
           end
+        end
+      end
+    end
+
+    def initialise_globals(globals:)
+      globals.each.with_index do |global, index|
+        if global.import.nil?
+          evaluate_expression(global.value, locals: [])
+          stack.pop(1) => [value]
+          current_module.globals.slice(index).value = value
         end
       end
     end
