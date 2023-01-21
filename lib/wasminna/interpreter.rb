@@ -74,16 +74,16 @@ module Wasminna
       self.current_module = nil
       self.modules = [
         Module.new(
-          name: '"spectest"',
+          name: 'spectest',
           functions: nil,
           tables: nil,
           memory: nil,
           globals: nil,
           types: nil,
           exports: {
-            '"global_i32"' => Global.new(value: 666),
-            '"global_i64"' => Global.new(value: 666),
-            '"print_i32"' => -> stack { stack.pop(1) }
+            'global_i32' => Global.new(value: 666),
+            'global_i64' => Global.new(value: 666),
+            'print_i32' => -> stack { stack.pop(1) }
           }
         )
       ]
@@ -124,7 +124,7 @@ module Wasminna
           in AssertReturn(action:, expecteds:)
             case action
             in Invoke(module_name:, name:, arguments:)
-              if name == '"4294967249"' # TODO remove once binary format is supported
+              if name == '4294967249' # TODO remove once binary format is supported
                 print "\e[33m.\e[0m"
                 next
               end

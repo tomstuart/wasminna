@@ -172,7 +172,7 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => module_name
       end
-      read => name
+      parse_string => name
       arguments = with_context(Context.new) { parse_instructions }
 
       Invoke.new(module_name:, name:, arguments:)
@@ -183,7 +183,7 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => module_name
       end
-      read => name
+      parse_string => name
 
       Get.new(module_name:, name:)
     end
@@ -298,13 +298,13 @@ module Wasminna
 
       exported_names = []
       while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { read }
+        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       if can_read_list?(starting_with: 'import')
         import_module_name, import_name =
           read_list(starting_with: 'import') do
-            [read, read]
+            [parse_string, parse_string]
           end
         import = [import_module_name, import_name]
         parse_typeuse => [type_index, _]
@@ -367,7 +367,7 @@ module Wasminna
 
       exported_names = []
       while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { read }
+        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       if can_read_list?(starting_with: 'data')
@@ -409,7 +409,7 @@ module Wasminna
 
       exported_names = []
       while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { read }
+        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
@@ -440,13 +440,13 @@ module Wasminna
 
       exported_names = []
       while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { read }
+        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       if can_read_list?(starting_with: 'import')
         import_module_name, import_name =
           read_list(starting_with: 'import') do
-            [read, read]
+            [parse_string, parse_string]
           end
         import = [import_module_name, import_name]
         parse_globaltype
@@ -468,7 +468,7 @@ module Wasminna
 
     def parse_export
       read => 'export'
-      read => name
+      parse_string => name
       kind, index =
         read_list do
           case read
@@ -488,8 +488,8 @@ module Wasminna
 
     def parse_import
       read => 'import'
-      read => module_name
-      read => name
+      parse_string => module_name
+      parse_string => name
       kind, type =
         read_list do
           case read
