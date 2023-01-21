@@ -95,24 +95,8 @@ module Wasminna
           case command
           in AST::Module => mod
             name = mod.name
-
-            function_imports =
-              mod.imports.select { |import| import in { kind: :func } }.
-                map do |import|
-                  import => { module_name:, name: }
-                  find_module(module_name).exports.fetch(name)
-                end
             functions =
-              function_imports +
-              mod.functions.map do |function|
-                if function.import.nil?
-                  function
-                else
-                  module_name, name = function.import
-                  find_module(module_name).exports.fetch(name)
-                end
-              end
-
+              build_functions(imports: mod.imports, functions: mod.functions)
             tables = mod.tables
             types = mod.types
 
@@ -219,6 +203,25 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def build_functions(imports:, functions:)
+      function_imports =
+        imports.select { |import| import in { kind: :func } }.
+          map do |import|
+            import => { module_name:, name: }
+            find_module(module_name).exports.fetch(name)
+          end
+
+      function_imports +
+        functions.map do |function|
+          if function.import.nil?
+            function
+          else
+            module_name, name = function.import
+            find_module(module_name).exports.fetch(name)
+          end
+        end
     end
 
     def build_globals(globals:)
