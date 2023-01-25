@@ -550,7 +550,7 @@ module Wasminna
     end
 
     def read_list(from: read, starting_with: nil)
-      raise unless from in [*]
+      raise "not a list: #{from.inspect}" unless from in [*]
       previous_s_expression, self.s_expression = self.s_expression, from
 
       read => ^starting_with unless starting_with.nil?
