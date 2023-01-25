@@ -109,6 +109,8 @@ module Wasminna
               exports << parse_export
             in 'import'
               imports << parse_import
+            in 'elem'
+              repeatedly { read }
             end
           end
         end
