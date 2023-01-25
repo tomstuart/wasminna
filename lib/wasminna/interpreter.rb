@@ -83,6 +83,7 @@ module Wasminna
           exports: {
             'global_i32' => Global.new(value: 666),
             'global_i64' => Global.new(value: 666),
+            'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
             'print_i32' => -> stack { stack.pop(1) }
           }
         )
