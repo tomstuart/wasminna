@@ -100,7 +100,7 @@ module Wasminna
               build_functions(imports: mod.imports, functions: mod.functions)
             tables = mod.tables
             types = mod.types
-            memory = build_memory(memory: mod.memory, datas: mod.datas)
+            memory = build_memory(memory: mod.memory)
             globals = build_globals(globals: mod.globals)
             exports = build_exports(functions:, globals:, exports: mod.exports)
 
@@ -108,6 +108,7 @@ module Wasminna
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
             self.current_module = modules.last
             initialise_globals(globals: mod.globals)
+            initialise_memory(datas: mod.datas)
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports.fetch(name)
@@ -199,26 +200,15 @@ module Wasminna
         end
     end
 
-    def build_memory(memory:, datas:)
+    def build_memory(memory:)
       unless memory.nil?
-        result =
-          if memory.string.nil?
-            Memory.from_limits \
-              minimum_size: memory.minimum_size,
-              maximum_size: memory.maximum_size
-          else
-            Memory.from_string(string: memory.string)
-          end
-
-        datas.each do |data|
-          evaluate_expression(data.offset, locals: [])
-          stack.pop(1) => [offset]
-          data.string.each_byte.with_index do |value, index|
-            result.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
-          end
+        if memory.string.nil?
+          Memory.from_limits \
+            minimum_size: memory.minimum_size,
+            maximum_size: memory.maximum_size
+        else
+          Memory.from_string(string: memory.string)
         end
-
-        result
       end
     end
 
@@ -267,6 +257,16 @@ module Wasminna
           evaluate_expression(global.value, locals: [])
           stack.pop(1) => [value]
           current_module.globals.slice(index).value = value
+        end
+      end
+    end
+
+    def initialise_memory(datas:)
+      datas.each do |data|
+        evaluate_expression(data.offset, locals: [])
+        stack.pop(1) => [offset]
+        data.string.each_byte.with_index do |value, index|
+          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
         end
       end
     end
