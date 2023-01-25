@@ -94,6 +94,7 @@ module Wasminna
         begin
           case command
           in AST::Module => mod
+            self.current_module = nil
             name = mod.name
             functions =
               build_functions(imports: mod.imports, functions: mod.functions)
