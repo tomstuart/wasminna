@@ -552,6 +552,8 @@ module Wasminna
             [:global, parse_globaltype]
           in 'memory'
             [:memory, parse_memory_sizes]
+          in 'table'
+            [:table, parse_tabletype]
           end
         end
 
