@@ -453,7 +453,21 @@ module Wasminna
     def parse_elements
       if can_read_list?(starting_with: 'elem')
         read_list(starting_with: 'elem') do
-          repeatedly { parse_index(context.functions) }
+          if can_read_list?
+            repeatedly do
+              read_list do
+                case peek
+                in 'item'
+                  read => 'item'
+                  parse_instructions
+                else
+                  [parse_instruction]
+                end
+              end
+            end
+          else
+            repeatedly { parse_index(context.functions) }
+          end
         end
       else
         []
