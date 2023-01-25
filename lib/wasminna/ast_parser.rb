@@ -522,6 +522,8 @@ module Wasminna
               read => ID_REGEXP
             end
             [:global, parse_globaltype]
+          in 'memory'
+            [:memory, parse_memory_sizes]
           end
         end
 
