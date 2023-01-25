@@ -831,7 +831,7 @@ module Wasminna
       in 'call_indirect'
         table_index =
           if peek in INDEX_REGEXP
-            parse_index(nil) # TODO context.tables
+            parse_index(context.tables)
           else
             0
           end
