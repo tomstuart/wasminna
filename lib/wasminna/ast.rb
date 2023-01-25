@@ -43,5 +43,6 @@ module Wasminna
     Import = Data.define(:module_name, :name, :kind, :type)
     RefFunc = Data.define
     TableInit = Data.define
+    Register = Data.define
   end
 end

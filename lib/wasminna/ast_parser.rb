@@ -33,6 +33,8 @@ module Wasminna
           parse_assert_return
         in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
           parse_unsupported_assertion
+        in 'register'
+          parse_register
         end
       end
     end
@@ -241,6 +243,11 @@ module Wasminna
       # TODO
       repeatedly { read }
       SkippedAssertion.new
+    end
+
+    def parse_register
+      repeatedly { read }
+      Register.new
     end
 
     ID_REGEXP = %r{\A\$}
