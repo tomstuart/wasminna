@@ -101,7 +101,7 @@ module Wasminna
               build_functions(imports: mod.imports, functions: mod.functions)
             tables = mod.tables
             types = mod.types
-            memory = build_memory(memory: mod.memory)
+            memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(globals: mod.globals)
             exports = build_exports(functions:, globals:, exports: mod.exports)
 
@@ -201,14 +201,26 @@ module Wasminna
         end
     end
 
-    def build_memory(memory:)
-      unless memory.nil?
-        if memory.string.nil?
-          Memory.from_limits \
-            minimum_size: memory.minimum_size,
-            maximum_size: memory.maximum_size
-        else
-          Memory.from_string(string: memory.string)
+    def build_memory(imports:, memory:)
+      memory_imports =
+        imports.select { |import| import in { kind: :memory } }.
+          map do |import|
+            import => { module_name:, name: }
+            find_module(module_name).exports.fetch(name)
+          end
+
+      case [memory_imports, memory]
+      in [imported_memory], nil
+        imported_memory
+      in [], _
+        unless memory.nil?
+          if memory.string.nil?
+            Memory.from_limits \
+              minimum_size: memory.minimum_size,
+              maximum_size: memory.maximum_size
+          else
+            Memory.from_string(string: memory.string)
+          end
         end
       end
     end
