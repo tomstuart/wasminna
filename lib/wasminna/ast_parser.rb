@@ -891,7 +891,7 @@ module Wasminna
 
         CallIndirect.new(table_index:, type_index:)
       in 'select'
-        if can_read_list?(starting_with: 'result')
+        while can_read_list?(starting_with: 'result')
           read_list(starting_with: 'result') do
             repeatedly { read }
           end
