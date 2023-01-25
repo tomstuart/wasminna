@@ -386,6 +386,11 @@ module Wasminna
 
     def parse_data
       read => 'data'
+      if can_read_list?(starting_with: 'memory')
+        read_list(starting_with: 'memory') do
+          read # TODO parse_index(context.memories)
+        end
+      end
       offset =
         read_list do
           case peek
