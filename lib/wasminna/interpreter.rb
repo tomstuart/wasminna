@@ -210,7 +210,7 @@ module Wasminna
           end
 
         datas.each do |data|
-          evaluate_instruction(data.offset, locals: [])
+          evaluate_expression(data.offset, locals: [])
           stack.pop(1) => [offset]
           data.string.each_byte.with_index do |value, index|
             result.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)

@@ -386,7 +386,7 @@ module Wasminna
 
     def parse_data
       read => 'data'
-      offset = read_list { parse_instruction }
+      offset = read_list { parse_instructions }
       string = repeatedly { parse_string }.join
 
       MemoryData.new(offset:, string:)
