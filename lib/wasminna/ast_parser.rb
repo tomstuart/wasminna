@@ -163,6 +163,9 @@ module Wasminna
             # TODO add imported func/table/memory/global name to context
             repeatedly { read }
             Context.new
+          in 'elem'
+            repeatedly { read }
+            Context.new
           end
         end
       end.inject(Context.new, :+).tap do |context|
