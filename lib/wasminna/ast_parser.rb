@@ -131,8 +131,11 @@ module Wasminna
             repeatedly { read }
             Context.new
           in 'table'
+            if peek in ID_REGEXP
+              read => ID_REGEXP => name
+            end
             repeatedly { read }
-            Context.new
+            Context.new(tables: [name])
           in 'global'
             if peek in ID_REGEXP
               read => ID_REGEXP => name
