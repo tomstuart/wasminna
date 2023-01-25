@@ -440,14 +440,18 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
+      parse_tabletype
+      elements = parse_elements
+
+      Table.new(name:, elements:)
+    end
+
+    def parse_tabletype
       repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
         parse_integer(bits: 32)
       end
 
       read => 'funcref'
-      elements = parse_elements
-
-      Table.new(name:, elements:)
     end
 
     def parse_elements
