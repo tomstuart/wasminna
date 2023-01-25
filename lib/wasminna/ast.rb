@@ -41,5 +41,6 @@ module Wasminna
     Get = Data.define(:module_name, :name)
     Export = Data.define(:name, :kind, :index)
     Import = Data.define(:module_name, :name, :kind, :type)
+    RefFunc = Data.define
   end
 end

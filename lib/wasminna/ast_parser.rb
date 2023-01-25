@@ -891,6 +891,9 @@ module Wasminna
       in 'ref.extern'
         read
         RefExtern.new
+      in 'ref.func'
+        read
+        RefFunc.new
       end
     end
 
