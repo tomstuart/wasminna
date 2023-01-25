@@ -900,6 +900,10 @@ module Wasminna
       in 'ref.func'
         read
         RefFunc.new
+      in 'table.init'
+        read
+        read
+        TableInit.new
       end
     end
 
