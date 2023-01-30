@@ -908,8 +908,8 @@ module Wasminna
         read
         RefExtern.new
       in 'ref.func'
-        read
-        RefFunc.new
+        index = parse_index(context.functions)
+        RefFunc.new(index:)
       in 'table.init'
         read
         read
