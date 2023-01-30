@@ -452,6 +452,8 @@ module Wasminna
         stack.push(nil)
       in RefExtern
         stack.push(:externref)
+      in RefFunc(index:)
+        stack.push(index) # TODO push Function instance?
       end
     end
 
