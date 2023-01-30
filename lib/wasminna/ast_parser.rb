@@ -584,6 +584,9 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
+      if peek in 'declare'
+        read => 'declare'
+      end
       table_index =
         if can_read_list?(starting_with: 'table')
           read_list(starting_with: 'table') do
