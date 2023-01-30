@@ -299,6 +299,10 @@ module Wasminna
           case element
           in Integer
             table_instance.elements[element_index] = element
+          in Array
+            evaluate_expression(element, locals: [])
+            stack.pop(1) => [value]
+            table_instance.elements[element_index] = value
           end
         end
       end
