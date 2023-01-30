@@ -546,18 +546,15 @@ module Wasminna
       kind, type =
         read_list do
           read => 'func' | 'table' | 'memory' | 'global' => kind
+          if peek in ID_REGEXP
+            read => ID_REGEXP
+          end
 
           case kind
           in 'func'
-            if peek in ID_REGEXP
-              read => ID_REGEXP
-            end
             parse_typeuse => [type_index, _]
             [:func, type_index]
           in 'global'
-            if peek in ID_REGEXP
-              read => ID_REGEXP
-            end
             [:global, parse_globaltype]
           in 'memory'
             [:memory, parse_memory_sizes]
