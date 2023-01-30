@@ -363,7 +363,16 @@ module Wasminna
       [index, parameter_names]
     end
 
-    INDEX_REGEXP = %r{\A(\d+|\$.+)\z}
+    INDEX_REGEXP =
+      %r{
+        \A
+        (
+          \d+
+          |
+          \$ .+
+        )
+        \z
+      }x
 
     def parse_index(index_space)
       read => INDEX_REGEXP => index
