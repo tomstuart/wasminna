@@ -477,7 +477,7 @@ module Wasminna
               end
             end
           else
-            repeatedly { parse_index(context.functions) }
+            repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
           end
         end
       else
