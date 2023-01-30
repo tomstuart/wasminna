@@ -571,6 +571,12 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
+      table_index =
+        if can_read_list?(starting_with: 'table')
+          read_list(starting_with: 'table') do
+            parse_index(context.tables)
+          end
+        end
       offset =
         if can_read_list?
           read_list do
