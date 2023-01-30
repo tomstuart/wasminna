@@ -59,7 +59,7 @@ module Wasminna
       # TODO
       repeatedly { read }
 
-      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [] }
+      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [] }
     end
 
     Context = Data.define(:types, :functions, :tables, :globals, :locals, :labels, :typedefs) do
@@ -84,8 +84,8 @@ module Wasminna
     end
 
     def parse_text_fields
-      functions, memory, tables, globals, datas, exports, imports =
-        [], nil, [], [], [], [], []
+      functions, memory, tables, globals, datas, exports, imports, elements =
+        [], nil, [], [], [], [], [], []
       initial_context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
@@ -112,12 +112,12 @@ module Wasminna
             in 'import'
               imports << parse_import
             in 'elem'
-              repeatedly { read }
+              elements << parse_element
             end
           end
         end
 
-        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, types: context.typedefs }
+        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, elements:, types: context.typedefs }
       end
     end
 
@@ -564,6 +564,23 @@ module Wasminna
         end
 
       Import.new(module_name:, name:, kind:, type:)
+    end
+
+    def parse_element
+      read => 'elem'
+      offset =
+        read_list do
+          case peek
+          in 'offset'
+            read => 'offset'
+            parse_instructions
+          else
+            [parse_instruction]
+          end
+        end
+      items = repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
+
+      Element.new(offset:, items:)
     end
 
     NUMERIC_OPCODE_REGEXP =
