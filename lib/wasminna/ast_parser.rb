@@ -369,6 +369,8 @@ module Wasminna
         (
           \d (_? \d)*
           |
+          0x \h (_? \h)*
+          |
           \$ .+
         )
         \z
@@ -378,6 +380,8 @@ module Wasminna
       read => INDEX_REGEXP => index
       if index.start_with?('$')
         index_space.index(index) || raise
+      elsif index.start_with?('0x')
+        index.to_i(16)
       else
         index.to_i(10)
       end
