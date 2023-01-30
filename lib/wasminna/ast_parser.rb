@@ -580,6 +580,12 @@ module Wasminna
             end
           end
         end
+      reftype =
+        if peek in 'funcref' | 'externref' | 'func'
+          read
+        else
+          'func' # TODO only if tableref was omitted
+        end
       items = repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
 
       Element.new(offset:, items:)
