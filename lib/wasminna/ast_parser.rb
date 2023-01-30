@@ -592,8 +592,10 @@ module Wasminna
       reftype =
         if peek in 'funcref' | 'externref' | 'func'
           read
+        elsif table_index.nil?
+          'func'
         else
-          'func' # TODO only if tableref was omitted
+          raise
         end
       items =
         case reftype
