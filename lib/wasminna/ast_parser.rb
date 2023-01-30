@@ -568,6 +568,9 @@ module Wasminna
 
     def parse_element
       read => 'elem'
+      if peek in ID_REGEXP
+        read => ID_REGEXP
+      end
       offset =
         if can_read_list?
           read_list do
