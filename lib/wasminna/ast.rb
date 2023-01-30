@@ -44,5 +44,6 @@ module Wasminna
     RefFunc = Data.define
     TableInit = Data.define
     Register = Data.define
+    TableGet = Data.define(:index)
   end
 end
