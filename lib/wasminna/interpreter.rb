@@ -111,7 +111,7 @@ module Wasminna
             self.current_module = modules.last
             initialise_globals(globals: mod.globals)
             initialise_memory(datas: mod.datas)
-            initialise_tables(tables: mod.tables) # TODO elements: mod.elements
+            initialise_tables(tables: mod.tables, elements: mod.elements)
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports.fetch(name)
@@ -292,13 +292,25 @@ module Wasminna
       end
     end
 
-    def initialise_tables(tables:)
+    def initialise_tables(tables:, elements:)
       tables.each.with_index do |table, table_index|
         table_instance = current_module.tables.slice(table_index)
         table.elements.each.with_index do |element, element_index|
           evaluate_expression(element, locals: [])
           stack.pop(1) => [value]
           table_instance.elements[element_index] = value
+        end
+      end
+
+      elements.each do |element|
+        table_instance = current_module.tables.slice(0) # TODO tableuse
+        evaluate_expression(element.offset, locals: [])
+        stack.pop(1) => [offset]
+
+        element.items.each.with_index do |item, item_index|
+          evaluate_expression(item, locals: [])
+          stack.pop(1) => [value]
+          table_instance.elements[offset + item_index] = value
         end
       end
     end
