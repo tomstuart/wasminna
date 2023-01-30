@@ -296,14 +296,9 @@ module Wasminna
       tables.each.with_index do |table, table_index|
         table_instance = current_module.tables.slice(table_index)
         table.elements.each.with_index do |element, element_index|
-          case element
-          in Integer
-            table_instance.elements[element_index] = element
-          in Array
-            evaluate_expression(element, locals: [])
-            stack.pop(1) => [value]
-            table_instance.elements[element_index] = value
-          end
+          evaluate_expression(element, locals: [])
+          stack.pop(1) => [value]
+          table_instance.elements[element_index] = value
         end
       end
     end
