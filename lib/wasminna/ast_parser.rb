@@ -569,13 +569,15 @@ module Wasminna
     def parse_element
       read => 'elem'
       offset =
-        read_list do
-          case peek
-          in 'offset'
-            read => 'offset'
-            parse_instructions
-          else
-            [parse_instruction]
+        if can_read_list?
+          read_list do
+            case peek
+            in 'offset'
+              read => 'offset'
+              parse_instructions
+            else
+              [parse_instruction]
+            end
           end
         end
       items = repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
