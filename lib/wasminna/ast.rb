@@ -45,5 +45,6 @@ module Wasminna
     TableInit = Data.define
     Register = Data.define
     TableGet = Data.define(:index)
+    TableSet = Data.define(:index)
   end
 end
