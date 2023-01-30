@@ -586,7 +586,23 @@ module Wasminna
         else
           'func' # TODO only if tableref was omitted
         end
-      items = repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
+      items =
+        case reftype
+        in 'funcref' | 'externref'
+          repeatedly do
+            read_list do
+              case peek
+              in 'item'
+                read => 'item'
+                parse_instructions
+              else
+                [parse_instruction]
+              end
+            end
+          end
+        in 'func'
+          repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
+        end
 
       Element.new(offset:, items:)
     end
