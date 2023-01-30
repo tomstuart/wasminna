@@ -367,7 +367,7 @@ module Wasminna
       %r{
         \A
         (
-          \d+
+          \d (_? \d)*
           |
           \$ .+
         )
