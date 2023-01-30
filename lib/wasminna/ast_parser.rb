@@ -545,7 +545,9 @@ module Wasminna
       parse_string => name
       kind, type =
         read_list do
-          case read
+          read => 'func' | 'table' | 'memory' | 'global' => kind
+
+          case kind
           in 'func'
             if peek in ID_REGEXP
               read => ID_REGEXP
