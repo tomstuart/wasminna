@@ -68,6 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :stack, :tags
 
     Global = Struct.new(:value)
+    Table = Struct.new(:elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
@@ -99,7 +100,7 @@ module Wasminna
             name = mod.name
             functions =
               build_functions(imports: mod.imports, functions: mod.functions)
-            tables = mod.tables
+            tables = build_tables(tables: mod.tables)
             types = mod.types
             memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(globals: mod.globals)
@@ -110,6 +111,7 @@ module Wasminna
             self.current_module = modules.last
             initialise_globals(globals: mod.globals)
             initialise_memory(datas: mod.datas)
+            initialise_tables(tables: mod.tables) # TODO elements: mod.elements
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports.fetch(name)
@@ -201,6 +203,12 @@ module Wasminna
         end
     end
 
+    def build_tables(tables:)
+      tables.map do |table|
+        Table.new(elements: Array.new(table.minimum_size || table.elements.length))
+      end
+    end
+
     def build_memory(imports:, memory:)
       memory_imports =
         imports.select { |import| import in { kind: :memory } }.
@@ -280,6 +288,18 @@ module Wasminna
         stack.pop(1) => [offset]
         data.string.each_byte.with_index do |value, index|
           current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+        end
+      end
+    end
+
+    def initialise_tables(tables:)
+      tables.each.with_index do |table, table_index|
+        table_instance = current_module.tables.slice(table_index)
+        table.elements.each.with_index do |element, element_index|
+          case element
+          in Integer
+            table_instance.elements[element_index] = element
+          end
         end
       end
     end
