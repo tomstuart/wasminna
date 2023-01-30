@@ -578,7 +578,7 @@ module Wasminna
           end
         end
       offset =
-        if can_read_list?
+        if !table_index.nil? || can_read_list?
           read_list do
             case peek
             in 'offset'
