@@ -458,7 +458,7 @@ module Wasminna
         parse_integer(bits: 32)
       end
 
-      read => 'funcref'
+      read => 'funcref' | 'externref'
     end
 
     def parse_elements
