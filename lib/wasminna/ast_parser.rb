@@ -448,7 +448,7 @@ module Wasminna
       end
 
       minimum_size, maximum_size, reftype = parse_tabletype
-      elements = parse_elements
+      elements = parse_table_element
 
       Table.new(name:, minimum_size:, maximum_size:, elements:)
     end
@@ -461,7 +461,7 @@ module Wasminna
       [minimum_size, maximum_size, reftype]
     end
 
-    def parse_elements
+    def parse_table_element
       if can_read_list?(starting_with: 'elem')
         read_list(starting_with: 'elem') do
           if can_read_list?
