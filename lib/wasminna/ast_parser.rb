@@ -447,18 +447,18 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      parse_tabletype
+      minimum_size, maximum_size, reftype = parse_tabletype
       elements = parse_elements
 
-      Table.new(name:, elements:)
+      Table.new(name:, minimum_size:, maximum_size:, elements:)
     end
 
     def parse_tabletype
-      repeatedly(until: -> { !%r{\A\d+\z}.match(_1) }) do
-        parse_integer(bits: 32)
-      end
+      minimum_size = parse_integer(bits: 32) if peek in %r{\A\d+\z}
+      maximum_size = parse_integer(bits: 32) if peek in %r{\A\d+\z}
+      read => 'funcref' | 'externref' => reftype
 
-      read => 'funcref' | 'externref'
+      [minimum_size, maximum_size, reftype]
     end
 
     def parse_elements
