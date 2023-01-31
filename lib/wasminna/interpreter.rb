@@ -98,7 +98,7 @@ module Wasminna
             types = mod.types
             memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(globals: mod.globals)
-            exports = build_exports(functions:, globals:, exports: mod.exports)
+            exports = build_exports(functions:, globals:, tables:, exports: mod.exports)
 
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
@@ -248,7 +248,7 @@ module Wasminna
       end
     end
 
-    def build_exports(functions:, globals:, exports:)
+    def build_exports(functions:, globals:, tables:, exports:)
       {}.tap do |result|
         functions.each do |function|
           case function
@@ -262,6 +262,12 @@ module Wasminna
         end
 
         # TODO use globals’ exported names
+
+        tables.each do |table|
+          table.exported_names.each do |name|
+            result[name] = table
+          end
+        end
 
         exports.each do |export|
           case export
