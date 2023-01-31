@@ -246,8 +246,13 @@ module Wasminna
     end
 
     def parse_register
-      repeatedly { read }
-      Register.new
+      read => 'register'
+      module_name = parse_string
+      if peek in ID_REGEXP
+        read => ID_REGEXP => name
+      end
+
+      Register.new(module_name:, name:)
     end
 
     ID_REGEXP = %r{\A\$}

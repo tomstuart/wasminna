@@ -161,6 +161,8 @@ module Wasminna
           in SkippedAssertion
             # TODO
             print "\e[33m.\e[0m"
+          in Register(module_name:, name:)
+            self.exports[module_name] = find_module(name).exports
           end
         rescue
           puts
