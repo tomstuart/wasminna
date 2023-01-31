@@ -68,7 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
     Global = Struct.new(:value)
-    Table = Data.define(:elements)
+    Table = Data.define(:exported_names, :elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
@@ -78,7 +78,7 @@ module Wasminna
         'spectest' => {
           'global_i32' => Global.new(value: 666),
           'global_i64' => Global.new(value: 666),
-          'table' => Table.new(elements: Array.new(10)),
+          'table' => Table.new(exported_names: [], elements: Array.new(10)),
           'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
           'print_i32' => -> stack { stack.pop(1) }
         }
@@ -209,7 +209,7 @@ module Wasminna
 
       table_imports +
         tables.map do |table|
-          Table.new(elements: Array.new(table.minimum_size || table.elements.length))
+          Table.new(exported_names: table.exported_names, elements: Array.new(table.minimum_size || table.elements.length))
         end
     end
 
