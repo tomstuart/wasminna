@@ -471,6 +471,14 @@ module Wasminna
       in RefFunc(index:)
         function = current_module.functions.slice(index)
         stack.push(function)
+      in TableGet(index:)
+        stack.pop(1) => [offset]
+        table = current_module.tables.slice(index)
+        stack.push(table.elements.slice(offset))
+      in TableSet(index:)
+        stack.pop(2) => [offset, value]
+        table = current_module.tables.slice(index)
+        table.elements[offset] = value
       end
     end
 
