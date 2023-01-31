@@ -100,7 +100,7 @@ module Wasminna
             name = mod.name
             functions =
               build_functions(imports: mod.imports, functions: mod.functions)
-            tables = build_tables(tables: mod.tables)
+            tables = build_tables(imports: mod.imports, tables: mod.tables)
             types = mod.types
             memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(globals: mod.globals)
@@ -203,10 +203,18 @@ module Wasminna
         end
     end
 
-    def build_tables(tables:)
-      tables.map do |table|
-        Table.new(elements: Array.new(table.minimum_size || table.elements.length))
-      end
+    def build_tables(imports:, tables:)
+      table_imports =
+        imports.select { |import| import in { kind: :table } }.
+          map do |import|
+            import => { module_name:, name: }
+            find_module(module_name).exports.fetch(name)
+          end
+
+      table_imports +
+        tables.map do |table|
+          Table.new(elements: Array.new(table.minimum_size || table.elements.length))
+        end
     end
 
     def build_memory(imports:, memory:)
