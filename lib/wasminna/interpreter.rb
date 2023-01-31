@@ -65,7 +65,7 @@ module Wasminna
       end
     end
 
-    attr_accessor :current_module, :modules, :stack, :tags
+    attr_accessor :current_module, :modules, :exports, :stack, :tags
 
     Global = Struct.new(:value)
     Table = Struct.new(:elements)
@@ -73,23 +73,16 @@ module Wasminna
 
     def evaluate_script(script)
       self.current_module = nil
-      self.modules = [
-        Module.new(
-          name: 'spectest',
-          functions: nil,
-          tables: nil,
-          memory: nil,
-          globals: nil,
-          types: nil,
-          exports: {
-            'global_i32' => Global.new(value: 666),
-            'global_i64' => Global.new(value: 666),
-            'table' => Table.new(elements: Array.new(10)),
-            'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
-            'print_i32' => -> stack { stack.pop(1) }
-          }
-        )
-      ]
+      self.modules = []
+      self.exports = {
+        'spectest' => {
+          'global_i32' => Global.new(value: 666),
+          'global_i64' => Global.new(value: 666),
+          'table' => Table.new(elements: Array.new(10)),
+          'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
+          'print_i32' => -> stack { stack.pop(1) }
+        }
+      }
       self.stack = []
       self.tags = []
 
@@ -190,7 +183,7 @@ module Wasminna
         imports.select { |import| import in { kind: :func } }.
           map do |import|
             import => { module_name:, name: }
-            find_module(module_name).exports.fetch(name)
+            exports.fetch(module_name).fetch(name)
           end
 
       function_imports +
@@ -199,7 +192,7 @@ module Wasminna
             function
           else
             module_name, name = function.import
-            find_module(module_name).exports.fetch(name)
+            exports.fetch(module_name).fetch(name)
           end
         end
     end
@@ -209,7 +202,7 @@ module Wasminna
         imports.select { |import| import in { kind: :table } }.
           map do |import|
             import => { module_name:, name: }
-            find_module(module_name).exports.fetch(name)
+            exports.fetch(module_name).fetch(name)
           end
 
       table_imports +
@@ -223,7 +216,7 @@ module Wasminna
         imports.select { |import| import in { kind: :memory } }.
           map do |import|
             import => { module_name:, name: }
-            find_module(module_name).exports.fetch(name)
+            exports.fetch(module_name).fetch(name)
           end
 
       case [memory_imports, memory]
@@ -248,7 +241,7 @@ module Wasminna
           Global.new
         else
           module_name, name = global.import
-          find_module(module_name).exports.fetch(name)
+          exports.fetch(module_name).fetch(name)
         end
       end
     end
