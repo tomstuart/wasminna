@@ -978,8 +978,8 @@ module Wasminna
         read
         RefNull.new
       in 'ref.extern'
-        read
-        RefExtern.new
+        value = parse_integer(bits: 32)
+        RefExtern.new(value:)
       in 'ref.func'
         index = parse_index(context.functions)
         RefFunc.new(index:)

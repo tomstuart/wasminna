@@ -37,7 +37,7 @@ module Wasminna
     MemorySize = Data.define
     MemoryData = Data.define(:offset, :string)
     RefNull = Data.define
-    RefExtern = Data.define
+    RefExtern = Data.define(:value)
     Get = Data.define(:module_name, :name)
     Export = Data.define(:name, :kind, :index)
     Import = Data.define(:module_name, :name, :kind, :type)

@@ -466,8 +466,8 @@ module Wasminna
         stack.push(current_module.memory.size_in_pages)
       in RefNull
         stack.push(nil)
-      in RefExtern
-        stack.push(:externref)
+      in RefExtern(value:)
+        stack.push({ externref: value })
       in RefFunc(index:)
         function = current_module.functions.slice(index)
         stack.push(function)
