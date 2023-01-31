@@ -427,8 +427,7 @@ module Wasminna
         stack.pop(1) => [index]
 
         table = current_module.tables.slice(table_index)
-        index = table.elements.slice(index)
-        function = current_module.functions.slice(index)
+        function = table.elements.slice(index)
         invoke_function(function)
       in Drop
         stack.pop(1)
@@ -470,7 +469,8 @@ module Wasminna
       in RefExtern
         stack.push(:externref)
       in RefFunc(index:)
-        stack.push(index) # TODO push Function instance?
+        function = current_module.functions.slice(index)
+        stack.push(function)
       end
     end
 
