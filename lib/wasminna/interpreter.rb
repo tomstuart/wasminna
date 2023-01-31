@@ -68,7 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
     Global = Struct.new(:value)
-    Table = Struct.new(:elements)
+    Table = Data.define(:elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
 
     def evaluate_script(script)
