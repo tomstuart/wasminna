@@ -136,30 +136,19 @@ module Wasminna
                 Type.new(parameters:, results:)
               end
             Context.new(types: [name], typedefs: [type])
-          in 'func'
+          in 'func' | 'table' | 'global' | 'data' => field_name
             if peek in ID_REGEXP
               read => ID_REGEXP => name
             end
             repeatedly { read }
-            Context.new(functions: [name])
-          in 'table'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
-            repeatedly { read }
-            Context.new(tables: [name])
-          in 'global'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
-            repeatedly { read }
-            Context.new(globals: [name])
-          in 'data'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
-            repeatedly { read }
-            Context.new(data: [name])
+            index_space_name =
+              {
+                'func' => :functions,
+                'table' => :tables,
+                'global' => :globals,
+                'data' => :data
+              }.fetch(field_name)
+            Context.new(index_space_name => [name])
           in 'import'
             # TODO add imported func/table/memory/global name to context
             repeatedly { read }
