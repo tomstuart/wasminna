@@ -486,6 +486,15 @@ module Wasminna
         length.times do |index|
           current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
         end
+      in MemoryCopy
+        stack.pop(3) => [destination, source, length]
+        values =
+          length.times.map do |index|
+            current_module.memory.load(offset: source + index, bits: Memory::BITS_PER_BYTE)
+          end
+        values.each.with_index do |value, index|
+          current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+        end
       end
     end
 
