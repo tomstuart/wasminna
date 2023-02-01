@@ -467,11 +467,20 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      if peek in UNSIGNED_INTEGER_REGEXP
+      if can_read_list?(starting_with: 'import')
+        import_module_name, import_name =
+          read_list(starting_with: 'import') do
+            [parse_string, parse_string]
+          end
+        import = [import_module_name, import_name]
         minimum_size, maximum_size, reftype = parse_tabletype
       else
-        read => 'funcref' | 'externref' => reftype
-        elements = parse_table_element
+        if peek in UNSIGNED_INTEGER_REGEXP
+          minimum_size, maximum_size, reftype = parse_tabletype
+        else
+          read => 'funcref' | 'externref' => reftype
+          elements = parse_table_element
+        end
       end
 
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
