@@ -406,7 +406,7 @@ module Wasminna
       if can_read_list?(starting_with: 'data')
         string = read_list { parse_memory_data }
       else
-        parse_memory_sizes => [minimum_size, maximum_size]
+        parse_limits => [minimum_size, maximum_size]
       end
 
       Memory.new(string:, minimum_size:, maximum_size:)
@@ -443,15 +443,6 @@ module Wasminna
       string = repeatedly { parse_string }.join
 
       MemoryData.new(offset:, string:)
-    end
-
-    def parse_memory_sizes
-      case repeatedly { parse_integer(bits: 32) }
-      in [minimum_size]
-        [minimum_size, nil]
-      in [minimum_size, maximum_size]
-        [minimum_size, maximum_size]
-      end
     end
 
     UNSIGNED_INTEGER_REGEXP =
@@ -597,7 +588,7 @@ module Wasminna
           in 'global'
             [:global, parse_globaltype]
           in 'memory'
-            [:memory, parse_memory_sizes]
+            [:memory, parse_limits]
           in 'table'
             [:table, parse_tabletype]
           end
