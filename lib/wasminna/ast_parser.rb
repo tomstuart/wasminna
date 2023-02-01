@@ -1002,6 +1002,10 @@ module Wasminna
         read
         read
         TableInit.new
+      in 'table.copy'
+        read
+        read
+        TableCopy.new
       end
     end
 
