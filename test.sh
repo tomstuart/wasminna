@@ -22,7 +22,7 @@ do
   ruby -I"$WASMINNA_PATH"/lib "$WASMINNA_PATH"/run_wast.rb "$WASM_SPEC_PATH"/test/core/$file
 done
 
-for pending in bulk
+for pending in table bulk
 do
   file=$pending.wast
   printf "\e[1m%s\e[0m (pending): " "$file"
