@@ -131,9 +131,6 @@ module Wasminna
             end
             repeatedly { read }
             Context.new(functions: [name])
-          in 'memory'
-            repeatedly { read }
-            Context.new
           in 'table'
             if peek in ID_REGEXP
               read => ID_REGEXP => name
@@ -163,14 +160,11 @@ module Wasminna
             end
             repeatedly { read }
             Context.new(data: [name])
-          in 'export'
-            repeatedly { read }
-            Context.new
           in 'import'
             # TODO add imported func/table/memory/global name to context
             repeatedly { read }
             Context.new
-          in 'elem'
+          else
             repeatedly { read }
             Context.new
           end
