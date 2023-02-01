@@ -49,5 +49,6 @@ module Wasminna
     Element = Data.define(:index, :offset, :items)
     MemoryFill = Data.define
     MemoryCopy = Data.define
+    MemoryInit = Data.define(:index)
   end
 end
