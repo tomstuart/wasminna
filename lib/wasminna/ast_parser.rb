@@ -471,9 +471,20 @@ module Wasminna
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
     end
 
+    UNSIGNED_INTEGER_REGEXP =
+      %r{
+        \A
+        (
+          \d (_? \d)*
+          |
+          0x \h (_? \h)*
+        )
+        \z
+      }x
+
     def parse_tabletype
-      minimum_size = parse_integer(bits: 32) if peek in %r{\A\d+\z}
-      maximum_size = parse_integer(bits: 32) if peek in %r{\A\d+\z}
+      minimum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
+      maximum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
       read => 'funcref' | 'externref' => reftype
 
       [minimum_size, maximum_size, reftype]
