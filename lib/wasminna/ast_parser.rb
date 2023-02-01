@@ -635,8 +635,9 @@ module Wasminna
         in 'func'
           repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
+      table_index ||= 0 unless offset.nil?
 
-      Element.new(index: table_index || 0, offset:, items:)
+      Element.new(index: table_index, offset:, items:)
     end
 
     NUMERIC_OPCODE_REGEXP =
