@@ -62,8 +62,8 @@ module Wasminna
       { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [] }
     end
 
-    Context = Data.define(:types, :functions, :tables, :globals, :data, :locals, :labels, :typedefs) do
-      def initialize(types: [], functions: [], tables: [], globals: [], data: [], locals: [], labels: [], typedefs: [])
+    Context = Data.define(:types, :functions, :tables, :globals, :elem, :data, :locals, :labels, :typedefs) do
+      def initialize(types: [], functions: [], tables: [], globals: [], elem: [], data: [], locals: [], labels: [], typedefs: [])
         super
       end
 
