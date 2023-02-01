@@ -498,10 +498,14 @@ module Wasminna
         end
       in MemoryInit(index:)
         stack.pop(3) => [destination, source, length]
-        data = current_module.datas.slice(index)
-        data.string.byteslice(source, length).each_byte.with_index do |value, index|
-          current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+        unless length.zero?
+          data = current_module.datas.slice(index)
+          data.string.byteslice(source, length).each_byte.with_index do |value, index|
+            current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+          end
         end
+      in DataDrop(index:)
+        current_module.datas[index] = nil
       end
     end
 
