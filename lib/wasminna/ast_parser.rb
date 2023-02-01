@@ -592,14 +592,14 @@ module Wasminna
       if peek in 'declare'
         read => 'declare'
       end
-      table_index =
+      index =
         if can_read_list?(starting_with: 'table')
           read_list(starting_with: 'table') do
             parse_index(context.tables)
           end
         end
       offset =
-        if !table_index.nil? || can_read_list?
+        if !index.nil? || can_read_list?
           read_list do
             case peek
             in 'offset'
@@ -613,7 +613,7 @@ module Wasminna
       reftype =
         if peek in 'funcref' | 'externref' | 'func'
           read
-        elsif table_index.nil?
+        elsif index.nil?
           'func'
         else
           raise
@@ -635,9 +635,9 @@ module Wasminna
         in 'func'
           repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
-      table_index ||= 0 unless offset.nil?
+      index ||= 0 unless offset.nil?
 
-      Element.new(index: table_index, offset:, items:)
+      Element.new(index:, offset:, items:)
     end
 
     NUMERIC_OPCODE_REGEXP =
