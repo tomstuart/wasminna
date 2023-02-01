@@ -42,7 +42,7 @@ module Wasminna
     Export = Data.define(:name, :kind, :index)
     Import = Data.define(:module_name, :name, :kind, :type)
     RefFunc = Data.define(:index)
-    TableInit = Data.define
+    TableInit = Data.define(:table_index, :element_index)
     Register = Data.define(:module_name, :name)
     TableGet = Data.define(:index)
     TableSet = Data.define(:index)

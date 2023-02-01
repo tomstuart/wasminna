@@ -999,9 +999,30 @@ module Wasminna
         index = parse_index(context.functions)
         RefFunc.new(index:)
       in 'table.init'
-        read
-        read
-        TableInit.new
+        read => INDEX_REGEXP => index
+        if peek in INDEX_REGEXP
+          table_index =
+            if index.start_with?('$')
+              context.tables.index(index) || raise
+            elsif index.start_with?('0x')
+              index.to_i(16)
+            else
+              index.to_i(10)
+            end
+          element_index = parse_index(context.elem)
+        else
+          table_index = 0
+          element_index =
+            if index.start_with?('$')
+              context.elem.index(index) || raise
+            elsif index.start_with?('0x')
+              index.to_i(16)
+            else
+              index.to_i(10)
+            end
+        end
+
+        TableInit.new(table_index:, element_index:)
       in 'table.copy'
         read
         read
