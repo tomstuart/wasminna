@@ -471,6 +471,13 @@ module Wasminna
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
     end
 
+    def parse_tabletype
+      minimum_size, maximum_size = parse_limits
+      read => 'funcref' | 'externref' => reftype
+
+      [minimum_size, maximum_size, reftype]
+    end
+
     UNSIGNED_INTEGER_REGEXP =
       %r{
         \A
@@ -482,12 +489,11 @@ module Wasminna
         \z
       }x
 
-    def parse_tabletype
+    def parse_limits
       minimum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
       maximum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
-      read => 'funcref' | 'externref' => reftype
 
-      [minimum_size, maximum_size, reftype]
+      [minimum_size, maximum_size]
     end
 
     def parse_table_element
