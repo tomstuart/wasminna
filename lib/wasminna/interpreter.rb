@@ -481,6 +481,11 @@ module Wasminna
         stack.pop(2) => [offset, value]
         table = current_module.tables.slice(index)
         table.elements[offset] = value
+      in MemoryFill
+        stack.pop(3) => [offset, value, length]
+        length.times do |index|
+          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+        end
       end
     end
 
