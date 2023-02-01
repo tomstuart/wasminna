@@ -313,7 +313,7 @@ module Wasminna
       end
 
       elements.reject { _1.offset.nil? }.each do |element|
-        table_instance = current_module.tables.slice(0) # TODO tableuse
+        table_instance = current_module.tables.slice(element.index)
         evaluate_expression(element.offset, locals: [])
         stack.pop(1) => [offset]
 
