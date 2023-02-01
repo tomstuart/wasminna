@@ -125,6 +125,17 @@ module Wasminna
       repeatedly do
         read_list do
           case read
+          in 'type'
+            if peek in ID_REGEXP
+              read => ID_REGEXP => name
+            end
+            type =
+              read_list(starting_with: 'func') do
+                _, parameters = unzip_pairs(parse_parameters)
+                results = parse_results
+                Type.new(parameters:, results:)
+              end
+            Context.new(types: [name], typedefs: [type])
           in 'func'
             if peek in ID_REGEXP
               read => ID_REGEXP => name
@@ -143,17 +154,6 @@ module Wasminna
             end
             repeatedly { read }
             Context.new(globals: [name])
-          in 'type'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
-            type =
-              read_list(starting_with: 'func') do
-                _, parameters = unzip_pairs(parse_parameters)
-                results = parse_results
-                Type.new(parameters:, results:)
-              end
-            Context.new(types: [name], typedefs: [type])
           in 'data'
             if peek in ID_REGEXP
               read => ID_REGEXP => name
