@@ -493,26 +493,22 @@ module Wasminna
     end
 
     def parse_table_element
-      if can_read_list?(starting_with: 'elem')
-        read_list(starting_with: 'elem') do
-          if can_read_list?
-            repeatedly do
-              read_list do
-                case peek
-                in 'item'
-                  read => 'item'
-                  parse_instructions
-                else
-                  [parse_instruction]
-                end
+      read_list(starting_with: 'elem') do
+        if can_read_list?
+          repeatedly do
+            read_list do
+              case peek
+              in 'item'
+                read => 'item'
+                parse_instructions
+              else
+                [parse_instruction]
               end
             end
-          else
-            repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
           end
+        else
+          repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
-      else
-        []
       end
     end
 
