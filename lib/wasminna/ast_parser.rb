@@ -454,6 +454,17 @@ module Wasminna
       end
     end
 
+    UNSIGNED_INTEGER_REGEXP =
+      %r{
+        \A
+        (
+          \d (_? \d)*
+          |
+          0x \h (_? \h)*
+        )
+        \z
+      }x
+
     def parse_table
       read => 'table'
       if peek in ID_REGEXP
@@ -465,7 +476,11 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      minimum_size, maximum_size, reftype = parse_tabletype
+      if peek in UNSIGNED_INTEGER_REGEXP
+        minimum_size, maximum_size, reftype = parse_tabletype
+      else
+        read => 'funcref' | 'externref' => reftype
+      end
       elements = parse_table_element
 
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
@@ -478,19 +493,9 @@ module Wasminna
       [minimum_size, maximum_size, reftype]
     end
 
-    UNSIGNED_INTEGER_REGEXP =
-      %r{
-        \A
-        (
-          \d (_? \d)*
-          |
-          0x \h (_? \h)*
-        )
-        \z
-      }x
-
     def parse_limits
-      minimum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
+      raise unless peek in UNSIGNED_INTEGER_REGEXP
+      minimum_size = parse_integer(bits: 32)
       maximum_size = parse_integer(bits: 32) if peek in UNSIGNED_INTEGER_REGEXP
 
       [minimum_size, maximum_size]
