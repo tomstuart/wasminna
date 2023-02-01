@@ -69,7 +69,7 @@ module Wasminna
 
     Global = Struct.new(:value)
     Table = Data.define(:exported_names, :elements)
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports)
+    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -99,9 +99,10 @@ module Wasminna
             memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(globals: mod.globals)
             exports = build_exports(functions:, globals:, tables:, exports: mod.exports)
+            datas = mod.datas
 
             self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:)
+              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:)
             self.current_module = modules.last
             initialise_globals(globals: mod.globals)
             initialise_memory(datas: mod.datas)
