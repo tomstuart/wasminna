@@ -158,8 +158,11 @@ module Wasminna
               end
             Context.new(types: [name], typedefs: [type])
           in 'data'
+            if peek in ID_REGEXP
+              read => ID_REGEXP => name
+            end
             repeatedly { read }
-            Context.new
+            Context.new(data: [name])
           in 'export'
             repeatedly { read }
             Context.new
