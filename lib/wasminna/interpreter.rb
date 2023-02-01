@@ -293,7 +293,7 @@ module Wasminna
     end
 
     def initialise_memory(datas:)
-      datas.each do |data|
+      datas.reject { _1.offset.nil? }.each do |data|
         evaluate_expression(data.offset, locals: [])
         stack.pop(1) => [offset]
         data.string.each_byte.with_index do |value, index|
