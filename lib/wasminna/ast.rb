@@ -51,5 +51,6 @@ module Wasminna
     MemoryCopy = Data.define
     MemoryInit = Data.define(:index)
     DataDrop = Data.define(:index)
+    ElemDrop = Data.define(:index)
   end
 end
