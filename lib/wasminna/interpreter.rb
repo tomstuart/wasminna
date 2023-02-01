@@ -304,6 +304,8 @@ module Wasminna
 
     def initialise_tables(tables:, elements:)
       tables.each.with_index do |table, table_index|
+        next if table.elements.nil?
+
         table_instance = current_module.tables.slice(table_index)
         table.elements.each.with_index do |element, element_index|
           evaluate_expression(element, locals: [])

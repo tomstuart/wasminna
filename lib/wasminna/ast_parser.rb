@@ -471,8 +471,8 @@ module Wasminna
         minimum_size, maximum_size, reftype = parse_tabletype
       else
         read => 'funcref' | 'externref' => reftype
+        elements = parse_table_element
       end
-      elements = parse_table_element
 
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
     end
