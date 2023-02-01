@@ -48,5 +48,6 @@ module Wasminna
     TableSet = Data.define(:index)
     Element = Data.define(:index, :offset, :items)
     MemoryFill = Data.define
+    MemoryCopy = Data.define
   end
 end

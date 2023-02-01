@@ -915,7 +915,7 @@ module Wasminna
 
     def parse_normal_instruction
       case read
-      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' => opcode
+      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => opcode
         {
           'return' => Return,
           'nop' => Nop,
@@ -923,7 +923,8 @@ module Wasminna
           'unreachable' => Unreachable,
           'memory.grow' => MemoryGrow,
           'memory.size' => MemorySize,
-          'memory.fill' => MemoryFill
+          'memory.fill' => MemoryFill,
+          'memory.copy' => MemoryCopy
         }.fetch(opcode).new
       in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'table.get' | 'table.set' => opcode
         index_space =
