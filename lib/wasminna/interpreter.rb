@@ -114,6 +114,7 @@ module Wasminna
             evaluate_expression(arguments, locals: [])
             self.current_module = mod
             invoke_function(function)
+            print "\e[32m.\e[0m"
           in AssertReturn(action:, expecteds:)
             case action
             in Invoke(module_name:, name:, arguments:)
