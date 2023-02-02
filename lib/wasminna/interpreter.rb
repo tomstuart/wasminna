@@ -519,6 +519,12 @@ module Wasminna
         end
       in ElemDrop(index:)
         current_module.elements[index] = nil
+      in TableCopy(destination_index:, source_index:)
+        stack.pop(3) => [destination, source, length]
+        destination_table = current_module.tables.slice(destination_index)
+        source_table = current_module.tables.slice(source_index)
+        destination_table.elements[destination, length] =
+          source_table.elements.slice(source, length)
       end
     end
 
