@@ -53,5 +53,6 @@ module Wasminna
     DataDrop = Data.define(:index)
     ElemDrop = Data.define(:index)
     TableCopy = Data.define(:destination_index, :source_index)
+    RefIsNull = Data.define
   end
 end

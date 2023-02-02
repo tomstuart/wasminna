@@ -525,6 +525,9 @@ module Wasminna
         source_table = current_module.tables.slice(source_index)
         destination_table.elements[destination, length] =
           source_table.elements.slice(source, length)
+      in RefIsNull
+        stack.pop(1) => [value]
+        stack.push(value.nil? ? 1 : 0)
       end
     end
 

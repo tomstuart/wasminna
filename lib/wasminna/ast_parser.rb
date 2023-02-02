@@ -1040,6 +1040,8 @@ module Wasminna
           end
 
         TableCopy.new(destination_index:, source_index:)
+      in 'ref.is_null'
+        RefIsNull.new
       end
     end
 
