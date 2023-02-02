@@ -517,6 +517,8 @@ module Wasminna
           stack.pop(1) => [value]
           table.elements[destination + index] = value
         end
+      in ElemDrop(index:)
+        current_module.elements[index] = nil
       end
     end
 
