@@ -1024,9 +1024,14 @@ module Wasminna
 
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
-        read
-        read
-        TableCopy.new
+        destination_index, source_index =
+          if peek in INDEX_REGEXP
+            [parse_index(context.tables), parse_index(context.tables)]
+          else
+            [0, 0]
+          end
+
+        TableCopy.new(destination_index:, source_index:)
       end
     end
 
