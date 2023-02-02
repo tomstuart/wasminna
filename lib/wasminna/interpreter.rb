@@ -508,6 +508,15 @@ module Wasminna
         end
       in DataDrop(index:)
         current_module.datas[index] = nil
+      in TableInit(table_index:, element_index:)
+        stack.pop(3) => [destination, source, length]
+        table = current_module.tables.slice(table_index)
+        element = current_module.elements.slice(element_index)
+        length.times do |index|
+          evaluate_expression(element.items.slice(source + index), locals: [])
+          stack.pop(1) => [value]
+          table.elements[destination + index] = value
+        end
       end
     end
 
