@@ -913,7 +913,7 @@ module Wasminna
           'memory.fill' => MemoryFill,
           'memory.copy' => MemoryCopy
         }.fetch(opcode).new
-      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'table.get' | 'table.set' | 'memory.init' | 'data.drop' | 'elem.drop' => opcode
+      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'memory.init' | 'data.drop' | 'elem.drop' => opcode
         index_space =
           case opcode
           in 'local.get' | 'local.set' | 'local.tee'
@@ -924,8 +924,6 @@ module Wasminna
             context.labels
           in 'call'
             context.functions
-          in 'table.get' | 'table.set'
-            context.tables
           in 'memory.init' | 'data.drop'
             context.data
           in 'elem.drop'
@@ -942,11 +940,21 @@ module Wasminna
           'br' => Br,
           'br_if' => BrIf,
           'call' => Call,
-          'table.get' => TableGet,
-          'table.set' => TableSet,
           'memory.init' => MemoryInit,
           'data.drop' => DataDrop,
           'elem.drop' => ElemDrop
+        }.fetch(opcode).new(index:)
+      in 'table.get' | 'table.set' => opcode
+        index =
+          if peek in INDEX_REGEXP
+            parse_index(context.tables)
+          else
+            0
+          end
+
+        {
+          'table.get' => TableGet,
+          'table.set' => TableSet
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =
