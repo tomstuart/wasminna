@@ -151,9 +151,22 @@ module Wasminna
               }.fetch(field_name)
             Context.new(index_space_name => [name])
           in 'import'
-            # TODO add imported func/table/memory/global name to context
-            repeatedly { read }
-            Context.new
+            2.times { read }
+            read_list do
+              read => 'func' | 'table' | 'memory' | 'global' => kind
+              index_space_name =
+                {
+                  'func' => :functions,
+                  'table' => :tables,
+                  'memory' => :mems,
+                  'global' => :globals
+                }.fetch(kind)
+              if peek in ID_REGEXP
+                read => ID_REGEXP => name
+              end
+              repeatedly { read }
+              Context.new(index_space_name => [name])
+            end
           else
             repeatedly { read }
             Context.new
