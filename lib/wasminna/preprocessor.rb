@@ -19,9 +19,11 @@ module Wasminna
 
     def process_module(mod)
       mod => ['module', *fields]
+      fields in [String => id, *fields]
 
       [
         'module',
+        *id,
         *fields.map do |field|
           process_field(field)
         end
