@@ -40,6 +40,14 @@ module Wasminna
         else
           field
         end
+      in ['table', *rest]
+        rest in [String => id, *rest]
+        case rest
+        in [['import', module_name, name], *tabletype]
+          ['import', module_name, name, ['table', *id, *tabletype]]
+        else
+          field
+        end
       else
         field
       end
