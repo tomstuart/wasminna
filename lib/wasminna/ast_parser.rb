@@ -136,7 +136,7 @@ module Wasminna
                 Type.new(parameters:, results:)
               end
             Context.new(types: [name], typedefs: [type])
-          in 'func' | 'table' | 'global' | 'elem' | 'data' => field_name
+          in 'func' | 'table' | 'memory' | 'global' | 'elem' | 'data' => field_name
             if peek in ID_REGEXP
               read => ID_REGEXP => name
             end
@@ -145,6 +145,7 @@ module Wasminna
               {
                 'func' => :functions,
                 'table' => :tables,
+                'memory' => :mems,
                 'global' => :globals,
                 'elem' => :elem,
                 'data' => :data
