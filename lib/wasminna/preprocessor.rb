@@ -48,6 +48,14 @@ module Wasminna
         else
           field
         end
+      in ['memory', *rest]
+        rest in [String => id, *rest]
+        case rest
+        in [['import', module_name, name], *memtype]
+          ['import', module_name, name, ['memory', *id, *memtype]]
+        else
+          field
+        end
       else
         field
       end
