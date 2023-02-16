@@ -427,7 +427,7 @@ module Wasminna
       if can_read_list?
         if can_read_list?(starting_with: 'memory')
           read_list(starting_with: 'memory') do
-            read # TODO parse_index(context.memories)
+            parse_index(context.mems)
           end
         end
         offset =
@@ -569,7 +569,7 @@ module Wasminna
           in 'table'
             [:table, parse_index(context.tables)]
           in 'memory'
-            [:memory, read] # TODO parse_index(context.memories)
+            [:memory, parse_index(context.mems)]
           end
         end
 
