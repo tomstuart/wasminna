@@ -336,18 +336,30 @@ module Wasminna
       case definition
       in AST::Function
         with_tags([]) do
-          type = current_module.types.slice(definition.type_index) || raise
+          type = function.module.types.slice(definition.type_index) || raise
 
           as_block(type:) do
             argument_values = stack.pop(type.parameters.length)
             locals = definition.locals.map { 0 }
             locals = argument_values + locals
 
-            evaluate_expression(definition.body, locals:)
+            with_module(function.module) do
+              evaluate_expression(definition.body, locals:)
+            end
           end
         end
       in Proc
         definition.call(stack)
+      end
+    end
+
+    def with_module(mod)
+      previous_module, self.current_module = self.current_module, mod
+
+      begin
+        yield
+      ensure
+        self.current_module = previous_module
       end
     end
 
