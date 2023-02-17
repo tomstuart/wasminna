@@ -271,7 +271,9 @@ module Wasminna
             result[name] = functions.slice(index)
           in { name:, kind: :global, index: }
             result[name] = globals.slice(index)
-          in { kind: :table | :memory }
+          in { name:, kind: :table, index: }
+            result[name] = tables.slice(index)
+          in { kind: :memory }
             # TODO
           end
         end
