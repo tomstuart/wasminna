@@ -106,7 +106,7 @@ module Wasminna
             types = mod.types
             memory = build_memory(imports: mod.imports, memory: mod.memory)
             globals = build_globals(imports: mod.imports, globals: mod.globals)
-            exports = build_exports(functions:, globals:, tables:, exports: mod.exports)
+            exports = build_exports(functions:, globals:, tables:, memories: [memory], exports: mod.exports)
             datas = mod.datas
             elements = mod.elements
 
@@ -251,7 +251,7 @@ module Wasminna
       global_imports + globals.map { Global.new }
     end
 
-    def build_exports(functions:, globals:, tables:, exports:)
+    def build_exports(functions:, globals:, tables:, memories:, exports:)
       {}.tap do |result|
         exports.each do |export|
           case export
@@ -261,8 +261,8 @@ module Wasminna
             result[name] = globals.slice(index)
           in { name:, kind: :table, index: }
             result[name] = tables.slice(index)
-          in { kind: :memory }
-            # TODO
+          in { name:, kind: :memory, index: }
+            result[name] = memories.slice(index)
           end
         end
       end
