@@ -615,7 +615,11 @@ module Wasminna
     NUMERIC_OPCODE_REGEXP =
       %r{
         \A
-        (?<type>[fi]) (?<bits>32|64) \. (?<operation>.+)
+        (
+          (?<type>[fi]) (?<bits>32|64)
+          |
+          (?<type>v) (?<bits>128)
+        ) \. (?<operation>.+)
         \z
       }x
 
