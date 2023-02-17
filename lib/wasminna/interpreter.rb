@@ -192,15 +192,7 @@ module Wasminna
             exports.fetch(module_name).fetch(name)
           end
 
-      function_imports +
-        functions.map do |function|
-          if function.import.nil?
-            function
-          else
-            module_name, name = function.import
-            exports.fetch(module_name).fetch(name)
-          end
-        end
+      function_imports + functions
     end
 
     def build_tables(imports:, tables:)
@@ -249,15 +241,7 @@ module Wasminna
             exports.fetch(module_name).fetch(name)
           end
 
-      global_imports +
-        globals.map do |global|
-          if global.import.nil?
-            Global.new
-          else
-            module_name, name = global.import
-            exports.fetch(module_name).fetch(name)
-          end
-        end
+      global_imports + globals.map { Global.new }
     end
 
     def build_exports(functions:, globals:, tables:, exports:)
@@ -299,11 +283,9 @@ module Wasminna
         imports.count { |import| import in { kind: :global } }
 
       globals.each.with_index do |global, index|
-        if global.import.nil?
-          evaluate_expression(global.value, locals: [])
-          stack.pop(1) => [value]
-          current_module.globals.slice(global_imports_count + index).value = value
-        end
+        evaluate_expression(global.value, locals: [])
+        stack.pop(1) => [value]
+        current_module.globals.slice(global_imports_count + index).value = value
       end
     end
 
