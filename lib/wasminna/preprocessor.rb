@@ -31,6 +31,8 @@ module Wasminna
       case command.first
       in 'module'
         process_module(command)
+      in 'assert_trap'
+        process_assert_trap(command)
       else
         command
       end
@@ -66,6 +68,15 @@ module Wasminna
         ]
       else
         [field]
+      end
+    end
+
+    def process_assert_trap(assertion)
+      case assertion
+      in ['assert_trap', ['module', *] => mod, failure]
+        ['assert_trap', process_module(mod), failure]
+      else
+        assertion
       end
     end
   end
