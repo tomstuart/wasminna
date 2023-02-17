@@ -322,27 +322,18 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      if can_read_list?(starting_with: 'import')
-        import_module_name, import_name =
-          read_list(starting_with: 'import') do
-            [parse_string, parse_string]
-          end
-        import = [import_module_name, import_name]
-        parse_typeuse => [type_index, _]
-      else
-        parse_typeuse => [type_index, parameter_names]
-        local_names, locals = unzip_pairs(parse_locals)
-        locals_context = Context.new(locals: parameter_names + local_names)
-        raise unless locals_context.well_formed?
-        body, updated_typedefs =
-          with_context(context + locals_context) do
-            body = parse_instructions
-            [body, context.typedefs]
-          end
-        self.context = context.with(typedefs: updated_typedefs)
-      end
+      parse_typeuse => [type_index, parameter_names]
+      local_names, locals = unzip_pairs(parse_locals)
+      locals_context = Context.new(locals: parameter_names + local_names)
+      raise unless locals_context.well_formed?
+      body, updated_typedefs =
+        with_context(context + locals_context) do
+          body = parse_instructions
+          [body, context.typedefs]
+        end
+      self.context = context.with(typedefs: updated_typedefs)
 
-      Function.new(exported_names:, import:, type_index:, locals:, body:)
+      Function.new(exported_names:, import: nil, type_index:, locals:, body:)
     end
 
     def parse_typeuse
@@ -468,20 +459,11 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      if can_read_list?(starting_with: 'import')
-        import_module_name, import_name =
-          read_list(starting_with: 'import') do
-            [parse_string, parse_string]
-          end
-        import = [import_module_name, import_name]
+      if peek in UNSIGNED_INTEGER_REGEXP
         minimum_size, maximum_size, reftype = parse_tabletype
       else
-        if peek in UNSIGNED_INTEGER_REGEXP
-          minimum_size, maximum_size, reftype = parse_tabletype
-        else
-          read => 'funcref' | 'externref' => reftype
-          elements = parse_table_element
-        end
+        read => 'funcref' | 'externref' => reftype
+        elements = parse_table_element
       end
 
       Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
@@ -533,19 +515,10 @@ module Wasminna
         exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
-      if can_read_list?(starting_with: 'import')
-        import_module_name, import_name =
-          read_list(starting_with: 'import') do
-            [parse_string, parse_string]
-          end
-        import = [import_module_name, import_name]
-        parse_globaltype
-      else
-        parse_globaltype
-        value = parse_instructions
-      end
+      parse_globaltype
+      value = parse_instructions
 
-      Global.new(import:, value:)
+      Global.new(import: nil, value:)
     end
 
     def parse_globaltype
