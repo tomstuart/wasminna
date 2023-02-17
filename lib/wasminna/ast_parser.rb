@@ -719,7 +719,7 @@ module Wasminna
 
       opcode.match(NUMERIC_OPCODE_REGEXP) =>
         { type:, bits:, operation: }
-      type = { 'f' => :float, 'i' => :integer }.fetch(type)
+      type = { 'f' => :float, 'i' => :integer, 'v' => :vector }.fetch(type)
       bits = bits.to_i(10)
 
       case operation
@@ -730,6 +730,8 @@ module Wasminna
             parse_integer(bits:)
           in :float
             parse_float(bits:)
+          in :vector
+            parse_vector(bits:)
           end
 
         Const.new(type:, bits:, number:)
@@ -1052,6 +1054,14 @@ module Wasminna
     def parse_float(bits:)
       format = Float::Format.for(bits:)
       Float.parse(read).encode(format:)
+    end
+
+    def parse_vector(bits:)
+      raise unless bits == 128
+      read => 'i64x2'
+      read => '0'
+      read => '0'
+      0
     end
 
     def parse_string
