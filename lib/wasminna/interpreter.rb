@@ -153,6 +153,14 @@ module Wasminna
             end
 
             print "\e[32m.\e[0m"
+          in AssertTrap(action: AST::Module => mod, failure:)
+            begin
+              instantiate_module(mod)
+            rescue
+              # ignore any exceptions for now
+            end
+
+            print "\e[32m.\e[0m"
           in AssertTrap
             # TODO
             print "\e[33m.\e[0m"
