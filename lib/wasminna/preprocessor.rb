@@ -18,16 +18,12 @@ module Wasminna
     end
 
     def process_module(mod)
-      mod => ['module', *fields]
-      fields in [String => id, *fields]
-
-      [
-        'module',
-        *id,
-        *fields.map do |field|
-          process_field(field)
-        end
-      ]
+      case mod
+      in ['module', String => id, *fields]
+        ['module', id, *fields.map { process_field(_1) }]
+      in ['module', *fields]
+        ['module', *fields.map { process_field(_1) }]
+      end
     end
 
     def process_field(field)
