@@ -98,7 +98,7 @@ module Wasminna
             tables = build_tables(imports: mod.imports, tables: mod.tables)
             types = mod.types
             memory = build_memory(imports: mod.imports, memory: mod.memory)
-            globals = build_globals(globals: mod.globals)
+            globals = build_globals(imports: mod.imports, globals: mod.globals)
             exports = build_exports(functions:, globals:, tables:, exports: mod.exports)
             datas = mod.datas
             elements = mod.elements
@@ -106,7 +106,7 @@ module Wasminna
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:, elements:)
             self.current_module = modules.last
-            initialise_globals(globals: mod.globals)
+            initialise_globals(imports: mod.imports, globals: mod.globals)
             initialise_memory(datas: mod.datas)
             initialise_tables(tables: mod.tables, elements: mod.elements)
           in Invoke(module_name:, name:, arguments:)
@@ -241,15 +241,23 @@ module Wasminna
       end
     end
 
-    def build_globals(globals:)
-      globals.map do |global|
-        if global.import.nil?
-          Global.new
-        else
-          module_name, name = global.import
-          exports.fetch(module_name).fetch(name)
+    def build_globals(imports:, globals:)
+      global_imports =
+        imports.select { |import| import in { kind: :global } }.
+          map do |import|
+            import => { module_name:, name: }
+            exports.fetch(module_name).fetch(name)
+          end
+
+      global_imports +
+        globals.map do |global|
+          if global.import.nil?
+            Global.new
+          else
+            module_name, name = global.import
+            exports.fetch(module_name).fetch(name)
+          end
         end
-      end
     end
 
     def build_exports(functions:, globals:, tables:, exports:)
@@ -286,12 +294,15 @@ module Wasminna
       end
     end
 
-    def initialise_globals(globals:)
+    def initialise_globals(imports:, globals:)
+      global_imports_count =
+        imports.count { |import| import in { kind: :global } }
+
       globals.each.with_index do |global, index|
         if global.import.nil?
           evaluate_expression(global.value, locals: [])
           stack.pop(1) => [value]
-          current_module.globals.slice(index).value = value
+          current_module.globals.slice(global_imports_count + index).value = value
         end
       end
     end
