@@ -56,6 +56,14 @@ module Wasminna
         else
           field
         end
+      in ['global', *rest]
+        rest in [String => id, *rest]
+        case rest
+        in [['import', module_name, name], globaltype]
+          ['import', module_name, name, ['global', *id, globaltype]]
+        else
+          field
+        end
       else
         field
       end
