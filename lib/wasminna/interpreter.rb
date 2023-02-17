@@ -300,6 +300,7 @@ module Wasminna
       datas.reject { _1.offset.nil? }.each do |data|
         evaluate_expression(data.offset, locals: [])
         stack.pop(1) => [offset]
+        raise if offset + data.string.bytesize > current_module.memory.bytes.bytesize
         data.string.each_byte.with_index do |value, index|
           current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
         end
