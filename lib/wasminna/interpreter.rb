@@ -67,7 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
-    Function = Data.define(:definition)
+    Function = Struct.new(:definition, :module)
     Global = Struct.new(:value)
     Table = Data.define(:elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas, :elements)
@@ -114,6 +114,7 @@ module Wasminna
             self.modules <<
               Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:, elements:)
             self.current_module = modules.last
+            initialise_functions
             initialise_globals(imports: mod.imports, globals: mod.globals)
             initialise_memory(datas: mod.datas)
             initialise_tables(tables: mod.tables, elements: mod.elements)
@@ -312,6 +313,12 @@ module Wasminna
           stack.pop(1) => [value]
           table_instance.elements[offset + item_index] = value
         end
+      end
+    end
+
+    def initialise_functions
+      current_module.functions.each do |function|
+        function.module ||= current_module # TODO assign module at function creation time
       end
     end
 
