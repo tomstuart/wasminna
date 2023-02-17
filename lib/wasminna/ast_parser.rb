@@ -328,7 +328,7 @@ module Wasminna
         end
       self.context = context.with(typedefs: updated_typedefs)
 
-      Function.new(exported_names: [], type_index:, locals:, body:)
+      Function.new(type_index:, locals:, body:)
     end
 
     def parse_typeuse
@@ -451,7 +451,7 @@ module Wasminna
         elements = parse_table_element
       end
 
-      Table.new(name:, exported_names: [], minimum_size:, maximum_size:, elements:)
+      Table.new(name:, minimum_size:, maximum_size:, elements:)
     end
 
     def parse_tabletype
