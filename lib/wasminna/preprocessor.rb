@@ -38,18 +38,18 @@ module Wasminna
         [['import', module_name, name, [kind, id, *description]]]
       in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
         [['import', module_name, name, [kind, *description]]]
-      in ['func', String => id, ['export', name], *rest]
+      in ['func' | 'table' => kind, String => id, ['export', name], *rest]
         [
-          ['export', name, ['func', id]],
-          *process_field(['func', id, *rest])
+          ['export', name, [kind, id]],
+          *process_field([kind, id, *rest])
         ]
-      in ['func', ['export', name], *rest]
+      in ['func' | 'table' => kind, ['export', name], *rest]
         id = "$__fresh_#{fresh_id}" # TODO find a better way
         self.fresh_id += 1
 
         [
-          ['export', name, ['func', id]],
-          *process_field(['func', id, *rest])
+          ['export', name, [kind, id]],
+          *process_field([kind, id, *rest])
         ]
       else
         [field]

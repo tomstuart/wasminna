@@ -132,3 +132,21 @@ if actual == expected
 else
   raise actual.inspect unless actual == expected
 end
+
+input = [
+  ['module',
+    ['table', %w[export "a"], *%w[0 1 funcref]]
+  ]
+]
+expected = [
+  ['module',
+    [*%w[export "a"], %w[table $__fresh_0]],
+    %w[table $__fresh_0 0 1 funcref]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
