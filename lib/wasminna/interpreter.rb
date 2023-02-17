@@ -78,10 +78,17 @@ module Wasminna
         'spectest' => {
           'global_i32' => Global.new(value: 666),
           'global_i64' => Global.new(value: 666),
+          'global_f32' => Global.new(value: 666),
+          'global_f64' => Global.new(value: 666),
           'table' => Table.new(elements: Array.new(10)),
           'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
           'print' => -> stack { },
-          'print_i32' => -> stack { stack.pop(1) }
+          'print_i32' => -> stack { stack.pop(1) },
+          'print_i64' => -> stack { stack.pop(1) },
+          'print_f32' => -> stack { stack.pop(1) },
+          'print_f64' => -> stack { stack.pop(1) },
+          'print_i32_f32' => -> stack { stack.pop(2) },
+          'print_f64_f64' => -> stack { stack.pop(2) }
         }
       }
       self.stack = []
