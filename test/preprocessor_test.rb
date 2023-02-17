@@ -112,3 +112,23 @@ if actual == expected
 else
   raise actual.inspect unless actual == expected
 end
+
+input = [
+  ['module',
+   ['func', %w[export "i32.test1"], %w[export "i32.test2"], %w[export "i32.test3"], %w[import "mymodule" "bad_dude"], %w[result i32]]
+  ]
+]
+expected = [
+  ['module',
+    [*%w[export "i32.test1"], %w[func $__fresh_0]],
+    [*%w[export "i32.test2"], %w[func $__fresh_0]],
+    [*%w[export "i32.test3"], %w[func $__fresh_0]],
+    [*%w[import "mymodule" "bad_dude"], [*%w[func $__fresh_0], %w[result i32]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
