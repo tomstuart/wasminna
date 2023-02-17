@@ -758,18 +758,26 @@ module Wasminna
         Const.new(type:, bits:, number:)
       in 'load' | 'load8_s' | 'load8_u' | 'load16_s' | 'load16_u' | 'load32_s' | 'load32_u' | 'store' | 'store8' | 'store16' | 'store32'
         offset =
-          if peek in %r{\Aoffset=\d+\z}
-            read => %r{\Aoffset=\d+\z} => offset
+          if peek in %r{\Aoffset=(?:\d+|0x\h+)\z}
+            read => %r{\Aoffset=(?:\d+|0x\h+)\z} => offset
             offset.split('=') => [_, offset]
-            offset.to_i(10)
+            if offset.start_with?('0x')
+              offset.to_i(16)
+            else
+              offset.to_i(10)
+            end
           else
             0
           end
         align =
-          if peek in %r{\Aalign=\d+\z}
-            read => %r{\Aalign=\d+\z} => align
+          if peek in %r{\Aalign=(?:\d+|0x\h+)\z}
+            read => %r{\Aalign=(?:\d+|0x\h+)\z} => align
             align.split('=') => [_, align]
-            align.to_i(10)
+            if align.start_with?('0x')
+              align.to_i(16)
+            else
+              align.to_i(10)
+            end
           else
             0
           end
