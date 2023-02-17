@@ -1,5 +1,9 @@
 module Wasminna
   class Preprocessor
+    def initialize
+      self.fresh_id = 0
+    end
+
     def process_script(s_expression)
       s_expression.map do |command|
         process_command(command)
@@ -7,6 +11,8 @@ module Wasminna
     end
 
     private
+
+    attr_accessor :fresh_id
 
     def process_command(command)
       case command.first
@@ -32,6 +38,14 @@ module Wasminna
         [['import', module_name, name, [kind, id, *description]]]
       in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
         [['import', module_name, name, [kind, *description]]]
+      in ['func', ['export', name], *rest]
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+
+        [
+          ['export', name, ['func', id]],
+          ['func', id, *rest]
+        ]
       else
         [field]
       end
