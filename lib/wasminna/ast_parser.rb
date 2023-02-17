@@ -317,11 +317,6 @@ module Wasminna
         read => ID_REGEXP
       end
 
-      exported_names = []
-      while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { parse_string }
-      end
-
       parse_typeuse => [type_index, parameter_names]
       local_names, locals = unzip_pairs(parse_locals)
       locals_context = Context.new(locals: parameter_names + local_names)
@@ -333,7 +328,7 @@ module Wasminna
         end
       self.context = context.with(typedefs: updated_typedefs)
 
-      Function.new(exported_names:, type_index:, locals:, body:)
+      Function.new(exported_names: [], type_index:, locals:, body:)
     end
 
     def parse_typeuse
@@ -388,11 +383,6 @@ module Wasminna
       read => 'memory'
       if peek in ID_REGEXP
         read => ID_REGEXP
-      end
-
-      exported_names = []
-      while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       if can_read_list?(starting_with: 'data')
@@ -454,11 +444,6 @@ module Wasminna
         read => ID_REGEXP => name
       end
 
-      exported_names = []
-      while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { parse_string }
-      end
-
       if peek in UNSIGNED_INTEGER_REGEXP
         minimum_size, maximum_size, reftype = parse_tabletype
       else
@@ -466,7 +451,7 @@ module Wasminna
         elements = parse_table_element
       end
 
-      Table.new(name:, exported_names:, minimum_size:, maximum_size:, elements:)
+      Table.new(name:, exported_names: [], minimum_size:, maximum_size:, elements:)
     end
 
     def parse_tabletype
@@ -508,11 +493,6 @@ module Wasminna
       read => 'global'
       if peek in ID_REGEXP
         read => ID_REGEXP
-      end
-
-      exported_names = []
-      while can_read_list?(starting_with: 'export')
-        exported_names << read_list(starting_with: 'export') { parse_string }
       end
 
       parse_globaltype
