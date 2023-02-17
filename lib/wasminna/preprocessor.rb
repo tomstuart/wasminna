@@ -5,8 +5,11 @@ module Wasminna
     end
 
     def process_script(s_expression)
-      s_expression.map do |command|
-        process_command(command)
+      [].tap do |result|
+        until s_expression.empty?
+          command = s_expression.shift
+          result.push(process_command(command))
+        end
       end
     end
 
