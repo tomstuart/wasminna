@@ -333,7 +333,7 @@ module Wasminna
         end
       self.context = context.with(typedefs: updated_typedefs)
 
-      Function.new(exported_names:, import: nil, type_index:, locals:, body:)
+      Function.new(exported_names:, type_index:, locals:, body:)
     end
 
     def parse_typeuse
@@ -518,7 +518,7 @@ module Wasminna
       parse_globaltype
       value = parse_instructions
 
-      Global.new(import: nil, value:)
+      Global.new(value:)
     end
 
     def parse_globaltype
