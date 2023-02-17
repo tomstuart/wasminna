@@ -99,25 +99,7 @@ module Wasminna
         begin
           case command
           in AST::Module => mod
-            self.current_module = nil
-            name = mod.name
-            functions =
-              build_functions(imports: mod.imports, functions: mod.functions)
-            tables = build_tables(imports: mod.imports, tables: mod.tables)
-            types = mod.types
-            memory = build_memory(imports: mod.imports, memory: mod.memory)
-            globals = build_globals(imports: mod.imports, globals: mod.globals)
-            exports = build_exports(functions:, globals:, tables:, memories: [memory], exports: mod.exports)
-            datas = mod.datas
-            elements = mod.elements
-
-            self.modules <<
-              Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:, elements:)
-            self.current_module = modules.last
-            initialise_functions
-            initialise_globals(imports: mod.imports, globals: mod.globals)
-            initialise_memory(datas: mod.datas)
-            initialise_tables(tables: mod.tables, elements: mod.elements)
+            instantiate_module(mod)
           in Invoke(module_name:, name:, arguments:)
             mod = find_module(module_name)
             function = mod.exports.fetch(name)
@@ -194,6 +176,28 @@ module Wasminna
 
     def pretty_print(ast)
       ast.inspect
+    end
+
+    def instantiate_module(mod)
+      self.current_module = nil
+      name = mod.name
+      functions =
+        build_functions(imports: mod.imports, functions: mod.functions)
+      tables = build_tables(imports: mod.imports, tables: mod.tables)
+      types = mod.types
+      memory = build_memory(imports: mod.imports, memory: mod.memory)
+      globals = build_globals(imports: mod.imports, globals: mod.globals)
+      exports = build_exports(functions:, globals:, tables:, memories: [memory], exports: mod.exports)
+      datas = mod.datas
+      elements = mod.elements
+
+      self.modules <<
+        Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:, elements:)
+      self.current_module = modules.last
+      initialise_functions
+      initialise_globals(imports: mod.imports, globals: mod.globals)
+      initialise_memory(datas: mod.datas)
+      initialise_tables(tables: mod.tables, elements: mod.elements)
     end
 
     def build_functions(imports:, functions:)
