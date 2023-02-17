@@ -68,7 +68,7 @@ module Wasminna
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
     Global = Struct.new(:value)
-    Table = Data.define(:exported_names, :elements)
+    Table = Data.define(:elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas, :elements)
 
     def evaluate_script(script)
@@ -78,7 +78,7 @@ module Wasminna
         'spectest' => {
           'global_i32' => Global.new(value: 666),
           'global_i64' => Global.new(value: 666),
-          'table' => Table.new(exported_names: [], elements: Array.new(10)),
+          'table' => Table.new(elements: Array.new(10)),
           'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
           'print' => -> stack { },
           'print_i32' => -> stack { stack.pop(1) }
@@ -205,7 +205,7 @@ module Wasminna
 
       table_imports +
         tables.map do |table|
-          Table.new(exported_names: table.exported_names, elements: Array.new(table.minimum_size || table.elements.length))
+          Table.new(elements: Array.new(table.minimum_size || table.elements.length))
         end
     end
 
@@ -246,25 +246,6 @@ module Wasminna
 
     def build_exports(functions:, globals:, tables:, exports:)
       {}.tap do |result|
-        functions.each do |function|
-          case function
-          in Function
-            function.exported_names.each do |name|
-              result[name] = function
-            end
-          in Proc
-            # TODO remove when `functions` contains only runtime functions
-          end
-        end
-
-        # TODO use globals’ exported names
-
-        tables.each do |table|
-          table.exported_names.each do |name|
-            result[name] = table
-          end
-        end
-
         exports.each do |export|
           case export
           in { name:, kind: :func, index: }
