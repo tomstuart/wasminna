@@ -32,14 +32,10 @@ module Wasminna
 
     def process_field(field)
       case field
-      in ['func' | 'table' | 'memory' | 'global' => kind, *rest]
-        rest in [String => id, *rest]
-        case rest
-        in [['import', module_name, name], *description]
-          ['import', module_name, name, [kind, *id, *description]]
-        else
-          field
-        end
+      in ['func' | 'table' | 'memory' | 'global' => kind, String => id, ['import', module_name, name], *description]
+        ['import', module_name, name, [kind, id, *description]]
+      in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
+        ['import', module_name, name, [kind, *description]]
       else
         field
       end
