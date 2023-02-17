@@ -20,20 +20,20 @@ module Wasminna
     def process_module(mod)
       case mod
       in ['module', String => id, *fields]
-        ['module', id, *fields.map { process_field(_1) }]
+        ['module', id, *fields.flat_map { process_field(_1) }]
       in ['module', *fields]
-        ['module', *fields.map { process_field(_1) }]
+        ['module', *fields.flat_map { process_field(_1) }]
       end
     end
 
     def process_field(field)
       case field
       in ['func' | 'table' | 'memory' | 'global' => kind, String => id, ['import', module_name, name], *description]
-        ['import', module_name, name, [kind, id, *description]]
+        [['import', module_name, name, [kind, id, *description]]]
       in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
-        ['import', module_name, name, [kind, *description]]
+        [['import', module_name, name, [kind, *description]]]
       else
-        field
+        [field]
       end
     end
   end
