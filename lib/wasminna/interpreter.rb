@@ -67,6 +67,7 @@ module Wasminna
 
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
+    Function = Data.define(:definition)
     Global = Struct.new(:value)
     Table = Data.define(:elements)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas, :elements)
@@ -82,13 +83,13 @@ module Wasminna
           'global_f64' => Global.new(value: 666),
           'table' => Table.new(elements: Array.new(10)),
           'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
-          'print' => -> stack { },
-          'print_i32' => -> stack { stack.pop(1) },
-          'print_i64' => -> stack { stack.pop(1) },
-          'print_f32' => -> stack { stack.pop(1) },
-          'print_f64' => -> stack { stack.pop(1) },
-          'print_i32_f32' => -> stack { stack.pop(2) },
-          'print_f64_f64' => -> stack { stack.pop(2) }
+          'print' => Function.new(definition: -> stack { }),
+          'print_i32' => Function.new(definition: -> stack { stack.pop(1) }),
+          'print_i64' => Function.new(definition: -> stack { stack.pop(1) }),
+          'print_f32' => Function.new(definition: -> stack { stack.pop(1) }),
+          'print_f64' => Function.new(definition: -> stack { stack.pop(1) }),
+          'print_i32_f32' => Function.new(definition: -> stack { stack.pop(2) }),
+          'print_f64_f64' => Function.new(definition: -> stack { stack.pop(2) })
         }
       }
       self.stack = []
@@ -133,7 +134,7 @@ module Wasminna
               end
               mod = find_module(module_name)
               function = mod.exports.fetch(name)
-              type = mod.types.slice(function.type_index) || raise
+              type = mod.types.slice(function.definition.type_index) || raise
 
               evaluate_expression(arguments, locals: [])
               self.current_module = mod
@@ -199,7 +200,7 @@ module Wasminna
             exports.fetch(module_name).fetch(name)
           end
 
-      function_imports + functions
+      function_imports + functions.map { Function.new(definition: _1) }
     end
 
     def build_tables(imports:, tables:)
@@ -323,21 +324,23 @@ module Wasminna
     end
 
     def invoke_function(function)
-      case function
-      in Function
+      definition = function.definition
+
+      case definition
+      in AST::Function
         with_tags([]) do
-          type = current_module.types.slice(function.type_index) || raise
+          type = current_module.types.slice(definition.type_index) || raise
 
           as_block(type:) do
             argument_values = stack.pop(type.parameters.length)
-            locals = function.locals.map { 0 }
+            locals = definition.locals.map { 0 }
             locals = argument_values + locals
 
-            evaluate_expression(function.body, locals:)
+            evaluate_expression(definition.body, locals:)
           end
         end
       in Proc
-        function.call(stack)
+        definition.call(stack)
       end
     end
 
