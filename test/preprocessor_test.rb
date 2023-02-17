@@ -150,3 +150,45 @@ if actual == expected
 else
   raise actual.inspect unless actual == expected
 end
+
+input = [
+  %w[func],
+  %w[memory 0],
+  ['func', %w[export "f"]]
+]
+expected = [
+  ['module',
+    %w[func],
+    %w[memory 0],
+    [*%w[export "f"], %w[func $__fresh_0]],
+    %w[func $__fresh_0]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  %w[func],
+  %w[memory 0],
+  ['func', %w[export "f"]],
+  %w[invoke "f"]
+]
+expected = [
+  ['module',
+    %w[func],
+    %w[memory 0],
+    [*%w[export "f"], %w[func $__fresh_0]],
+    %w[func $__fresh_0]
+  ],
+  %w[invoke "f"]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end

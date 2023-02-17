@@ -7,7 +7,17 @@ module Wasminna
     def process_script(s_expression)
       [].tap do |result|
         until s_expression.empty?
-          command = s_expression.shift
+          inline_module = []
+          while s_expression in [['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *], *]
+            inline_module.push(s_expression.shift)
+          end
+
+          command =
+            if inline_module.empty?
+              s_expression.shift
+            else
+              ['module', *inline_module]
+            end
           result.push(process_command(command))
         end
       end
