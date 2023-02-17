@@ -171,6 +171,9 @@ module Wasminna
             end
 
             print "\e[32m.\e[0m"
+          in AssertTrap
+            # TODO
+            print "\e[33m.\e[0m"
           in SkippedAssertion
             # TODO
             print "\e[33m.\e[0m"

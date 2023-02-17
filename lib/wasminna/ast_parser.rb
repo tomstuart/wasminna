@@ -31,7 +31,9 @@ module Wasminna
           parse_invoke
         in 'assert_return'
           parse_assert_return
-        in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion' | 'assert_unlinkable'
+        in 'assert_trap'
+          parse_assert_trap
+        in 'assert_malformed' | 'assert_invalid' | 'assert_exhaustion' | 'assert_unlinkable'
           parse_unsupported_assertion
         in 'register'
           parse_register
@@ -212,6 +214,23 @@ module Wasminna
       expecteds = parse_expecteds
 
       AssertReturn.new(action:, expecteds:)
+    end
+
+    def parse_assert_trap
+      read => 'assert_trap'
+      action =
+        if can_read_list?(starting_with: 'invoke')
+          read_list { parse_invoke }
+        elsif can_read_list?(starting_with: 'get')
+          read_list { parse_get }
+        elsif can_read_list?(starting_with: 'module')
+          read_list { parse_module }
+        else
+          raise
+        end
+      failure = parse_string
+
+      AssertTrap.new(action:, failure:)
     end
 
     def parse_expecteds

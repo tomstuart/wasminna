@@ -54,5 +54,6 @@ module Wasminna
     ElemDrop = Data.define(:index)
     TableCopy = Data.define(:destination_index, :source_index)
     RefIsNull = Data.define
+    AssertTrap = Data.define(:action, :failure)
   end
 end
