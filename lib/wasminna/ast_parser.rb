@@ -115,6 +115,8 @@ module Wasminna
               imports << parse_import
             in 'elem'
               elements << parse_element
+            in 'start'
+              repeatedly { read } # TODO
             end
           end
         end
