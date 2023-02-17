@@ -31,7 +31,7 @@ module Wasminna
           parse_invoke
         in 'assert_return'
           parse_assert_return
-        in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion'
+        in 'assert_malformed' | 'assert_trap' | 'assert_invalid' | 'assert_exhaustion' | 'assert_unlinkable'
           parse_unsupported_assertion
         in 'register'
           parse_register
