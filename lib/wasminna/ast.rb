@@ -55,5 +55,6 @@ module Wasminna
     TableCopy = Data.define(:destination_index, :source_index)
     RefIsNull = Data.define
     AssertTrap = Data.define(:action, :failure)
+    TableFill = Data.define(:index)
   end
 end
