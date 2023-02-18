@@ -61,7 +61,7 @@ module Wasminna
       # TODO
       repeatedly { read }
 
-      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [] }
+      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [], start: nil }
     end
 
     Context = Data.define(:types, :functions, :tables, :mems, :globals, :elem, :data, :locals, :labels, :typedefs) do
@@ -86,8 +86,8 @@ module Wasminna
     end
 
     def parse_text_fields
-      functions, memory, tables, globals, datas, exports, imports, elements =
-        [], nil, [], [], [], [], [], []
+      functions, memory, tables, globals, datas, exports, imports, elements, start =
+        [], nil, [], [], [], [], [], [], nil
       initial_context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
@@ -116,12 +116,12 @@ module Wasminna
             in 'elem'
               elements << parse_element
             in 'start'
-              repeatedly { read } # TODO
+              start = parse_start
             end
           end
         end
 
-        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, elements:, types: context.typedefs }
+        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
       end
     end
 
@@ -631,6 +631,11 @@ module Wasminna
       index ||= 0 unless offset.nil?
 
       Element.new(index:, offset:, items:)
+    end
+
+    def parse_start
+      read => 'start'
+      parse_index(context.functions)
     end
 
     NUMERIC_OPCODE_REGEXP =
