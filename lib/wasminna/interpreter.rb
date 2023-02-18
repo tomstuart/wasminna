@@ -567,9 +567,7 @@ module Wasminna
         previous_size = table.elements.length
         maximum_size = table.maximum_size.nil? ? 2 ** 32 - 1 : table.maximum_size
         if previous_size + delta <= maximum_size
-          delta.times do
-            table.elements.push(value)
-          end
+          table.elements.concat(Array.new(delta, value))
           stack.push(previous_size)
         else
           stack.push(unsigned(-1, bits: 32))
