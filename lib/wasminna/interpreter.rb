@@ -555,6 +555,12 @@ module Wasminna
       in RefIsNull
         stack.pop(1) => [value]
         stack.push(value.nil? ? 1 : 0)
+      in TableFill(index:)
+        stack.pop(3) => [offset, value, length]
+        table = current_module.tables.slice(index)
+        length.times do |index|
+          table.elements[offset + index] = value
+        end
       end
     end
 
