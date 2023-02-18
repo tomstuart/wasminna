@@ -314,6 +314,7 @@ module Wasminna
         table_instance = current_module.tables.slice(element.index)
         evaluate_expression(element.offset, locals: [])
         stack.pop(1) => [offset]
+        raise if offset + element.items.length > table_instance.elements.length
 
         element.items.each.with_index do |item, item_index|
           evaluate_expression(item, locals: [])
