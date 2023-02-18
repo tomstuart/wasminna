@@ -69,7 +69,7 @@ module Wasminna
 
     Function = Struct.new(:definition, :module)
     Global = Struct.new(:value)
-    Table = Data.define(:elements)
+    Table = Data.define(:elements, :maximum_size)
     Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas, :elements)
 
     def evaluate_script(script)
@@ -81,7 +81,7 @@ module Wasminna
           'global_i64' => Global.new(value: 666),
           'global_f32' => Global.new(value: 666),
           'global_f64' => Global.new(value: 666),
-          'table' => Table.new(elements: Array.new(10)),
+          'table' => Table.new(elements: Array.new(10), maximum_size: 10),
           'memory' => Memory.from_limits(minimum_size: 1, maximum_size: 2),
           'print' => Function.new(definition: -> stack { }),
           'print_i32' => Function.new(definition: -> stack { stack.pop(1) }),
@@ -233,7 +233,7 @@ module Wasminna
 
       table_imports +
         tables.map do |table|
-          Table.new(elements: Array.new(table.minimum_size || table.elements.length))
+          Table.new(elements: Array.new(table.minimum_size || table.elements.length), maximum_size: table.maximum_size)
         end
     end
 
