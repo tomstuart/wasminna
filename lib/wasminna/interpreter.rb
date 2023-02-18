@@ -565,7 +565,8 @@ module Wasminna
         stack.pop(2) => [value, delta]
         table = current_module.tables.slice(index)
         previous_size = table.elements.length
-        if table.maximum_size.nil? || previous_size + delta <= table.maximum_size
+        maximum_size = table.maximum_size.nil? ? 2 ** 32 - 1 : table.maximum_size
+        if previous_size + delta <= maximum_size
           delta.times do
             table.elements.push(value)
           end
