@@ -561,6 +561,21 @@ module Wasminna
         length.times do |index|
           table.elements[offset + index] = value
         end
+      in TableGrow(index:)
+        stack.pop(2) => [value, delta]
+        table = current_module.tables.slice(index)
+        previous_size = table.elements.length
+        if table.maximum_size.nil? || previous_size + delta <= table.maximum_size
+          delta.times do
+            table.elements.push(value)
+          end
+          stack.push(previous_size)
+        else
+          stack.push(unsigned(-1, bits: 32))
+        end
+      in TableSize(index:)
+        table = current_module.tables.slice(index)
+        stack.push(table.elements.length)
       end
     end
 
