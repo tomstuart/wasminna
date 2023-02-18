@@ -206,6 +206,10 @@ module Wasminna
       initialise_globals(imports: mod.imports, globals: mod.globals)
       initialise_memory(datas: mod.datas)
       initialise_tables(tables: mod.tables, elements: mod.elements)
+
+      if mod.start
+        invoke_function(functions.slice(mod.start))
+      end
     end
 
     def build_functions(imports:, functions:)
