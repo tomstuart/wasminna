@@ -951,7 +951,7 @@ module Wasminna
           'data.drop' => DataDrop,
           'elem.drop' => ElemDrop
         }.fetch(opcode).new(index:)
-      in 'table.get' | 'table.set' | 'table.fill' => opcode
+      in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => opcode
         index =
           if peek in INDEX_REGEXP
             parse_index(context.tables)
@@ -962,7 +962,9 @@ module Wasminna
         {
           'table.get' => TableGet,
           'table.set' => TableSet,
-          'table.fill' => TableFill
+          'table.fill' => TableFill,
+          'table.grow' => TableGrow,
+          'table.size' => TableSize
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =

@@ -56,5 +56,7 @@ module Wasminna
     RefIsNull = Data.define
     AssertTrap = Data.define(:action, :failure)
     TableFill = Data.define(:index)
+    TableGrow = Data.define(:index)
+    TableSize = Data.define(:index)
   end
 end
