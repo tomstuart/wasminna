@@ -1,6 +1,7 @@
 #!/bin/sh
 
 set -e
+export RUBY_YJIT_ENABLE=1
 
 WASMINNA_PATH=$(dirname "$0")
 if [ -z "$WASM_SPEC_PATH" ]; then
