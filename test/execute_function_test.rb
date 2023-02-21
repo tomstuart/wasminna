@@ -23,10 +23,23 @@ mod = Wasminna.load(source)
 raise unless mod.dup(6) == [6, 6]
 print "\e[32m.\e[0m"
 
+source =
+  <<~eos
+    (module
+      (func (export "add") (param f32 f32) (result f32)
+        (f32.add (local.get 0) (local.get 1))
+      )
+    )
+  eos
+mod = Wasminna.load(source)
+raise unless mod.add(2.0, 3.0) == 5.0
+print "\e[32m.\e[0m"
+
 puts
 
 BEGIN {
   require 'wasminna/ast_parser'
+  require 'wasminna/float'
   require 'wasminna/interpreter'
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
@@ -47,6 +60,10 @@ BEGIN {
             type = mod.types.slice(function.definition.type_index)
             instance.define_singleton_method key do |*arguments|
               raise unless arguments.length == type.parameters.length
+              arguments =
+                arguments.zip(type.parameters).map do |value, type|
+                  Wasminna.to_webassembly_value(value, type:)
+                end
               interpreter.stack.push(*arguments)
               interpreter.send :invoke_function, function
 
@@ -54,13 +71,35 @@ BEGIN {
               when 0
                 nil
               when 1
-                interpreter.stack.pop
+                result = interpreter.stack.pop
+                Wasminna.from_webassembly_value(result, type: type.results.first)
               else
-                interpreter.stack.pop(type.results.length)
+                results = interpreter.stack.pop(type.results.length)
+                results.zip(type.results).map do |value, type|
+                  Wasminna.from_webassembly_value(value, type:)
+                end
               end
             end
           end
         end
+      end
+    end
+
+    def self.to_webassembly_value(value, type:)
+      case type
+      in 'i32'
+        value
+      in 'f32'
+        Float.from_float(value).encode(format: Float::Format::Single)
+      end
+    end
+
+    def self.from_webassembly_value(value, type:)
+      case type
+      in 'i32'
+        value
+      in 'f32'
+        Float.decode(value, format: Float::Format::Single).to_f
       end
     end
   end
