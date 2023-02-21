@@ -35,6 +35,18 @@ mod = Wasminna.load(source)
 raise unless mod.add(2.0, 3.0) == 5.0
 print "\e[32m.\e[0m"
 
+source =
+  <<~eos
+    (module
+      (func (export "add") (param i32 i32) (result i32)
+        (i32.add (local.get 0) (local.get 1))
+      )
+    )
+  eos
+mod = Wasminna.load(source)
+raise unless mod.add(-2, 3) == 1
+print "\e[32m.\e[0m"
+
 puts
 
 BEGIN {
@@ -89,7 +101,7 @@ BEGIN {
     def self.to_webassembly_value(value, type:)
       case type
       in 'i32'
-        value
+        Interpreter.new.send :unsigned, value, bits: 32
       in 'f32'
         Float.from_float(value).encode(format: Float::Format::Single)
       end
