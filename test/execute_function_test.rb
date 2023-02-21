@@ -6,7 +6,8 @@ source =
       )
     )
   eos
-raise unless execute(source, 'add', [2, 3]) == 5
+mod = Wasminna.load(source)
+raise unless mod.add(2, 3) == 5
 print "\e[32m.\e[0m"
 
 source =
@@ -18,7 +19,8 @@ source =
       )
     )
   eos
-raise unless execute(source, 'dup', [6]) == [6, 6]
+mod = Wasminna.load(source)
+raise unless mod.dup(6) == [6, 6]
 print "\e[32m.\e[0m"
 
 puts
@@ -29,26 +31,37 @@ BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
 
-  def execute(source, function_name, arguments)
-    s_expression = Wasminna::SExpressionParser.new.parse(source)
-    desugared_s_expression = Wasminna::Preprocessor.new.process_script(s_expression)
-    script = Wasminna::ASTParser.new.parse_script(desugared_s_expression)
-    interpreter = Wasminna::Interpreter.new
-    interpreter.evaluate_script(script)
-    mod = interpreter.modules.first
-    function = mod.exports.fetch(function_name)
-    type = mod.types.slice(function.definition.type_index)
+  module Wasminna
+    def self.load(source)
+      s_expression = SExpressionParser.new.parse(source)
+      desugared_s_expression = Preprocessor.new.process_script(s_expression)
+      script = ASTParser.new.parse_script(desugared_s_expression)
+      interpreter = Interpreter.new
+      interpreter.evaluate_script(script)
+      mod = interpreter.modules.first
 
-    interpreter.stack.push(*arguments)
-    interpreter.send :invoke_function, function
+      Object.new.tap do |instance|
+        mod.exports.each do |key, value|
+          if value.is_a?(Interpreter::Function)
+            function = value
+            type = mod.types.slice(function.definition.type_index)
+            instance.define_singleton_method key do |*arguments|
+              raise unless arguments.length == type.parameters.length
+              interpreter.stack.push(*arguments)
+              interpreter.send :invoke_function, function
 
-    case type.results.length
-    when 0
-      nil
-    when 1
-      interpreter.stack.pop
-    else
-      interpreter.stack.pop(type.results.length)
+              case type.results.length
+              when 0
+                nil
+              when 1
+                interpreter.stack.pop
+              else
+                interpreter.stack.pop(type.results.length)
+              end
+            end
+          end
+        end
+      end
     end
   end
 }
