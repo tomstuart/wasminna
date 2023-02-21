@@ -9,6 +9,18 @@ source =
 raise unless execute(source, 'add', [2, 3]) == 5
 print "\e[32m.\e[0m"
 
+source =
+  <<~eos
+    (module
+      (func (export "dup") (param i32) (result i32 i32)
+        local.get 0
+        local.get 0
+      )
+    )
+  eos
+raise unless execute(source, 'dup', [6]) == [6, 6]
+print "\e[32m.\e[0m"
+
 puts
 
 BEGIN {
@@ -25,9 +37,18 @@ BEGIN {
     interpreter.evaluate_script(script)
     mod = interpreter.modules.first
     function = mod.exports.fetch(function_name)
+    type = mod.types.slice(function.definition.type_index)
 
     interpreter.stack.push(*arguments)
     interpreter.send :invoke_function, function
-    interpreter.stack.pop
+
+    case type.results.length
+    when 0
+      nil
+    when 1
+      interpreter.stack.pop
+    else
+      interpreter.stack.pop(type.results.length)
+    end
   end
 }
