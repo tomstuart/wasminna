@@ -192,3 +192,5 @@ if actual == expected
 else
   raise actual.inspect unless actual == expected
 end
+
+puts
