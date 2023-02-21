@@ -9,7 +9,7 @@ if [ -z "$WASM_SPEC_PATH" ]; then
   printf "\e[33mno WASM_SPEC_PATH set, guessing %s\e[0m\n" "$WASM_SPEC_PATH"
 fi
 
-for test in s_expression_parser_test float_test preprocessor_test
+for test in s_expression_parser_test float_test preprocessor_test execute_function_test
 do
   file=$test.rb
   printf "\e[1m%s\e[0m: " "$file"
