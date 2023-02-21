@@ -66,18 +66,19 @@ BEGIN {
                 end
               interpreter.stack.push(*arguments)
               interpreter.send :invoke_function, function
+              results =
+                interpreter.stack.pop(type.results.length).
+                zip(type.results).map do |value, type|
+                  Wasminna.from_webassembly_value(value, type:)
+                end
 
-              case type.results.length
+              case results.length
               when 0
                 nil
               when 1
-                result = interpreter.stack.pop
-                Wasminna.from_webassembly_value(result, type: type.results.first)
+                results.first
               else
-                results = interpreter.stack.pop(type.results.length)
-                results.zip(type.results).map do |value, type|
-                  Wasminna.from_webassembly_value(value, type:)
-                end
+                results
               end
             end
           end
