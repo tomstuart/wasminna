@@ -336,11 +336,10 @@ module Wasminna
       read => 'local'
       if peek in ID_REGEXP
         read => ID_REGEXP => name
-        read => type
-        [[name, type]]
-      else
-        repeatedly { read }.map { |type| [nil, type] }
       end
+      read => type
+
+      [[name, type]]
     end
 
     def parse_function
