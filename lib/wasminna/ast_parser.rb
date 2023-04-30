@@ -295,11 +295,31 @@ module Wasminna
     end
 
     def parse_parameters(desugared:)
-      read_lists(starting_with: 'param') { parse_parameter(desugared:) }
+      if desugared
+        [].tap do |results|
+          while can_read_list?(starting_with: 'param')
+            read_list do
+              results.concat(parse_parameter(desugared:))
+            end
+          end
+        end
+      else
+        read_lists(starting_with: 'param') { parse_parameter(desugared:) }
+      end
     end
 
     def parse_results(desugared:)
-      read_lists(starting_with: 'result') { parse_result(desugared:) }
+      if desugared
+        [].tap do |results|
+          while can_read_list?(starting_with: 'result')
+            read_list do
+              results.concat(parse_result(desugared:))
+            end
+          end
+        end
+      else
+        read_lists(starting_with: 'result') { parse_result(desugared:) }
+      end
     end
 
     def parse_locals
