@@ -322,18 +322,31 @@ module Wasminna
 
     def parse_parameter(desugared:)
       read => 'param'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
+      if desugared
+        if peek in ID_REGEXP
+          read => ID_REGEXP => name
+        end
         read => type
+
         [[name, type]]
       else
-        repeatedly { read }.map { |type| [nil, type] }
+        if peek in ID_REGEXP
+          read => ID_REGEXP => name
+          read => type
+          [[name, type]]
+        else
+          repeatedly { read }.map { |type| [nil, type] }
+        end
       end
     end
 
     def parse_result(desugared:)
       read => 'result'
-      repeatedly { read }
+      if desugared
+        [read]
+      else
+        repeatedly { read }
+      end
     end
 
     def parse_local
