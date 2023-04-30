@@ -306,7 +306,7 @@ module Wasminna
       [].tap do |results|
         while can_read_list?(starting_with: 'local')
           read_list do
-            results.concat(parse_local)
+            results << parse_local
           end
         end
       end
@@ -345,7 +345,7 @@ module Wasminna
       end
       read => type
 
-      [[name, type]]
+      [name, type]
     end
 
     def parse_function
