@@ -95,11 +95,25 @@ module Wasminna
         end
 
         while definition in [['param', *], *]
-          typeuse.push(definition.shift)
+          param = definition.shift
+          case param
+          in ['param', ID_REGEXP => id, type]
+            typeuse.push(param)
+          in ['param', *types]
+            types.each do |type|
+              typeuse.push(['param', type])
+            end
+          end
         end
 
         while definition in [['result', *], *]
-          typeuse.push(definition.shift)
+          result = definition.shift
+          case result
+          in ['result', *types]
+            types.each do |type|
+              typeuse.push(['result', type])
+            end
+          end
         end
       end
     end
