@@ -303,7 +303,13 @@ module Wasminna
     end
 
     def parse_locals
-      read_lists(starting_with: 'local') { parse_local }
+      [].tap do |results|
+        while can_read_list?(starting_with: 'local')
+          read_list do
+            results.concat(parse_local)
+          end
+        end
+      end
     end
 
     def read_lists(starting_with:)
