@@ -295,42 +295,25 @@ module Wasminna
     end
 
     def parse_parameters(desugared:)
-      if desugared
-        [].tap do |results|
-          while can_read_list?(starting_with: 'param')
-            results << read_list { parse_parameter(desugared:) }
-          end
-        end
-      else
-        read_lists(starting_with: 'param') { parse_parameter(desugared:) }
-      end
+      read_lists(starting_with: 'param', desugared:) { parse_parameter(desugared:) }
     end
 
     def parse_results(desugared:)
-      if desugared
-        [].tap do |results|
-          while can_read_list?(starting_with: 'result')
-            results << read_list { parse_result(desugared:) }
-          end
-        end
-      else
-        read_lists(starting_with: 'result') { parse_result(desugared:) }
-      end
+      read_lists(starting_with: 'result', desugared:) { parse_result(desugared:) }
     end
 
     def parse_locals
-      [].tap do |results|
-        while can_read_list?(starting_with: 'local')
-          results << read_list { parse_local }
-        end
-      end
+      read_lists(starting_with: 'local', desugared: true) { parse_local }
     end
 
-    def read_lists(starting_with:)
+    def read_lists(starting_with:, desugared:)
       [].tap do |results|
         while can_read_list?(starting_with:)
-          read_list do
-            results.concat(yield)
+          result = read_list { yield }
+          if desugared
+            results << result
+          else
+            results.concat(result)
           end
         end
       end
