@@ -305,9 +305,7 @@ module Wasminna
     def parse_locals
       [].tap do |results|
         while can_read_list?(starting_with: 'local')
-          read_list do
-            results << parse_local
-          end
+          results << read_list { parse_local }
         end
       end
     end
