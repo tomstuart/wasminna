@@ -70,6 +70,8 @@ module Wasminna
         ]
       in ['func', *]
         [process_function(field)]
+      in ['type', *]
+        [process_type(field)]
       else
         [field]
       end
@@ -130,6 +132,30 @@ module Wasminna
               locals.push(['local', type])
             end
           end
+        end
+      end
+    end
+
+    def process_type(type)
+      case type
+      in ['type', ID_REGEXP => id, definition]
+        ['type', id, process_functype(definition)]
+      in ['type', definition]
+        ['type', process_functype(definition)]
+      end
+    end
+
+    def process_functype(definition)
+      [].tap do |functype|
+        definition.shift => 'func'
+        functype.push('func')
+
+        while definition in [['param', *], *]
+          functype.push(definition.shift)
+        end
+
+        while definition in [['result', *], *]
+          functype.push(definition.shift)
         end
       end
     end
