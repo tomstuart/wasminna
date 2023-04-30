@@ -42,7 +42,7 @@ module Wasminna
 
     def process_module(mod)
       case mod
-      in ['module', String => id, *fields]
+      in ['module', ID_REGEXP => id, *fields]
         ['module', id, *fields.flat_map { process_field(_1) }]
       in ['module', *fields]
         ['module', *fields.flat_map { process_field(_1) }]
@@ -51,11 +51,11 @@ module Wasminna
 
     def process_field(field)
       case field
-      in ['func' | 'table' | 'memory' | 'global' => kind, String => id, ['import', module_name, name], *description]
+      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['import', module_name, name], *description]
         [['import', module_name, name, [kind, id, *description]]]
       in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
         [['import', module_name, name, [kind, *description]]]
-      in ['func' | 'table' | 'memory' | 'global' => kind, String => id, ['export', name], *rest]
+      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['export', name], *rest]
         [
           ['export', name, [kind, id]],
           *process_field([kind, id, *rest])
@@ -77,7 +77,7 @@ module Wasminna
 
     def process_function(function)
       case function
-      in ['func', String => id, *definition]
+      in ['func', ID_REGEXP => id, *definition]
         typeuse = process_typeuse(definition)
         locals = process_locals(definition)
         ['func', id, *typeuse, *locals, *definition]
