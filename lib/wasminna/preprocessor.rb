@@ -66,8 +66,39 @@ module Wasminna
           ['export', name, [kind, id]],
           *process_field([kind, id, *rest])
         ]
+      in ['func', *]
+        [process_function(field)]
       else
         [field]
+      end
+    end
+
+    def process_function(function)
+      case function
+      in ['func', String => id, *definition]
+        typeuse = process_typeuse(definition)
+        locals = process_locals(definition)
+        ['func', id, *typeuse, *locals, *definition]
+      in ['func', *definition]
+        typeuse = process_typeuse(definition)
+        locals = process_locals(definition)
+        ['func', *typeuse, *locals, *definition]
+      end
+    end
+
+    def process_typeuse(definition)
+      [].tap do |typeuse|
+        while definition in [['type' | 'param' | 'result', *], *]
+          typeuse.push(definition.shift)
+        end
+      end
+    end
+
+    def process_locals(definition)
+      [].tap do |locals|
+        while definition in [['local', *], *]
+          locals.push(definition.shift)
+        end
       end
     end
 
