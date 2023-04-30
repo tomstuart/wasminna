@@ -135,8 +135,8 @@ module Wasminna
             end
             type =
               read_list(starting_with: 'func') do
-                _, parameters = unzip_pairs(parse_parameters(desugared: false))
-                results = parse_results(desugared: false)
+                _, parameters = unzip_pairs(parse_parameters(desugared: true))
+                results = parse_results(desugared: true)
                 Type.new(parameters:, results:)
               end
             Context.new(types: [name], typedefs: [type])
@@ -287,8 +287,8 @@ module Wasminna
 
       read_list do
         read => 'func'
-        _, parameters = unzip_pairs(parse_parameters(desugared: false))
-        results = parse_results(desugared: false)
+        _, parameters = unzip_pairs(parse_parameters(desugared: true))
+        results = parse_results(desugared: true)
 
         Type.new(parameters:, results:)
       end
