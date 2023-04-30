@@ -193,4 +193,21 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = [
+  ['module',
+    ['func', %w[result i32], %w[local i32 f64 funcref], ['return', %w[i32.const 0x0bAdD00D]]]
+  ]
+]
+expected = [
+  ['module',
+    ['func', %w[result i32], %w[local i32], %w[local f64], %w[local funcref], ['return', %w[i32.const 0x0bAdD00D]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts

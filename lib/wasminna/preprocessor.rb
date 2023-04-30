@@ -25,6 +25,8 @@ module Wasminna
 
     private
 
+    ID_REGEXP = %r{\A\$}
+
     attr_accessor :fresh_id
 
     def process_command(command)
@@ -97,7 +99,15 @@ module Wasminna
     def process_locals(definition)
       [].tap do |locals|
         while definition in [['local', *], *]
-          locals.push(definition.shift)
+          local = definition.shift
+          case local
+          in ['local', ID_REGEXP => id, type]
+            locals.push(local)
+          in ['local', *types]
+            types.each do |type|
+              locals.push(['local', type])
+            end
+          end
         end
       end
     end
