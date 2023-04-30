@@ -90,7 +90,15 @@ module Wasminna
 
     def process_typeuse(definition)
       [].tap do |typeuse|
-        while definition in [['type' | 'param' | 'result', *], *]
+        if definition in [['type', *], *]
+          typeuse.push(definition.shift)
+        end
+
+        while definition in [['param', *], *]
+          typeuse.push(definition.shift)
+        end
+
+        while definition in [['result', *], *]
           typeuse.push(definition.shift)
         end
       end
