@@ -298,9 +298,7 @@ module Wasminna
       if desugared
         [].tap do |results|
           while can_read_list?(starting_with: 'param')
-            read_list do
-              results << parse_parameter(desugared:)
-            end
+            results << read_list { parse_parameter(desugared:) }
           end
         end
       else
@@ -312,9 +310,7 @@ module Wasminna
       if desugared
         [].tap do |results|
           while can_read_list?(starting_with: 'result')
-            read_list do
-              results << parse_result(desugared:)
-            end
+            results << read_list { parse_result(desugared:) }
           end
         end
       else
