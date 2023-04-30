@@ -151,11 +151,25 @@ module Wasminna
         functype.push('func')
 
         while definition in [['param', *], *]
-          functype.push(definition.shift)
+          param = definition.shift
+          case param
+          in ['param', ID_REGEXP => id, type]
+            functype.push(param)
+          in ['param', *types]
+            types.each do |type|
+              functype.push(['param', type])
+            end
+          end
         end
 
         while definition in [['result', *], *]
-          functype.push(definition.shift)
+          result = definition.shift
+          case result
+          in ['result', *types]
+            types.each do |type|
+              functype.push(['result', type])
+            end
+          end
         end
       end
     end
