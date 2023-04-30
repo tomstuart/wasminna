@@ -299,7 +299,7 @@ module Wasminna
         [].tap do |results|
           while can_read_list?(starting_with: 'param')
             read_list do
-              results.concat(parse_parameter(desugared:))
+              results << parse_parameter(desugared:)
             end
           end
         end
@@ -313,7 +313,7 @@ module Wasminna
         [].tap do |results|
           while can_read_list?(starting_with: 'result')
             read_list do
-              results.concat(parse_result(desugared:))
+              results << parse_result(desugared:)
             end
           end
         end
@@ -348,7 +348,7 @@ module Wasminna
         end
         read => type
 
-        [[name, type]]
+        [name, type]
       else
         if peek in ID_REGEXP
           read => ID_REGEXP => name
@@ -363,7 +363,7 @@ module Wasminna
     def parse_result(desugared:)
       read => 'result'
       if desugared
-        [read]
+        read
       else
         repeatedly { read }
       end
