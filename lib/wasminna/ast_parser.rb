@@ -135,8 +135,8 @@ module Wasminna
             end
             type =
               read_list(starting_with: 'func') do
-                _, parameters = unzip_pairs(parse_parameters(desugared: true))
-                results = parse_results(desugared: true)
+                _, parameters = unzip_pairs(parse_parameters)
+                results = parse_results
                 Type.new(parameters:, results:)
               end
             Context.new(types: [name], typedefs: [type])
@@ -287,26 +287,26 @@ module Wasminna
 
       read_list do
         read => 'func'
-        _, parameters = unzip_pairs(parse_parameters(desugared: true))
-        results = parse_results(desugared: true)
+        _, parameters = unzip_pairs(parse_parameters)
+        results = parse_results
 
         Type.new(parameters:, results:)
       end
     end
 
-    def parse_parameters(desugared:)
-      read_lists(starting_with: 'param', desugared:) { parse_parameter(desugared:) }
+    def parse_parameters
+      read_lists(starting_with: 'param') { parse_parameter }
     end
 
-    def parse_results(desugared:)
-      read_lists(starting_with: 'result', desugared:) { parse_result(desugared:) }
+    def parse_results
+      read_lists(starting_with: 'result') { parse_result }
     end
 
     def parse_locals
-      read_lists(starting_with: 'local', desugared: true) { parse_local }
+      read_lists(starting_with: 'local') { parse_local }
     end
 
-    def read_lists(starting_with:, desugared:)
+    def read_lists(starting_with:)
       [].tap do |results|
         while can_read_list?(starting_with:)
           results << read_list { yield }
@@ -314,7 +314,7 @@ module Wasminna
       end
     end
 
-    def parse_parameter(desugared:)
+    def parse_parameter
       read => 'param'
       if peek in ID_REGEXP
         read => ID_REGEXP => name
@@ -324,7 +324,7 @@ module Wasminna
       [name, type]
     end
 
-    def parse_result(desugared:)
+    def parse_result
       read => 'result'
       read
     end
@@ -345,7 +345,7 @@ module Wasminna
         read => ID_REGEXP
       end
 
-      parse_typeuse(desugared: true) => [type_index, parameter_names]
+      parse_typeuse => [type_index, parameter_names]
       local_names, locals = unzip_pairs(parse_locals)
       locals_context = Context.new(locals: parameter_names + local_names)
       raise unless locals_context.well_formed?
@@ -359,12 +359,12 @@ module Wasminna
       Function.new(type_index:, locals:, body:)
     end
 
-    def parse_typeuse(desugared:)
+    def parse_typeuse
       if can_read_list?(starting_with: 'type')
         index = read_list(starting_with: 'type') { parse_index(context.types) }
       end
-      parameter_names, parameters = unzip_pairs(parse_parameters(desugared:))
-      results = parse_results(desugared:)
+      parameter_names, parameters = unzip_pairs(parse_parameters)
+      results = parse_results
 
       if index.nil?
         generated_type = Type.new(parameters:, results:)
@@ -570,7 +570,7 @@ module Wasminna
 
           case kind
           in 'func'
-            parse_typeuse(desugared: true) => [type_index, _]
+            parse_typeuse => [type_index, _]
             [:func, type_index]
           in 'global'
             [:global, parse_globaltype]
@@ -862,7 +862,7 @@ module Wasminna
     def parse_blocktype
       type_index, parameter_names, updated_typedefs =
         with_context(context) do
-          parse_typeuse(desugared: true) => [type_index, parameter_names]
+          parse_typeuse => [type_index, parameter_names]
           [type_index, parameter_names, context.typedefs]
         end
       raise unless parameter_names.all?(&:nil?)
