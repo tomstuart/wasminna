@@ -95,13 +95,13 @@ module Wasminna
     end
 
     def process_typeuse(definition)
-      [].tap do |typeuse|
-        if definition in [['type', *], *]
-          typeuse.push(definition.shift)
-        end
-        typeuse.concat(process_parameters(definition))
-        typeuse.concat(process_results(definition))
+      if definition in [['type', *], *]
+        type = [definition.shift]
       end
+      parameters = process_parameters(definition)
+      results = process_results(definition)
+
+      [*type, *parameters, *results]
     end
 
     def process_parameters(definition)
@@ -154,12 +154,11 @@ module Wasminna
     end
 
     def process_functype(definition)
-      [].tap do |functype|
-        definition.shift => 'func'
-        functype.push('func')
-        functype.concat(process_parameters(definition))
-        functype.concat(process_results(definition))
-      end
+      definition.shift => 'func'
+      parameters = process_parameters(definition)
+      results = process_results(definition)
+
+      ['func', *parameters, *results]
     end
 
     def process_import(import)
