@@ -295,24 +295,24 @@ module Wasminna
     end
 
     def parse_parameters
-      read_lists(starting_with: 'param') { parse_declaration(kind: 'param') }
+      parse_declarations(kind: 'param')
     end
 
     def parse_results
-      read_lists(starting_with: 'result') do
-        parse_declaration(kind: 'result') => [nil, type]
+      parse_declarations(kind: 'result').map do |result|
+        result => [nil, type]
         type
       end
     end
 
     def parse_locals
-      read_lists(starting_with: 'local') { parse_declaration(kind: 'local') }
+      parse_declarations(kind: 'local')
     end
 
-    def read_lists(starting_with:)
+    def parse_declarations(kind:)
       [].tap do |results|
-        while can_read_list?(starting_with:)
-          results << read_list { yield }
+        while can_read_list?(starting_with: kind)
+          results << read_list { parse_declaration(kind:) }
         end
       end
     end
