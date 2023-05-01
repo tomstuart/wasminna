@@ -72,6 +72,8 @@ module Wasminna
         [process_function(field)]
       in ['type', *]
         [process_type(field)]
+      in ['import', *]
+        [process_import(field)]
       else
         [field]
       end
@@ -171,6 +173,22 @@ module Wasminna
             end
           end
         end
+      end
+    end
+
+    def process_import(import)
+      import => ['import', module_name, name, descriptor]
+      ['import', module_name, name, process_import_descriptor(descriptor)]
+    end
+
+    def process_import_descriptor(descriptor)
+      case descriptor
+      in ['func', ID_REGEXP => id, *typeuse]
+        ['func', id, *typeuse]
+      in ['func', *typeuse]
+        ['func', *typeuse]
+      else
+        descriptor
       end
     end
 
