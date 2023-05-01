@@ -105,47 +105,28 @@ module Wasminna
     end
 
     def process_parameters(definition)
-      [].tap do |parameters|
-        while definition in [['param', *], *]
-          param = definition.shift
-          case param
-          in ['param', ID_REGEXP => id, type]
-            parameters.push(param)
-          in ['param', *types]
-            types.each do |type|
-              parameters.push(['param', type])
-            end
-          end
-        end
-      end
+      expand_anonymous_declarations(definition, kind: 'param')
     end
 
     def process_results(definition)
-      [].tap do |results|
-        while definition in [['result', *], *]
-          result = definition.shift
-          case result
-          in ['result', *types]
-            types.each do |type|
-              results.push(['result', type])
-            end
-          end
-        end
-      end
+      expand_anonymous_declarations(definition, kind: 'result')
     end
 
     def process_locals(definition)
-      [].tap do |locals|
-        while definition in [['local', *], *]
-          local = definition.shift
-          case local
-          in ['local', ID_REGEXP => id, type]
-            locals.push(local)
-          in ['local', *types]
-            types.each do |type|
-              locals.push(['local', type])
+      expand_anonymous_declarations(definition, kind: 'local')
+    end
+
+    def expand_anonymous_declarations(s_expression, kind:)
+      [].tap do |declarations|
+        while s_expression in [[^kind, *], *]
+          expanded_declarations =
+            case s_expression.shift
+            in [^kind, ID_REGEXP, _] => declaration
+              [declaration]
+            in [^kind, *types]
+              types.map { |type| [kind, type] }
             end
-          end
+          declarations.concat(expanded_declarations)
         end
       end
     end
