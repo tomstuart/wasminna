@@ -261,4 +261,56 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = [
+  ['module',
+    ['func',
+      ['block', %w[param i32 i32], %w[result i32 i32],
+        %w[i32 add], %w[i32.const 1]
+      ]
+    ]
+  ]
+]
+expected = [
+  ['module',
+    ['func',
+      ['block', %w[param i32], %w[param i32], %w[result i32], %w[result i32],
+        %w[i32 add], %w[i32.const 1]
+      ]
+    ]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+    ['func',
+      ['call_indirect',
+        %w[param i64], %w[param], %w[param f64 i32 i64],
+        %w[result f32 f64], %w[result i32]
+      ]
+    ]
+  ]
+]
+expected = [
+  ['module',
+    ['func',
+      ['call_indirect',
+        %w[param i64], %w[param f64], %w[param i32], %w[param i64],
+        %w[result f32], %w[result f64], %w[result i32]
+      ]
+    ]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts

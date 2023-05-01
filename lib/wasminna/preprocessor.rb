@@ -143,6 +143,8 @@ module Wasminna
     def process_instructions(instructions)
       instructions.flat_map do |instruction|
         case instruction
+        in ['param' | 'result' => kind, *types]
+          types.map { |type| [kind, type] }
         in [*]
           [process_instructions(instruction)]
         else
