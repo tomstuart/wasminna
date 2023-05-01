@@ -309,43 +309,24 @@ module Wasminna
     def read_lists(starting_with:, desugared:)
       [].tap do |results|
         while can_read_list?(starting_with:)
-          result = read_list { yield }
-          if desugared
-            results << result
-          else
-            results.concat(result)
-          end
+          results << read_list { yield }
         end
       end
     end
 
     def parse_parameter(desugared:)
       read => 'param'
-      if desugared
-        if peek in ID_REGEXP
-          read => ID_REGEXP => name
-        end
-        read => type
-
-        [name, type]
-      else
-        if peek in ID_REGEXP
-          read => ID_REGEXP => name
-          read => type
-          [[name, type]]
-        else
-          repeatedly { read }.map { |type| [nil, type] }
-        end
+      if peek in ID_REGEXP
+        read => ID_REGEXP => name
       end
+      read => type
+
+      [name, type]
     end
 
     def parse_result(desugared:)
       read => 'result'
-      if desugared
-        read
-      else
-        repeatedly { read }
-      end
+      read
     end
 
     def parse_local
