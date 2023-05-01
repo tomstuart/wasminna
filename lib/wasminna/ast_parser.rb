@@ -589,7 +589,7 @@ module Wasminna
 
           case kind
           in 'func'
-            parse_typeuse(desugared: false) => [type_index, _]
+            parse_typeuse(desugared: true) => [type_index, _]
             [:func, type_index]
           in 'global'
             [:global, parse_globaltype]
