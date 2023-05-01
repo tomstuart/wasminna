@@ -184,9 +184,9 @@ module Wasminna
     def process_import_descriptor(descriptor)
       case descriptor
       in ['func', ID_REGEXP => id, *typeuse]
-        ['func', id, *typeuse]
+        ['func', id, *process_typeuse(typeuse)]
       in ['func', *typeuse]
-        ['func', *typeuse]
+        ['func', *process_typeuse(typeuse)]
       else
         descriptor
       end

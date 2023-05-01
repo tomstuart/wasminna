@@ -244,4 +244,21 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = [
+  ['module',
+    ['import', 'a', 'b', ['func', %w[param i32 i64], %w[result f32 f64]]]
+  ]
+]
+expected = [
+  ['module',
+    ['import', 'a', 'b', ['func', %w[param i32], %w[param i64], %w[result f32], %w[result f64]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts
