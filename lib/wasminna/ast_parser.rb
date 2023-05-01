@@ -295,15 +295,18 @@ module Wasminna
     end
 
     def parse_parameters
-      read_lists(starting_with: 'param') { parse_parameter }
+      read_lists(starting_with: 'param') { parse_declaration(kind: 'param') }
     end
 
     def parse_results
-      read_lists(starting_with: 'result') { parse_result }
+      read_lists(starting_with: 'result') do
+        parse_declaration(kind: 'result') => [nil, type]
+        type
+      end
     end
 
     def parse_locals
-      read_lists(starting_with: 'local') { parse_local }
+      read_lists(starting_with: 'local') { parse_declaration(kind: 'local') }
     end
 
     def read_lists(starting_with:)
@@ -314,23 +317,8 @@ module Wasminna
       end
     end
 
-    def parse_parameter
-      read => 'param'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
-      read => type
-
-      [name, type]
-    end
-
-    def parse_result
-      read => 'result'
-      read
-    end
-
-    def parse_local
-      read => 'local'
+    def parse_declaration(kind:)
+      read => ^kind
       if peek in ID_REGEXP
         read => ID_REGEXP => name
       end
