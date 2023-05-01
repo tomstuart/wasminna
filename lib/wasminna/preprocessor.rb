@@ -99,25 +99,35 @@ module Wasminna
         if definition in [['type', *], *]
           typeuse.push(definition.shift)
         end
+        typeuse.concat(process_parameters(definition))
+        typeuse.concat(process_results(definition))
+      end
+    end
 
+    def process_parameters(definition)
+      [].tap do |parameters|
         while definition in [['param', *], *]
           param = definition.shift
           case param
           in ['param', ID_REGEXP => id, type]
-            typeuse.push(param)
+            parameters.push(param)
           in ['param', *types]
             types.each do |type|
-              typeuse.push(['param', type])
+              parameters.push(['param', type])
             end
           end
         end
+      end
+    end
 
+    def process_results(definition)
+      [].tap do |results|
         while definition in [['result', *], *]
           result = definition.shift
           case result
           in ['result', *types]
             types.each do |type|
-              typeuse.push(['result', type])
+              results.push(['result', type])
             end
           end
         end
@@ -166,28 +176,8 @@ module Wasminna
       [].tap do |functype|
         definition.shift => 'func'
         functype.push('func')
-
-        while definition in [['param', *], *]
-          param = definition.shift
-          case param
-          in ['param', ID_REGEXP => id, type]
-            functype.push(param)
-          in ['param', *types]
-            types.each do |type|
-              functype.push(['param', type])
-            end
-          end
-        end
-
-        while definition in [['result', *], *]
-          result = definition.shift
-          case result
-          in ['result', *types]
-            types.each do |type|
-              functype.push(['result', type])
-            end
-          end
-        end
+        functype.concat(process_parameters(definition))
+        functype.concat(process_results(definition))
       end
     end
 
