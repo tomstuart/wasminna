@@ -84,11 +84,13 @@ module Wasminna
       in ['func', ID_REGEXP => id, *definition]
         typeuse = process_typeuse(definition)
         locals = process_locals(definition)
-        ['func', id, *typeuse, *locals, *definition]
+        body = process_instructions(definition)
+        ['func', id, *typeuse, *locals, *body]
       in ['func', *definition]
         typeuse = process_typeuse(definition)
         locals = process_locals(definition)
-        ['func', *typeuse, *locals, *definition]
+        body = process_instructions(definition)
+        ['func', *typeuse, *locals, *body]
       end
     end
 
@@ -134,6 +136,17 @@ module Wasminna
               locals.push(['local', type])
             end
           end
+        end
+      end
+    end
+
+    def process_instructions(instructions)
+      instructions.flat_map do |instruction|
+        case instruction
+        in [*]
+          [process_instructions(instruction)]
+        else
+          [instruction]
         end
       end
     end
