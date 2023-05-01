@@ -881,7 +881,7 @@ module Wasminna
     def parse_blocktype
       type_index, parameter_names, updated_typedefs =
         with_context(context) do
-          parse_typeuse(desugared: false) => [type_index, parameter_names]
+          parse_typeuse(desugared: true) => [type_index, parameter_names]
           [type_index, parameter_names, context.typedefs]
         end
       raise unless parameter_names.all?(&:nil?)
