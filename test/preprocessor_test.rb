@@ -193,4 +193,124 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = [
+  ['module',
+    ['func', %w[result i32], %w[local i32 f64 funcref], ['return', %w[i32.const 0x0bAdD00D]]]
+  ]
+]
+expected = [
+  ['module',
+    ['func', %w[result i32], %w[local i32], %w[local f64], %w[local funcref], ['return', %w[i32.const 0x0bAdD00D]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+   ['func', %w[param i32 i64], %w[result i64 i32], %w[i64.const 1], %w[i32.const 2]]
+  ]
+]
+expected = [
+  ['module',
+   ['func', %w[param i32], %w[param i64], %w[result i64], %w[result i32], %w[i64.const 1], %w[i32.const 2]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+    ['type', ['func', %w[param i32 i64], %w[result f32 f64]]]
+  ]
+]
+expected = [
+  ['module',
+    ['type', ['func', %w[param i32], %w[param i64], %w[result f32], %w[result f64]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+    ['import', 'a', 'b', ['func', %w[param i32 i64], %w[result f32 f64]]]
+  ]
+]
+expected = [
+  ['module',
+    ['import', 'a', 'b', ['func', %w[param i32], %w[param i64], %w[result f32], %w[result f64]]]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+    ['func',
+      ['block', %w[param i32 i32], %w[result i32 i32],
+        %w[i32 add], %w[i32.const 1]
+      ]
+    ]
+  ]
+]
+expected = [
+  ['module',
+    ['func',
+      ['block', %w[param i32], %w[param i32], %w[result i32], %w[result i32],
+        %w[i32 add], %w[i32.const 1]
+      ]
+    ]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
+input = [
+  ['module',
+    ['func',
+      ['call_indirect',
+        %w[param i64], %w[param], %w[param f64 i32 i64],
+        %w[result f32 f64], %w[result i32]
+      ]
+    ]
+  ]
+]
+expected = [
+  ['module',
+    ['func',
+      ['call_indirect',
+        %w[param i64], %w[param f64], %w[param i32], %w[param i64],
+        %w[result f32], %w[result f64], %w[result i32]
+      ]
+    ]
+  ]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts
