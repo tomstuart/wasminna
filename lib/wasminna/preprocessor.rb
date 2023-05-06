@@ -112,28 +112,34 @@ module Wasminna
     end
 
     def process_parameters
-      expand_anonymous_declarations(s_expression, kind: 'param')
+      expand_anonymous_declarations(kind: 'param')
     end
 
     def process_results
-      expand_anonymous_declarations(s_expression, kind: 'result')
+      expand_anonymous_declarations(kind: 'result')
     end
 
     def process_locals
-      expand_anonymous_declarations(s_expression, kind: 'local')
+      expand_anonymous_declarations(kind: 'local')
     end
 
-    def expand_anonymous_declarations(s_expression, kind:)
+    def expand_anonymous_declarations(kind:)
       [].tap do |declarations|
-        while s_expression in [[^kind, *], *]
-          expanded_declarations =
-            case s_expression.shift
-            in [^kind, ID_REGEXP, _] => declaration
-              [declaration]
-            in [^kind, *types]
-              types.map { |type| [kind, type] }
+        while can_read_list?(starting_with: kind)
+          declarations.concat(
+            read_list(starting_with: kind) do
+              if peek in ID_REGEXP
+                read => ID_REGEXP => id
+                read => type
+                [[kind, id, type]]
+              else
+                repeatedly do
+                  read => type
+                  [kind, type]
+                end
+              end
             end
-          declarations.concat(expanded_declarations)
+          )
         end
       end
     end
