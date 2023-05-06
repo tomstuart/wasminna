@@ -57,33 +57,11 @@ module Wasminna
       case field
       in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
         read_list(from: field) do
-          read => 'func' | 'table' | 'memory' | 'global' => kind
-          if peek in ID_REGEXP
-            read => ID_REGEXP => id
-          end
-          read => ['import', module_name, name]
-          description = repeatedly { read }
-
-          [
-            ['import', module_name, name, [kind, *id, *description]]
-          ]
+          expand_inline_import
         end
       in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
         read_list(from: field) do
-          read => 'func' | 'table' | 'memory' | 'global' => kind
-          if peek in ID_REGEXP
-            read => ID_REGEXP => id
-          else
-            id = "$__fresh_#{fresh_id}" # TODO find a better way
-            self.fresh_id += 1
-          end
-          read => ['export', name]
-          rest = repeatedly { read }
-
-          [
-            ['export', name, [kind, id]],
-            *read_list(from: [[kind, id, *rest]]) { process_field(read) }
-          ]
+          expand_inline_export
         end
       in ['func', *]
         read_list(from: field) do
@@ -100,6 +78,36 @@ module Wasminna
       else
         [field]
       end
+    end
+
+    def expand_inline_import
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+      read => ['import', module_name, name]
+      description = repeatedly { read }
+
+      [
+        ['import', module_name, name, [kind, *id, *description]]
+      ]
+    end
+
+    def expand_inline_export
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      else
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+      end
+      read => ['export', name]
+      rest = repeatedly { read }
+
+      [
+        ['export', name, [kind, id]],
+        *read_list(from: [[kind, id, *rest]]) { process_field(read) }
+      ]
     end
 
     def process_function
