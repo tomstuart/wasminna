@@ -86,15 +86,19 @@ module Wasminna
     def process_function(function)
       case function
       in ['func', ID_REGEXP => id, *definition]
-        typeuse = process_typeuse(definition)
-        locals = process_locals(definition)
-        body = process_instructions(definition)
-        ['func', id, *typeuse, *locals, *body]
+        read_list(from: definition) do
+          typeuse = process_typeuse(definition)
+          locals = process_locals(definition)
+          body = process_instructions
+          ['func', id, *typeuse, *locals, *body]
+        end
       in ['func', *definition]
-        typeuse = process_typeuse(definition)
-        locals = process_locals(definition)
-        body = process_instructions(definition)
-        ['func', *typeuse, *locals, *body]
+        read_list(from: definition) do
+          typeuse = process_typeuse(definition)
+          locals = process_locals(definition)
+          body = process_instructions
+          ['func', *typeuse, *locals, *body]
+        end
       end
     end
 
@@ -135,27 +139,25 @@ module Wasminna
       end
     end
 
-    def process_instructions(instructions)
-      read_list(from: instructions) do
-        repeatedly do
-          if can_read_list?
-            read_list do
-              case peek
-              in 'param' | 'result'
-                read => 'param' | 'result' => kind
-                repeatedly do
-                  read => type
-                  [kind, type]
-                end
-              else
-                [process_instructions(s_expression)]
+    def process_instructions
+      repeatedly do
+        if can_read_list?
+          read_list do
+            case peek
+            in 'param' | 'result'
+              read => 'param' | 'result' => kind
+              repeatedly do
+                read => type
+                [kind, type]
               end
+            else
+              [process_instructions]
             end
-          else
-            [read]
           end
-        end.flatten(1)
-      end
+        else
+          [read]
+        end
+      end.flatten(1)
     end
 
     def process_type(type)
