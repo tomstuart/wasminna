@@ -1,5 +1,9 @@
+require 'wasminna/helpers'
+
 module Wasminna
   class Preprocessor
+    include Helpers::ReadFromSExpression
+
     def initialize
       self.fresh_id = 0
     end
@@ -27,7 +31,7 @@ module Wasminna
 
     ID_REGEXP = %r{\A\$}
 
-    attr_accessor :fresh_id
+    attr_accessor :fresh_id, :s_expression
 
     def process_command(command)
       case command.first
