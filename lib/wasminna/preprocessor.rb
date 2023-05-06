@@ -165,11 +165,13 @@ module Wasminna
     end
 
     def process_functype(definition)
-      definition.shift => 'func'
-      parameters = process_parameters(definition)
-      results = process_results(definition)
+      read_list(from: definition) do
+        read => 'func'
+        parameters = process_parameters(s_expression)
+        results = process_results(s_expression)
 
-      ['func', *parameters, *results]
+        ['func', *parameters, *results]
+      end
     end
 
     def process_import(import)
