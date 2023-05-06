@@ -86,19 +86,14 @@ module Wasminna
     def process_function(function)
       read_list(from: function) do
         read => 'func'
-
         if peek in ID_REGEXP
           read => ID_REGEXP => id
-          typeuse = process_typeuse
-          locals = process_locals(s_expression)
-          body = process_instructions
-          ['func', id, *typeuse, *locals, *body]
-        else
-          typeuse = process_typeuse
-          locals = process_locals(s_expression)
-          body = process_instructions
-          ['func', *typeuse, *locals, *body]
         end
+        typeuse = process_typeuse
+        locals = process_locals(s_expression)
+        body = process_instructions
+
+        ['func', *id, *typeuse, *locals, *body]
       end
     end
 
