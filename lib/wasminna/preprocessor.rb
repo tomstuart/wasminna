@@ -77,7 +77,9 @@ module Wasminna
           [process_function]
         end
       in ['type', *]
-        [process_type(field)]
+        read_list(from: field) do
+          [process_type]
+        end
       in ['import', *]
         [process_import(field)]
       else
@@ -155,16 +157,14 @@ module Wasminna
       end.flatten(1)
     end
 
-    def process_type(type)
-      read_list(from: type) do
-        read => 'type'
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
-        functype = read_list { process_functype }
-
-        ['type', *id, functype]
+    def process_type
+      read => 'type'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
       end
+      functype = read_list { process_functype }
+
+      ['type', *id, functype]
     end
 
     def process_functype
