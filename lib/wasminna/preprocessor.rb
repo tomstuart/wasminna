@@ -181,17 +181,20 @@ module Wasminna
     end
 
     def process_import_descriptor(descriptor)
-      case descriptor
-      in ['func', ID_REGEXP => id, *typeuse]
-        read_list(from: typeuse) do
-          ['func', id, *process_typeuse]
+      read_list(from: descriptor) do
+        case peek
+        when 'func'
+          read => 'func'
+
+          if peek in ID_REGEXP
+            read => ID_REGEXP => id
+            ['func', *id, *process_typeuse]
+          else
+            ['func', *process_typeuse]
+          end
+        else
+          repeatedly { read }
         end
-      in ['func', *typeuse]
-        read_list(from: typeuse) do
-          ['func', *process_typeuse]
-        end
-      else
-        descriptor
       end
     end
 
