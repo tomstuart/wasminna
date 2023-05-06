@@ -40,7 +40,9 @@ module Wasminna
           process_module
         end
       in 'assert_trap'
-        process_assert_trap(command)
+        read_list(from: command) do
+          process_assert_trap
+        end
       else
         command
       end
@@ -236,18 +238,16 @@ module Wasminna
       end
     end
 
-    def process_assert_trap(assertion)
-      read_list(from: assertion) do
-        read => 'assert_trap'
+    def process_assert_trap
+      read => 'assert_trap'
 
-        if can_read_list?(starting_with: 'module')
-          mod = read_list { process_module }
-          read => failure
+      if can_read_list?(starting_with: 'module')
+        mod = read_list { process_module }
+        read => failure
 
-          ['assert_trap', mod, failure]
-        else
-          ['assert_trap', *repeatedly { read }]
-        end
+        ['assert_trap', mod, failure]
+      else
+        ['assert_trap', *repeatedly { read }]
       end
     end
   end
