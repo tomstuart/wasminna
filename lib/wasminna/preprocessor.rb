@@ -73,7 +73,9 @@ module Wasminna
           *process_field([kind, id, *rest])
         ]
       in ['func', *]
-        [process_function(field)]
+        read_list(from: field) do
+          [process_function]
+        end
       in ['type', *]
         [process_type(field)]
       in ['import', *]
@@ -83,18 +85,16 @@ module Wasminna
       end
     end
 
-    def process_function(function)
-      read_list(from: function) do
-        read => 'func'
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
-        typeuse = process_typeuse
-        locals = process_locals(s_expression)
-        body = process_instructions
-
-        ['func', *id, *typeuse, *locals, *body]
+    def process_function
+      read => 'func'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
       end
+      typeuse = process_typeuse
+      locals = process_locals(s_expression)
+      body = process_instructions
+
+      ['func', *id, *typeuse, *locals, *body]
     end
 
     def process_typeuse
