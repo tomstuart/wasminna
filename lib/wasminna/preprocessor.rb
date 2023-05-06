@@ -177,22 +177,22 @@ module Wasminna
 
     def process_import(import)
       import => ['import', module_name, name, descriptor]
-      ['import', module_name, name, process_import_descriptor(descriptor)]
+      read_list(from: descriptor) do
+        ['import', module_name, name, process_import_descriptor]
+      end
     end
 
-    def process_import_descriptor(descriptor)
-      read_list(from: descriptor) do
-        case peek
-        when 'func'
-          read => 'func'
-          if peek in ID_REGEXP
-            read => ID_REGEXP => id
-          end
-
-          ['func', *id, *process_typeuse]
-        else
-          repeatedly { read }
+    def process_import_descriptor
+      case peek
+      when 'func'
+        read => 'func'
+        if peek in ID_REGEXP
+          read => ID_REGEXP => id
         end
+
+        ['func', *id, *process_typeuse]
+      else
+        repeatedly { read }
       end
     end
 
