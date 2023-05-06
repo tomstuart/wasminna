@@ -185,13 +185,11 @@ module Wasminna
         case peek
         when 'func'
           read => 'func'
-
           if peek in ID_REGEXP
             read => ID_REGEXP => id
-            ['func', *id, *process_typeuse]
-          else
-            ['func', *process_typeuse]
           end
+
+          ['func', *id, *process_typeuse]
         else
           repeatedly { read }
         end
