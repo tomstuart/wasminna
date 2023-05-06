@@ -237,13 +237,17 @@ module Wasminna
     end
 
     def process_assert_trap(assertion)
-      case assertion
-      in ['assert_trap', ['module', *] => mod, failure]
-        read_list(from: mod) do
-          ['assert_trap', process_module, failure]
+      read_list(from: assertion) do
+        read => 'assert_trap'
+
+        if can_read_list?(starting_with: 'module')
+          mod = read_list { process_module }
+          read => failure
+
+          ['assert_trap', mod, failure]
+        else
+          ['assert_trap', *repeatedly { read }]
         end
-      else
-        assertion
       end
     end
   end
