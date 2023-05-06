@@ -158,20 +158,22 @@ module Wasminna
     def process_type(type)
       case type
       in ['type', ID_REGEXP => id, definition]
-        ['type', id, process_functype(definition)]
+        read_list(from: definition) do
+          ['type', id, process_functype]
+        end
       in ['type', definition]
-        ['type', process_functype(definition)]
+        read_list(from: definition) do
+          ['type', process_functype]
+        end
       end
     end
 
-    def process_functype(definition)
-      read_list(from: definition) do
-        read => 'func'
-        parameters = process_parameters(s_expression)
-        results = process_results(s_expression)
+    def process_functype
+      read => 'func'
+      parameters = process_parameters(s_expression)
+      results = process_results(s_expression)
 
-        ['func', *parameters, *results]
-      end
+      ['func', *parameters, *results]
     end
 
     def process_import(import)
