@@ -81,7 +81,9 @@ module Wasminna
           [process_type]
         end
       in ['import', *]
-        [process_import(field)]
+        read_list(from: field) do
+          [process_import]
+        end
       else
         [field]
       end
@@ -175,15 +177,13 @@ module Wasminna
       ['func', *parameters, *results]
     end
 
-    def process_import(import)
-      read_list(from: import) do
-        read => 'import'
-        read => module_name
-        read => name
-        descriptor = read_list { process_import_descriptor }
+    def process_import
+      read => 'import'
+      read => module_name
+      read => name
+      descriptor = read_list { process_import_descriptor }
 
-        ['import', module_name, name, descriptor]
-      end
+      ['import', module_name, name, descriptor]
     end
 
     def process_import_descriptor
