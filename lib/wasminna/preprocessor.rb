@@ -55,23 +55,36 @@ module Wasminna
 
     def process_field(field)
       case field
-      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['import', module_name, name], *description]
-        [['import', module_name, name, [kind, id, *description]]]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
-        [['import', module_name, name, [kind, *description]]]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['export', name], *rest]
-        [
-          ['export', name, [kind, id]],
-          *process_field([kind, id, *rest])
-        ]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ['export', name], *rest]
-        id = "$__fresh_#{fresh_id}" # TODO find a better way
-        self.fresh_id += 1
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+        read_list(from: field) do
+          read => 'func' | 'table' | 'memory' | 'global' => kind
+          if peek in ID_REGEXP
+            read => ID_REGEXP => id
+          end
+          read => ['import', module_name, name]
+          description = repeatedly { read }
 
-        [
-          ['export', name, [kind, id]],
-          *process_field([kind, id, *rest])
-        ]
+          [
+            ['import', module_name, name, [kind, *id, *description]]
+          ]
+        end
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+        read_list(from: field) do
+          read => 'func' | 'table' | 'memory' | 'global' => kind
+          if peek in ID_REGEXP
+            read => ID_REGEXP => id
+          else
+            id = "$__fresh_#{fresh_id}" # TODO find a better way
+            self.fresh_id += 1
+          end
+          read => ['export', name]
+          rest = repeatedly { read }
+
+          [
+            ['export', name, [kind, id]],
+            *read_list(from: [[kind, id, *rest]]) { process_field(read) }
+          ]
+        end
       in ['func', *]
         read_list(from: field) do
           [process_function]
