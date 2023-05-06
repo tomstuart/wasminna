@@ -136,15 +136,25 @@ module Wasminna
     end
 
     def process_instructions(instructions)
-      instructions.flat_map do |instruction|
-        case instruction
-        in ['param' | 'result' => kind, *types]
-          types.map { |type| [kind, type] }
-        in [*]
-          [process_instructions(instruction)]
-        else
-          [instruction]
-        end
+      read_list(from: instructions) do
+        repeatedly do
+          if can_read_list?
+            read_list do
+              case peek
+              in 'param' | 'result'
+                read => 'param' | 'result' => kind
+                repeatedly do
+                  read => type
+                  [kind, type]
+                end
+              else
+                [process_instructions(s_expression)]
+              end
+            end
+          else
+            [read]
+          end
+        end.flatten(1)
       end
     end
 
