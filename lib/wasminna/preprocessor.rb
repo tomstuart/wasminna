@@ -36,7 +36,9 @@ module Wasminna
     def process_command(command)
       case command.first
       in 'module'
-        process_module(command)
+        read_list(from: command) do
+          process_module
+        end
       in 'assert_trap'
         process_assert_trap(command)
       else
@@ -44,16 +46,14 @@ module Wasminna
       end
     end
 
-    def process_module(mod)
-      read_list(from: mod) do
-        read => 'module'
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
-        fields = repeatedly { process_field }.flatten(1)
-
-        ['module', *id, *fields]
+    def process_module
+      read => 'module'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
       end
+      fields = repeatedly { process_field }.flatten(1)
+
+      ['module', *id, *fields]
     end
 
     def process_field
@@ -239,7 +239,9 @@ module Wasminna
     def process_assert_trap(assertion)
       case assertion
       in ['assert_trap', ['module', *] => mod, failure]
-        ['assert_trap', process_module(mod), failure]
+        read_list(from: mod) do
+          ['assert_trap', process_module, failure]
+        end
       else
         assertion
       end
