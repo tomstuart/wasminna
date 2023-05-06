@@ -64,22 +64,21 @@ module Wasminna
           read_list(from: field) do
             expand_inline_export
           end
-        in ['func', *]
-          read_list(from: field) do
-            [process_function]
-          end
-        in ['type', *]
-          read_list(from: field) do
-            [process_type]
-          end
-        in ['import', *]
-          read_list(from: field) do
-            [process_import]
-          end
         else
-          read_list(from: field) do
-            [repeatedly { read }]
-          end
+          [
+            read_list(from: field) do
+              case peek
+              in 'func'
+                process_function
+              in 'type'
+                process_type
+              in 'import'
+                process_import
+              else
+                repeatedly { read }
+              end
+            end
+          ]
         end
       else
         [field]
