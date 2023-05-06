@@ -22,7 +22,9 @@ module Wasminna
             else
               ['module', *inline_module]
             end
-          result.push(process_command(command))
+          read_list(from: command) do
+            result.push(process_command)
+          end
         end
       end
     end
@@ -33,16 +35,14 @@ module Wasminna
 
     attr_accessor :fresh_id, :s_expression
 
-    def process_command(command)
-      read_list(from: command) do
-        case peek
-        in 'module'
-          process_module
-        in 'assert_trap'
-          process_assert_trap
-        else
-          repeatedly { read }
-        end
+    def process_command
+      case peek
+      in 'module'
+        process_module
+      in 'assert_trap'
+        process_assert_trap
+      else
+        repeatedly { read }
       end
     end
 
