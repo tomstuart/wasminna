@@ -95,7 +95,7 @@ module Wasminna
         read => ID_REGEXP => id
       end
       typeuse = process_typeuse
-      locals = process_locals(s_expression)
+      locals = process_locals
       body = process_instructions
 
       ['func', *id, *typeuse, *locals, *body]
@@ -105,22 +105,22 @@ module Wasminna
       if can_read_list?(starting_with: 'type')
         type = [read]
       end
-      parameters = process_parameters(s_expression)
-      results = process_results(s_expression)
+      parameters = process_parameters
+      results = process_results
 
       [*type, *parameters, *results]
     end
 
-    def process_parameters(definition)
-      expand_anonymous_declarations(definition, kind: 'param')
+    def process_parameters
+      expand_anonymous_declarations(s_expression, kind: 'param')
     end
 
-    def process_results(definition)
-      expand_anonymous_declarations(definition, kind: 'result')
+    def process_results
+      expand_anonymous_declarations(s_expression, kind: 'result')
     end
 
-    def process_locals(definition)
-      expand_anonymous_declarations(definition, kind: 'local')
+    def process_locals
+      expand_anonymous_declarations(s_expression, kind: 'local')
     end
 
     def expand_anonymous_declarations(s_expression, kind:)
@@ -171,8 +171,8 @@ module Wasminna
 
     def process_functype
       read => 'func'
-      parameters = process_parameters(s_expression)
-      results = process_results(s_expression)
+      parameters = process_parameters
+      results = process_results
 
       ['func', *parameters, *results]
     end
