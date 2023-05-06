@@ -176,9 +176,13 @@ module Wasminna
     end
 
     def process_import(import)
-      import => ['import', module_name, name, descriptor]
-      read_list(from: descriptor) do
-        ['import', module_name, name, process_import_descriptor]
+      read_list(from: import) do
+        read => 'import'
+        read => module_name
+        read => name
+        descriptor = read_list { process_import_descriptor }
+
+        ['import', module_name, name, descriptor]
       end
     end
 
