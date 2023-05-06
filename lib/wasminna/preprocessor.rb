@@ -47,15 +47,12 @@ module Wasminna
     def process_module(mod)
       read_list(from: mod) do
         read => 'module'
-
         if peek in ID_REGEXP
           read => ID_REGEXP => id
-          fields = repeatedly { process_field }.flatten(1)
-          ['module', *id, *fields]
-        else
-          fields = repeatedly { process_field }.flatten(1)
-          ['module', *id, *fields]
         end
+        fields = repeatedly { process_field }.flatten(1)
+
+        ['module', *id, *fields]
       end
     end
 
