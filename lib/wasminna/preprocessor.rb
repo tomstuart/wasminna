@@ -34,17 +34,15 @@ module Wasminna
     attr_accessor :fresh_id, :s_expression
 
     def process_command(command)
-      case command.first
-      in 'module'
-        read_list(from: command) do
+      read_list(from: command) do
+        case peek
+        in 'module'
           process_module
-        end
-      in 'assert_trap'
-        read_list(from: command) do
+        in 'assert_trap'
           process_assert_trap
+        else
+          repeatedly { read }
         end
-      else
-        command
       end
     end
 
