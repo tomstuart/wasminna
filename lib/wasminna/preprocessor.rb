@@ -87,14 +87,14 @@ module Wasminna
       case function
       in ['func', ID_REGEXP => id, *definition]
         read_list(from: definition) do
-          typeuse = process_typeuse(definition)
+          typeuse = process_typeuse
           locals = process_locals(definition)
           body = process_instructions
           ['func', id, *typeuse, *locals, *body]
         end
       in ['func', *definition]
         read_list(from: definition) do
-          typeuse = process_typeuse(definition)
+          typeuse = process_typeuse
           locals = process_locals(definition)
           body = process_instructions
           ['func', *typeuse, *locals, *body]
@@ -102,12 +102,12 @@ module Wasminna
       end
     end
 
-    def process_typeuse(definition)
-      if definition in [['type', *], *]
-        type = [definition.shift]
+    def process_typeuse
+      if can_read_list?(starting_with: 'type')
+        type = [read]
       end
-      parameters = process_parameters(definition)
-      results = process_results(definition)
+      parameters = process_parameters(s_expression)
+      results = process_results(s_expression)
 
       [*type, *parameters, *results]
     end
@@ -185,9 +185,13 @@ module Wasminna
     def process_import_descriptor(descriptor)
       case descriptor
       in ['func', ID_REGEXP => id, *typeuse]
-        ['func', id, *process_typeuse(typeuse)]
+        read_list(from: typeuse) do
+          ['func', id, *process_typeuse]
+        end
       in ['func', *typeuse]
-        ['func', *process_typeuse(typeuse)]
+        read_list(from: typeuse) do
+          ['func', *process_typeuse]
+        end
       else
         descriptor
       end
