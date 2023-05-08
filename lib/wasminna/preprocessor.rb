@@ -11,18 +11,7 @@ module Wasminna
     def process_script(s_expression)
       read_list(from: s_expression) do
         repeatedly do
-          inline_module = []
-          while peek in ['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *]
-            inline_module.push(read)
-          end
-
-          command =
-            if inline_module.empty?
-              read
-            else
-              ['module', *inline_module]
-            end
-          read_list(from: command) do
+          read_list(from: read_command) do
             process_command
           end
         end
@@ -34,6 +23,29 @@ module Wasminna
     ID_REGEXP = %r{\A\$}
 
     attr_accessor :fresh_id, :s_expression
+
+    def read_command
+      if can_read_field?
+        expand_inline_module
+      else
+        read
+      end
+    end
+
+    def can_read_field?
+      peek in ['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *]
+    end
+
+    def expand_inline_module
+      fields =
+        [].tap do |fields|
+          while can_read_field?
+            fields.push(read)
+          end
+        end
+
+      ['module', *fields]
+    end
 
     def process_command
       case peek
