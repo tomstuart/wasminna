@@ -158,15 +158,12 @@ module Wasminna
     def process_type(type)
       read_list(from: type) do
         read => 'type'
-
         if peek in ID_REGEXP
           read => ID_REGEXP => id
-          functype = read_list { process_functype }
-          ['type', id, functype]
-        else
-          functype = read_list { process_functype }
-          ['type', functype]
         end
+        functype = read_list { process_functype }
+
+        ['type', *id, functype]
       end
     end
 
