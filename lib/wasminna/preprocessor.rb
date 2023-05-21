@@ -47,9 +47,13 @@ module Wasminna
     def process_module(mod)
       case mod
       in ['module', ID_REGEXP => id, *fields]
-        ['module', id, *fields.flat_map { process_field(_1) }]
+        read_list(from: fields) do
+          ['module', id, *repeatedly { process_field(read) }.flatten(1)]
+        end
       in ['module', *fields]
-        ['module', *fields.flat_map { process_field(_1) }]
+        read_list(from: fields) do
+          ['module', *repeatedly { process_field(read) }.flatten(1)]
+        end
       end
     end
 
