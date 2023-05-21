@@ -48,29 +48,29 @@ module Wasminna
       case mod
       in ['module', ID_REGEXP => id, *fields]
         read_list(from: fields) do
-          ['module', id, *repeatedly { process_field(read) }.flatten(1)]
+          ['module', id, *repeatedly { process_field }.flatten(1)]
         end
       in ['module', *fields]
         read_list(from: fields) do
-          ['module', *repeatedly { process_field(read) }.flatten(1)]
+          ['module', *repeatedly { process_field }.flatten(1)]
         end
       end
     end
 
-    def process_field(field)
-      if field in [*]
-        case field
+    def process_field
+      if can_read_list?
+        case peek
         in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-          read_list(from: field) do
+          read_list do
             expand_inline_import
           end
         in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-          read_list(from: field) do
+          read_list do
             expand_inline_export
           end
         else
           [
-            read_list(from: field) do
+            read_list do
               case peek
               in 'func'
                 process_function
@@ -85,7 +85,7 @@ module Wasminna
           ]
         end
       else
-        [field]
+        [read]
       end
     end
 
@@ -112,7 +112,7 @@ module Wasminna
       end
       read => ['export', name]
       field = [kind, id, *repeatedly { read }]
-      processed_field = read_list(from: [field]) { process_field(read) }
+      processed_field = read_list(from: [field]) { process_field }
 
       [
         ['export', name, [kind, id]],
