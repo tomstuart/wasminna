@@ -63,40 +63,42 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
-      fields = repeatedly { process_field }.flatten(1)
 
-      ['module', *id, *fields]
+      if peek in 'binary'
+        read => 'binary'
+        strings = repeatedly { read }
+        ['module', *id, 'binary', *strings]
+      else
+        fields = repeatedly { process_field }.flatten(1)
+        ['module', *id, *fields]
+      end
     end
 
     def process_field
-      if can_read_list?
-        case peek
-        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-          read_list do
-            expand_inline_import
-          end
-        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-          read_list do
-            expand_inline_export
-          end
-        else
-          [
-            read_list do
-              case peek
-              in 'func'
-                process_function
-              in 'type'
-                process_type
-              in 'import'
-                process_import
-              else
-                repeatedly { read }
-              end
-            end
-          ]
+      case peek
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+        read_list do
+          expand_inline_import
+        end
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+        read_list do
+          expand_inline_export
         end
       else
-        [read]
+        [
+          read_list do
+            case peek
+            in 'func'
+              process_function
+            in 'type'
+              process_type
+            in 'import'
+              process_import
+            else
+              repeatedly { read }
+            end
+          end
+        ]
       end
     end
 
