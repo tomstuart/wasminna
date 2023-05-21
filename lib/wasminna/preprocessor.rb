@@ -102,11 +102,12 @@ module Wasminna
         self.fresh_id += 1
       end
       read => ['export', name]
-      rest = repeatedly { read }
+      field = [kind, id, *repeatedly { read }]
+      processed_field = read_list(from: [field]) { process_field(read) }
 
       [
         ['export', name, [kind, id]],
-        *read_list(from: [[kind, id, *rest]]) { process_field(read) }
+        *processed_field
       ]
     end
 
