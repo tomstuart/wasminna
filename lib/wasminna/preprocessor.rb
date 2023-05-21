@@ -54,26 +54,32 @@ module Wasminna
     end
 
     def process_field(field)
-      case field
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-        read_list(from: field) do
-          expand_inline_import
-        end
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-        read_list(from: field) do
-          expand_inline_export
-        end
-      in ['func', *]
-        read_list(from: field) do
-          [process_function]
-        end
-      in ['type', *]
-        read_list(from: field) do
-          [process_type]
-        end
-      in ['import', *]
-        read_list(from: field) do
-          [process_import]
+      if field in [*]
+        case field
+        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+          read_list(from: field) do
+            expand_inline_import
+          end
+        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+          read_list(from: field) do
+            expand_inline_export
+          end
+        in ['func', *]
+          read_list(from: field) do
+            [process_function]
+          end
+        in ['type', *]
+          read_list(from: field) do
+            [process_type]
+          end
+        in ['import', *]
+          read_list(from: field) do
+            [process_import]
+          end
+        else
+          read_list(from: field) do
+            [repeatedly { read }]
+          end
         end
       else
         [field]
