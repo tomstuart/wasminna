@@ -1,24 +1,19 @@
+require 'wasminna/helpers'
+
 module Wasminna
   class Preprocessor
+    include Helpers::ReadFromSExpression
+
     def initialize
       self.fresh_id = 0
     end
 
     def process_script(s_expression)
-      [].tap do |result|
-        until s_expression.empty?
-          inline_module = []
-          while s_expression in [['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *], *]
-            inline_module.push(s_expression.shift)
+      read_list(from: s_expression) do
+        repeatedly do
+          read_list(from: read_command) do
+            process_command
           end
-
-          command =
-            if inline_module.empty?
-              s_expression.shift
-            else
-              ['module', *inline_module]
-            end
-          result.push(process_command(command))
         end
       end
     end
@@ -27,162 +22,244 @@ module Wasminna
 
     ID_REGEXP = %r{\A\$}
 
-    attr_accessor :fresh_id
+    attr_accessor :fresh_id, :s_expression
 
-    def process_command(command)
-      case command.first
-      in 'module'
-        process_module(command)
-      in 'assert_trap'
-        process_assert_trap(command)
+    def read_command
+      if can_read_field?
+        expand_inline_module
       else
-        command
+        read
       end
     end
 
-    def process_module(mod)
-      case mod
-      in ['module', ID_REGEXP => id, *fields]
-        ['module', id, *fields.flat_map { process_field(_1) }]
-      in ['module', *fields]
-        ['module', *fields.flat_map { process_field(_1) }]
+    def can_read_field?
+      peek in ['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *]
+    end
+
+    def expand_inline_module
+      fields =
+        [].tap do |fields|
+          while can_read_field?
+            fields.push(read)
+          end
+        end
+
+      ['module', *fields]
+    end
+
+    def process_command
+      case peek
+      in 'module'
+        process_module
+      in 'assert_trap'
+        process_assert_trap
+      else
+        repeatedly { read }
       end
     end
 
-    def process_field(field)
-      case field
-      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['import', module_name, name], *description]
-        [['import', module_name, name, [kind, id, *description]]]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ['import', module_name, name], *description]
-        [['import', module_name, name, [kind, *description]]]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ID_REGEXP => id, ['export', name], *rest]
+    def process_module
+      read => 'module'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if peek in 'binary'
+        read => 'binary'
+        strings = repeatedly { read }
+        ['module', *id, 'binary', *strings]
+      else
+        fields = repeatedly { process_field }.flatten(1)
+        ['module', *id, *fields]
+      end
+    end
+
+    def process_field
+      case peek
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+        read_list do
+          expand_inline_import
+        end
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+        read_list do
+          expand_inline_export
+        end
+      else
         [
-          ['export', name, [kind, id]],
-          *process_field([kind, id, *rest])
+          read_list do
+            case peek
+            in 'func'
+              process_function
+            in 'type'
+              process_type
+            in 'import'
+              process_import
+            else
+              repeatedly { read }
+            end
+          end
         ]
-      in ['func' | 'table' | 'memory' | 'global' => kind, ['export', name], *rest]
+      end
+    end
+
+    def expand_inline_import
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+      read => ['import', module_name, name]
+      description = repeatedly { read }
+
+      [
+        ['import', module_name, name, [kind, *id, *description]]
+      ]
+    end
+
+    def expand_inline_export
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      else
         id = "$__fresh_#{fresh_id}" # TODO find a better way
         self.fresh_id += 1
-
-        [
-          ['export', name, [kind, id]],
-          *process_field([kind, id, *rest])
-        ]
-      in ['func', *]
-        [process_function(field)]
-      in ['type', *]
-        [process_type(field)]
-      in ['import', *]
-        [process_import(field)]
-      else
-        [field]
       end
+      read => ['export', name]
+      field = [kind, id, *repeatedly { read }]
+      processed_field = read_list(from: [field]) { process_field }
+
+      [
+        ['export', name, [kind, id]],
+        *processed_field
+      ]
     end
 
-    def process_function(function)
-      case function
-      in ['func', ID_REGEXP => id, *definition]
-        typeuse = process_typeuse(definition)
-        locals = process_locals(definition)
-        body = process_instructions(definition)
-        ['func', id, *typeuse, *locals, *body]
-      in ['func', *definition]
-        typeuse = process_typeuse(definition)
-        locals = process_locals(definition)
-        body = process_instructions(definition)
-        ['func', *typeuse, *locals, *body]
+    def process_function
+      read => 'func'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
       end
+      typeuse = process_typeuse
+      locals = process_locals
+      body = process_instructions
+
+      ['func', *id, *typeuse, *locals, *body]
     end
 
-    def process_typeuse(definition)
-      if definition in [['type', *], *]
-        type = [definition.shift]
+    def process_typeuse
+      if can_read_list?(starting_with: 'type')
+        type = [read]
       end
-      parameters = process_parameters(definition)
-      results = process_results(definition)
+      parameters = process_parameters
+      results = process_results
 
       [*type, *parameters, *results]
     end
 
-    def process_parameters(definition)
-      expand_anonymous_declarations(definition, kind: 'param')
+    def process_parameters
+      expand_anonymous_declarations(kind: 'param')
     end
 
-    def process_results(definition)
-      expand_anonymous_declarations(definition, kind: 'result')
+    def process_results
+      expand_anonymous_declarations(kind: 'result')
     end
 
-    def process_locals(definition)
-      expand_anonymous_declarations(definition, kind: 'local')
+    def process_locals
+      expand_anonymous_declarations(kind: 'local')
     end
 
-    def expand_anonymous_declarations(s_expression, kind:)
+    def expand_anonymous_declarations(kind:)
       [].tap do |declarations|
-        while s_expression in [[^kind, *], *]
-          expanded_declarations =
-            case s_expression.shift
-            in [^kind, ID_REGEXP, _] => declaration
-              [declaration]
-            in [^kind, *types]
-              types.map { |type| [kind, type] }
+        while can_read_list?(starting_with: kind)
+          declarations.concat(
+            read_list(starting_with: kind) do
+              if peek in ID_REGEXP
+                read => ID_REGEXP => id
+                read => type
+                [[kind, id, type]]
+              else
+                repeatedly do
+                  read => type
+                  [kind, type]
+                end
+              end
             end
-          declarations.concat(expanded_declarations)
+          )
         end
       end
     end
 
-    def process_instructions(instructions)
-      instructions.flat_map do |instruction|
-        case instruction
-        in ['param' | 'result' => kind, *types]
-          types.map { |type| [kind, type] }
-        in [*]
-          [process_instructions(instruction)]
+    def process_instructions
+      repeatedly do
+        if can_read_list?
+          read_list do
+            case peek
+            in 'param' | 'result'
+              read => 'param' | 'result' => kind
+              repeatedly do
+                read => type
+                [kind, type]
+              end
+            else
+              [process_instructions]
+            end
+          end
         else
-          [instruction]
+          [read]
         end
-      end
+      end.flatten(1)
     end
 
-    def process_type(type)
-      case type
-      in ['type', ID_REGEXP => id, definition]
-        ['type', id, process_functype(definition)]
-      in ['type', definition]
-        ['type', process_functype(definition)]
+    def process_type
+      read => 'type'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
       end
+      functype = read_list { process_functype }
+
+      ['type', *id, functype]
     end
 
-    def process_functype(definition)
-      definition.shift => 'func'
-      parameters = process_parameters(definition)
-      results = process_results(definition)
+    def process_functype
+      read => 'func'
+      parameters = process_parameters
+      results = process_results
 
       ['func', *parameters, *results]
     end
 
-    def process_import(import)
-      import => ['import', module_name, name, descriptor]
-      ['import', module_name, name, process_import_descriptor(descriptor)]
+    def process_import
+      read => 'import'
+      read => module_name
+      read => name
+      descriptor = read_list { process_import_descriptor }
+
+      ['import', module_name, name, descriptor]
     end
 
-    def process_import_descriptor(descriptor)
-      case descriptor
-      in ['func', ID_REGEXP => id, *typeuse]
-        ['func', id, *process_typeuse(typeuse)]
-      in ['func', *typeuse]
-        ['func', *process_typeuse(typeuse)]
+    def process_import_descriptor
+      case peek
+      when 'func'
+        read => 'func'
+        if peek in ID_REGEXP
+          read => ID_REGEXP => id
+        end
+
+        ['func', *id, *process_typeuse]
       else
-        descriptor
+        repeatedly { read }
       end
     end
 
-    def process_assert_trap(assertion)
-      case assertion
-      in ['assert_trap', ['module', *] => mod, failure]
-        ['assert_trap', process_module(mod), failure]
+    def process_assert_trap
+      read => 'assert_trap'
+
+      if can_read_list?(starting_with: 'module')
+        mod = read_list { process_module }
+        read => failure
+
+        ['assert_trap', mod, failure]
       else
-        assertion
+        ['assert_trap', *repeatedly { read }]
       end
     end
   end

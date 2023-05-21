@@ -313,4 +313,17 @@ else
   raise actual.inspect unless actual == expected
 end
 
+input = [
+  %w[module $M2 binary "\00asm" "\01\00\00\00"]
+]
+expected = [
+  %w[module $M2 binary "\00asm" "\01\00\00\00"]
+]
+actual = Wasminna::Preprocessor.new.process_script(input)
+if actual == expected
+  print "\e[32m.\e[0m"
+else
+  raise actual.inspect unless actual == expected
+end
+
 puts
