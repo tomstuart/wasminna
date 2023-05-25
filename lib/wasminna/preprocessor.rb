@@ -119,7 +119,7 @@ module Wasminna
       end
       read => ['export', name]
       field = [kind, id, *repeatedly { read }]
-      processed_field = read_list(from: [field]) { read_list { process_field } }
+      processed_field = read_list(from: field) { process_field }
 
       [
         ['export', name, [kind, id]],
