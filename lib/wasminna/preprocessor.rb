@@ -69,32 +69,30 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = repeatedly { process_field }.flatten(1)
+        fields = repeatedly { read_list { process_field } }.flatten(1)
         ['module', *id, *fields]
       end
     end
 
     def process_field
-      read_list do
-        case s_expression
-        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-          expand_inline_import
-        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-          expand_inline_export
-        else
-          [
-            case peek
-            in 'func'
-              process_function
-            in 'type'
-              process_type
-            in 'import'
-              process_import
-            else
-              repeatedly { read }
-            end
-          ]
-        end
+      case s_expression
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+        expand_inline_import
+      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+        expand_inline_export
+      else
+        [
+          case peek
+          in 'func'
+            process_function
+          in 'type'
+            process_type
+          in 'import'
+            process_import
+          else
+            repeatedly { read }
+          end
+        ]
       end
     end
 
@@ -121,7 +119,7 @@ module Wasminna
       end
       read => ['export', name]
       field = [kind, id, *repeatedly { read }]
-      processed_field = read_list(from: [field]) { process_field }
+      processed_field = read_list(from: [field]) { read_list { process_field } }
 
       [
         ['export', name, [kind, id]],
