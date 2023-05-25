@@ -127,14 +127,14 @@ module Wasminna
     end
 
     def can_read_inline_import_export?
-      s_expression in [['import', _, _], *] | [['export', _], *]
+      peek in ['import', _, _] | ['export', _]
     end
 
     def expand_inline_import_export(**)
-      case s_expression
-      in [['import', _, _], *]
+      case peek
+      in ['import', _, _]
         expand_inline_import(**)
-      in [['export', _], *]
+      in ['export', _]
         expand_inline_export(**)
       end
     end
