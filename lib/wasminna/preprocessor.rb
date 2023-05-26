@@ -89,6 +89,8 @@ module Wasminna
         process_type_definition
       in 'import'
         process_import
+      in 'elem'
+        process_element_segment
       else
         [repeatedly { read }]
       end
@@ -310,6 +312,18 @@ module Wasminna
       else
         repeatedly { read }
       end
+    end
+
+    def process_element_segment
+      read => 'elem'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+      rest = repeatedly { read }
+
+      [
+        ['elem', *id, *rest]
+      ]
     end
 
     def process_assert_trap
