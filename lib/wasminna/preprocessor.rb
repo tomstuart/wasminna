@@ -341,6 +341,10 @@ module Wasminna
       offset = read_list { process_offset }
       element_list = process_element_list(func_optional: table_use.nil?)
 
+      if table_use.nil? && (element_list in ['funcref' | 'externref' | 'func', *])
+        table_use = [%w[table 0]]
+      end
+
       [
         ['elem', *id, *table_use, offset, *element_list]
       ]
