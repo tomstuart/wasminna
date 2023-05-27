@@ -396,12 +396,15 @@ module Wasminna
     end
 
     def process_element_expression
-      if peek in 'item'
-        read => 'item' => kind
-      end
-      instructions = process_instructions
+      instructions =
+        if peek in 'item'
+          read => 'item'
+          process_instructions
+        else
+          process_instruction
+        end
 
-      [*kind, *instructions]
+      ['item', *instructions]
     end
 
     def process_assert_trap
