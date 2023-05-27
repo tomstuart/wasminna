@@ -233,7 +233,7 @@ module Wasminna
 
       table_imports +
         tables.map do |table|
-          Table.new(elements: Array.new(table.minimum_size || table.elements.length), maximum_size: table.maximum_size)
+          Table.new(elements: Array.new(table.minimum_size), maximum_size: table.maximum_size)
         end
     end
 
