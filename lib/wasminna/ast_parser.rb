@@ -402,14 +402,9 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
+      parse_limits => [minimum_size, maximum_size]
 
-      if can_read_list?(starting_with: 'data')
-        string = read_list { parse_memory_data }
-      else
-        parse_limits => [minimum_size, maximum_size]
-      end
-
-      AST::Memory.new(string:, minimum_size:, maximum_size:)
+      AST::Memory.new(string: nil, minimum_size:, maximum_size:)
     end
 
     def parse_memory_data
