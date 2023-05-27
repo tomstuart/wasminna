@@ -205,7 +205,7 @@ module Wasminna
       initialise_functions
       initialise_globals(imports: mod.imports, globals: mod.globals)
       initialise_memory(datas: mod.datas)
-      initialise_tables(tables: mod.tables, elements: mod.elements)
+      initialise_tables(elements: mod.elements)
 
       if mod.start
         invoke_function(functions.slice(mod.start))
@@ -311,18 +311,7 @@ module Wasminna
       end
     end
 
-    def initialise_tables(tables:, elements:)
-      tables.each.with_index do |table, table_index|
-        next if table.elements.nil?
-
-        table_instance = current_module.tables.slice(table_index)
-        table.elements.each.with_index do |element, element_index|
-          evaluate_expression(element, locals: [])
-          stack.pop(1) => [value]
-          table_instance.elements[element_index] = value
-        end
-      end
-
+    def initialise_tables(elements:)
       elements.reject { _1.offset.nil? }.each do |element|
         table_instance = current_module.tables.slice(element.index)
         evaluate_expression(element.offset, locals: [])
