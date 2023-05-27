@@ -196,13 +196,9 @@ module Wasminna
         imported_memory
       in [], _
         unless memory.nil?
-          if memory.string.nil?
-            Memory.from_limits \
-              minimum_size: memory.minimum_size,
-              maximum_size: memory.maximum_size
-          else
-            Memory.from_string(string: memory.string)
-          end
+          Memory.from_limits \
+            minimum_size: memory.minimum_size,
+            maximum_size: memory.maximum_size
         end
       end
     end
