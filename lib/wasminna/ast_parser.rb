@@ -480,26 +480,6 @@ module Wasminna
       [minimum_size, maximum_size]
     end
 
-    def parse_table_element
-      read_list(starting_with: 'elem') do
-        if can_read_list?
-          repeatedly do
-            read_list do
-              case peek
-              in 'item'
-                read => 'item'
-                parse_instructions
-              else
-                [parse_instruction]
-              end
-            end
-          end
-        else
-          repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
-        end
-      end
-    end
-
     def parse_global
       read => 'global'
       if peek in ID_REGEXP
