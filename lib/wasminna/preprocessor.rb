@@ -335,15 +335,10 @@ module Wasminna
           [read]
         end
       offset = read_list { process_offset }
-      if peek in 'funcref' | 'externref'
-        read => 'funcref' | 'externref' => reftype
-      elsif !table_use.nil? || (peek in 'func')
-        read => 'func' => reftype
-      end
-      items = repeatedly { read }
+      element_list = process_element_list(func_optional: table_use.nil?)
 
       [
-        ['elem', *id, *table_use, offset, *reftype, *items]
+        ['elem', *id, *table_use, offset, *element_list]
       ]
     end
 
@@ -370,6 +365,17 @@ module Wasminna
       instructions = process_instructions
 
       [*kind, *instructions]
+    end
+
+    def process_element_list(func_optional:)
+      if peek in 'funcref' | 'externref'
+        read => 'funcref' | 'externref' => reftype
+      elsif !func_optional || (peek in 'func')
+        read => 'func' => reftype
+      end
+      items = repeatedly { read }
+
+      [*reftype, *items]
     end
 
     def process_assert_trap
