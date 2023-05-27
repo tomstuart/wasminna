@@ -407,11 +407,6 @@ module Wasminna
       AST::Memory.new(string: nil, minimum_size:, maximum_size:)
     end
 
-    def parse_memory_data
-      read => 'data'
-      repeatedly { parse_string }.join
-    end
-
     def parse_data
       read => 'data'
       if peek in ID_REGEXP
