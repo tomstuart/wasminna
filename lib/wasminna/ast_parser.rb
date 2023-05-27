@@ -460,15 +460,9 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => name
       end
+      minimum_size, maximum_size, reftype = parse_tabletype
 
-      if peek in UNSIGNED_INTEGER_REGEXP
-        minimum_size, maximum_size, reftype = parse_tabletype
-      else
-        read => 'funcref' | 'externref' => reftype
-        elements = parse_table_element
-      end
-
-      Table.new(name:, minimum_size:, maximum_size:, elements:)
+      Table.new(name:, minimum_size:, maximum_size:, elements: nil)
     end
 
     def parse_tabletype
