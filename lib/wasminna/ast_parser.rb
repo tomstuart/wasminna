@@ -462,7 +462,7 @@ module Wasminna
       end
       minimum_size, maximum_size, reftype = parse_tabletype
 
-      Table.new(name:, minimum_size:, maximum_size:, elements: nil)
+      Table.new(name:, minimum_size:, maximum_size:)
     end
 
     def parse_tabletype

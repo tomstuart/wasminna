@@ -26,7 +26,7 @@ module Wasminna
     GlobalGet = Data.define(:index)
     Function = Data.define(:type_index, :locals, :body)
     Memory = Data.define(:string, :minimum_size, :maximum_size)
-    Table = Data.define(:name, :minimum_size, :maximum_size, :elements)
+    Table = Data.define(:name, :minimum_size, :maximum_size)
     Global = Data.define(:value)
     Module = Data.define(:name, :functions, :memory, :tables, :globals, :types, :datas, :exports, :imports, :elements, :start)
     Invoke = Data.define(:module_name, :name, :arguments)
