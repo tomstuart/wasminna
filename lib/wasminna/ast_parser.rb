@@ -605,14 +605,8 @@ module Wasminna
         case reftype
         in 'funcref' | 'externref'
           repeatedly do
-            read_list do
-              case peek
-              in 'item'
-                read => 'item'
-                parse_instructions
-              else
-                [parse_instruction]
-              end
+            read_list(starting_with: 'item') do
+              parse_instructions
             end
           end
         in 'func'
