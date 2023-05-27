@@ -8,13 +8,6 @@ module Wasminna
     BYTES_PER_PAGE = 0x10000
     MAXIMUM_PAGES = 0x10000
 
-    def self.from_string(string:)
-      size_in_pages = size_of(string.bytesize, in: BYTES_PER_PAGE)
-      bytes = "\0" * (size_in_pages * BYTES_PER_PAGE)
-      bytes[0, string.length] = string
-      new(bytes:, maximum_size: nil)
-    end
-
     def self.from_limits(minimum_size:, maximum_size:)
       bytes = "\0" * (minimum_size * BYTES_PER_PAGE)
       maximum_size =
