@@ -590,12 +590,7 @@ module Wasminna
       elsif peek in 'declare'
         read => 'declare'
       end
-      reftype =
-        if peek in 'funcref' | 'externref'
-          read
-        else
-          raise
-        end
+      read => 'funcref' | 'externref' => reftype
       items =
         case reftype
         in 'funcref' | 'externref'
