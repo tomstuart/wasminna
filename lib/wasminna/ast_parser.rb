@@ -593,8 +593,6 @@ module Wasminna
       reftype =
         if peek in 'funcref' | 'externref'
           read
-        elsif index.nil?
-          'func'
         else
           raise
         end
