@@ -330,10 +330,14 @@ module Wasminna
     end
 
     def process_active_element_segment(id:)
+      table_use =
+        if can_read_list?(starting_with: 'table')
+          [read]
+        end
       rest = repeatedly { read }
 
       [
-        ['elem', *id, *rest]
+        ['elem', *id, *table_use, *rest]
       ]
     end
 
