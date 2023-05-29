@@ -140,9 +140,16 @@ module Wasminna
 
     def expand_inline_element_segment(id:)
       read => 'funcref' | 'externref' => reftype
-      items =
+      item_type, items =
         read_list(starting_with: 'elem') do
-          repeatedly { read }
+          item_type =
+            if can_read_list?
+              reftype
+            else
+              'func'
+            end
+          items = repeatedly { read }
+          [item_type, items]
         end
 
       [
