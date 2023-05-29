@@ -612,7 +612,6 @@ module Wasminna
         in 'func'
           repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
-      index ||= 0 unless offset.nil?
 
       Element.new(index:, offset:, items:)
     end
