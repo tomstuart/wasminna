@@ -319,6 +319,33 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
+
+      if can_read_list?
+        process_active_element_segment(id:)
+      elsif peek in 'declare'
+        process_declarative_element_segment(id:)
+      else
+        process_passive_element_segment(id:)
+      end
+    end
+
+    def process_active_element_segment(id:)
+      rest = repeatedly { read }
+
+      [
+        ['elem', *id, *rest]
+      ]
+    end
+
+    def process_declarative_element_segment(id:)
+      rest = repeatedly { read }
+
+      [
+        ['elem', *id, *rest]
+      ]
+    end
+
+    def process_passive_element_segment(id:)
       rest = repeatedly { read }
 
       [
