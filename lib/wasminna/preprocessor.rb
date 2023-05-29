@@ -335,10 +335,15 @@ module Wasminna
           [read]
         end
       offset = read_list { process_offset }
-      rest = repeatedly { read }
+      if peek in 'funcref' | 'externref'
+        read => 'funcref' | 'externref' => reftype
+      elsif !table_use.nil? || (peek in 'func')
+        read => 'func' => reftype
+      end
+      items = repeatedly { read }
 
       [
-        ['elem', *id, *table_use, offset, *rest]
+        ['elem', *id, *table_use, offset, *reftype, *items]
       ]
     end
 
