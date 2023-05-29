@@ -336,17 +336,17 @@ module Wasminna
     def process_active_element_segment(id:)
       table_use =
         if can_read_list?(starting_with: 'table')
-          [read]
+          read
         end
       offset = read_list { process_offset }
       element_list = process_element_list(func_optional: table_use.nil?)
 
       if table_use.nil?
-        table_use = [%w[table 0]]
+        table_use = %w[table 0]
       end
 
       [
-        ['elem', *id, *table_use, offset, *element_list]
+        ['elem', *id, table_use, offset, *element_list]
       ]
     end
 
