@@ -588,15 +588,9 @@ module Wasminna
           end
         end
       offset =
-        if !index.nil? || can_read_list?
-          read_list do
-            case peek
-            in 'offset'
-              read => 'offset'
-              parse_instructions
-            else
-              [parse_instruction]
-            end
+        if !index.nil? || can_read_list?(starting_with: 'offset')
+          read_list(starting_with: 'offset') do
+            parse_instructions
           end
         end
       reftype =
