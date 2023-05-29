@@ -334,10 +334,11 @@ module Wasminna
         if can_read_list?(starting_with: 'table')
           [read]
         end
+      offset = read_list { process_offset }
       rest = repeatedly { read }
 
       [
-        ['elem', *id, *table_use, *rest]
+        ['elem', *id, *table_use, offset, *rest]
       ]
     end
 
@@ -355,6 +356,10 @@ module Wasminna
       [
         ['elem', *id, *rest]
       ]
+    end
+
+    def process_offset
+      repeatedly { read }
     end
 
     def process_assert_trap
