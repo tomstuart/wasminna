@@ -152,9 +152,18 @@ module Wasminna
           [item_type, items]
         end
 
-      [
-        ['table', *id, reftype, ['elem', *items]]
-      ]
+      if id.nil?
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+      end
+      limit = items.length.to_s
+      expanded =
+        [
+          ['table', id, limit, limit, reftype],
+          ['elem', ['table', id], %w[i32.const 0], item_type, *items]
+        ]
+
+      read_list(from: expanded) { process_fields }
     end
 
     def process_memory_definition
