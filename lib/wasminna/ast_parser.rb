@@ -592,15 +592,10 @@ module Wasminna
       end
       read => 'funcref' | 'externref' => reftype
       items =
-        case reftype
-        in 'funcref' | 'externref'
-          repeatedly do
-            read_list(starting_with: 'item') do
-              parse_instructions
-            end
+        repeatedly do
+          read_list(starting_with: 'item') do
+            parse_instructions
           end
-        in 'func'
-          repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
 
       Element.new(index:, offset:, items:)
