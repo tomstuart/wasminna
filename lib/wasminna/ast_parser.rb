@@ -594,7 +594,7 @@ module Wasminna
           end
         end
       reftype =
-        if peek in 'funcref' | 'externref' | 'func'
+        if peek in 'funcref' | 'externref'
           read
         elsif index.nil?
           'func'
