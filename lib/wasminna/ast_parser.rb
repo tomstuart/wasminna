@@ -581,18 +581,16 @@ module Wasminna
       if peek in 'declare'
         read => 'declare'
       end
-      index =
-        if can_read_list?(starting_with: 'table')
+      if can_read_list?(starting_with: 'table')
+        index =
           read_list(starting_with: 'table') do
             parse_index(context.tables)
           end
-        end
-      offset =
-        if !index.nil? || can_read_list?(starting_with: 'offset')
+        offset =
           read_list(starting_with: 'offset') do
             parse_instructions
           end
-        end
+      end
       reftype =
         if peek in 'funcref' | 'externref'
           read
