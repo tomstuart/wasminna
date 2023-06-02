@@ -371,7 +371,7 @@ module Wasminna
     def process_element_list(func_optional:)
       if peek in 'funcref' | 'externref'
         read => 'funcref' | 'externref' => reftype
-        items = repeatedly { read }
+        items = process_element_expressions
       elsif !func_optional || (peek in 'func')
         read => 'func' => reftype
         items = repeatedly { read }
@@ -380,6 +380,16 @@ module Wasminna
       end
 
       [*reftype, *items]
+    end
+
+    def process_element_expressions
+      repeatedly do
+        read_list { process_element_expression }
+      end
+    end
+
+    def process_element_expression
+      repeatedly { read }
     end
 
     def process_assert_trap
