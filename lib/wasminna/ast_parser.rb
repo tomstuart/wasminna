@@ -578,9 +578,6 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      if peek in 'declare'
-        read => 'declare'
-      end
       if can_read_list?(starting_with: 'table')
         index =
           read_list(starting_with: 'table') do
@@ -590,6 +587,8 @@ module Wasminna
           read_list(starting_with: 'offset') do
             parse_instructions
           end
+      elsif peek in 'declare'
+        read => 'declare'
       end
       reftype =
         if peek in 'funcref' | 'externref'
