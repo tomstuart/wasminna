@@ -385,18 +385,16 @@ module Wasminna
         items = process_element_expressions
 
         [reftype, *items]
-      elsif !func_optional || (peek in 'func')
-        read => 'func'
+      else
+        if !func_optional || (peek in 'func')
+          read => 'func'
+        end
         items =
           read_list(from: process_function_indexes) do
             process_element_expressions
           end
 
         ['funcref', *items]
-      else
-        items = repeatedly { read }
-
-        [*items]
       end
     end
 
