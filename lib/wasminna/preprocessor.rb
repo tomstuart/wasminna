@@ -382,10 +382,13 @@ module Wasminna
 
         [reftype, *items]
       elsif !func_optional || (peek in 'func')
-        read => 'func' => reftype
-        items = repeatedly { read }
+        read => 'func'
+        items =
+          read_list(from: process_function_indexes) do
+            process_element_expressions
+          end
 
-        [reftype, *items]
+        ['funcref', *items]
       else
         items = repeatedly { read }
 
@@ -409,6 +412,10 @@ module Wasminna
         end
 
       ['item', *instructions]
+    end
+
+    def process_function_indexes
+      repeatedly { ['ref.func', read] }
     end
 
     def process_assert_trap
