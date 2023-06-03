@@ -379,14 +379,18 @@ module Wasminna
       if peek in 'funcref' | 'externref'
         read => 'funcref' | 'externref' => reftype
         items = process_element_expressions
+
+        [reftype, *items]
       elsif !func_optional || (peek in 'func')
         read => 'func' => reftype
         items = repeatedly { read }
+
+        [reftype, *items]
       else
         items = repeatedly { read }
-      end
 
-      [*reftype, *items]
+        [*items]
+      end
     end
 
     def process_element_expressions
