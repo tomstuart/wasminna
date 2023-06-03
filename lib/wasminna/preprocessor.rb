@@ -90,37 +90,6 @@ module Wasminna
       end
     end
 
-    def expand_inline_import
-      read => 'func' | 'table' | 'memory' | 'global' => kind
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
-      read => ['import', module_name, name]
-      description = repeatedly { read }
-
-      [
-        ['import', module_name, name, [kind, *id, *description]]
-      ]
-    end
-
-    def expand_inline_export
-      read => 'func' | 'table' | 'memory' | 'global' => kind
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      else
-        id = "$__fresh_#{fresh_id}" # TODO find a better way
-        self.fresh_id += 1
-      end
-      read => ['export', name]
-      expanded =
-        [
-          ['export', name, [kind, id]],
-          [kind, id, *repeatedly { read }]
-        ]
-
-      read_list(from: expanded) { process_fields }
-    end
-
     def process_function_definition
       case s_expression
       in ['func', ID_REGEXP, ['import', _, _], *] | ['func', ['import', _, _], *]
@@ -151,6 +120,37 @@ module Wasminna
       else
         [repeatedly { read }]
       end
+    end
+
+    def expand_inline_import
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+      read => ['import', module_name, name]
+      description = repeatedly { read }
+
+      [
+        ['import', module_name, name, [kind, *id, *description]]
+      ]
+    end
+
+    def expand_inline_export
+      read => 'func' | 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      else
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+      end
+      read => ['export', name]
+      expanded =
+        [
+          ['export', name, [kind, id]],
+          [kind, id, *repeatedly { read }]
+        ]
+
+      read_list(from: expanded) { process_fields }
     end
 
     def process_typeuse
