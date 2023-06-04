@@ -470,10 +470,14 @@ module Wasminna
     end
 
     def process_active_data_segment(id:)
+      memory_use =
+        if can_read_list?(starting_with: 'memory')
+          [read]
+        end
       rest = repeatedly { read }
 
       [
-        ['data', *id, *rest]
+        ['data', *id, *memory_use, *rest]
       ]
     end
 
