@@ -472,15 +472,15 @@ module Wasminna
     def process_active_data_segment(id:)
       memory_use =
         if can_read_list?(starting_with: 'memory')
-          [read]
+          read
         else
-          [%w[memory 0]]
+          %w[memory 0]
         end
       offset = read_list { process_offset }
       strings = repeatedly { read }
 
       [
-        ['data', *id, *memory_use, offset, *strings]
+        ['data', *id, memory_use, offset, *strings]
       ]
     end
 
