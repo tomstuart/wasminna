@@ -429,14 +429,8 @@ module Wasminna
           end
         end
         offset =
-          read_list do
-            case peek
-            in 'offset'
-              read => 'offset'
-              parse_instructions
-            else
-              [parse_instruction]
-            end
+          read_list(starting_with: 'offset') do
+            parse_instructions
           end
       end
       string = repeatedly { parse_string }.join
