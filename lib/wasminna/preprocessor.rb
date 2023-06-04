@@ -91,6 +91,8 @@ module Wasminna
         process_import
       in 'elem'
         process_element_segment
+      in 'data'
+        process_data_segment
       else
         [repeatedly { read }]
       end
@@ -452,6 +454,18 @@ module Wasminna
 
     def process_function_indexes
       repeatedly { ['ref.func', read] }
+    end
+
+    def process_data_segment
+      read => 'data'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+      rest = repeatedly { read }
+
+      [
+        ['data', *id, *rest]
+      ]
     end
 
     def process_assert_trap
