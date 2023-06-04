@@ -474,10 +474,11 @@ module Wasminna
         if can_read_list?(starting_with: 'memory')
           [read]
         end
-      rest = repeatedly { read }
+      offset = read_list { process_offset }
+      strings = repeatedly { read }
 
       [
-        ['data', *id, *memory_use, *rest]
+        ['data', *id, *memory_use, offset, *strings]
       ]
     end
 
