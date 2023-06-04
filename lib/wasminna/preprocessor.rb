@@ -473,6 +473,8 @@ module Wasminna
       memory_use =
         if can_read_list?(starting_with: 'memory')
           [read]
+        else
+          [%w[memory 0]]
         end
       offset = read_list { process_offset }
       strings = repeatedly { read }

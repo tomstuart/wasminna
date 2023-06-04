@@ -448,6 +448,16 @@ assert_preprocess <<'--', <<'--'
   )
 --
 
+assert_preprocess <<'--', <<'--'
+  (module
+    (data $d (offset i32.const 0) "hello" "world")
+  )
+--
+  (module
+    (data $d (memory 0) (offset i32.const 0) "hello" "world")
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
