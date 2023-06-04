@@ -461,6 +461,23 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
+
+      if can_read_list?
+        process_active_data_segment(id:)
+      else
+        process_passive_data_segment(id:)
+      end
+    end
+
+    def process_active_data_segment(id:)
+      rest = repeatedly { read }
+
+      [
+        ['data', *id, *rest]
+      ]
+    end
+
+    def process_passive_data_segment(id:)
       rest = repeatedly { read }
 
       [
