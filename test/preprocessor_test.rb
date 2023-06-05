@@ -290,6 +290,16 @@ assert_preprocess <<'--', <<'--'
   )
 --
 
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table $t) (i32.const 0) funcref (item ref.func $f))
+  )
+--
+  (module
+    (elem (table $t) (offset i32.const 0) funcref (item ref.func $f))
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

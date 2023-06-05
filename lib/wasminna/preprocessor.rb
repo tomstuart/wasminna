@@ -269,6 +269,10 @@ module Wasminna
       end.flatten(1)
     end
 
+    def process_instruction
+      process_instructions # TODO only process one instruction
+    end
+
     def process_type_definition
       read => 'type'
       if peek in ID_REGEXP
@@ -360,12 +364,15 @@ module Wasminna
     end
 
     def process_offset
-      if peek in 'offset'
-        read => 'offset' => kind
-      end
-      instructions = process_instructions
+      instructions =
+        if peek in 'offset'
+          read => 'offset'
+          process_instructions
+        else
+          process_instruction
+        end
 
-      [*kind, *instructions]
+      ['offset', *instructions]
     end
 
     def process_element_list(func_optional:)
