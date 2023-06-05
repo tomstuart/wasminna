@@ -256,6 +256,26 @@ assert_preprocess <<'--', <<'--'
   (module $M2 binary "\00asm" "\01\00\00\00")
 --
 
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table $t)
+      (offset
+        (call_indirect (param i32 i64) (result f32 f64))
+      )
+      funcref (item ref.func $f)
+    )
+  )
+--
+  (module
+    (elem (table $t)
+      (offset
+        (call_indirect (param i32) (param i64) (result f32) (result f64))
+      )
+      funcref (item ref.func $f)
+    )
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

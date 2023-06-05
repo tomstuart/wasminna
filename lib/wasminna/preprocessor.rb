@@ -359,7 +359,12 @@ module Wasminna
     end
 
     def process_offset
-      repeatedly { read }
+      if peek in 'offset'
+        read => 'offset' => kind
+      end
+      instructions = process_instructions
+
+      [*kind, *instructions]
     end
 
     def process_assert_trap
