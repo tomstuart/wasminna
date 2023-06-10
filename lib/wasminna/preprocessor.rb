@@ -77,9 +77,9 @@ module Wasminna
 
     def process_field
       case s_expression
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
+      in ['table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['table' | 'memory' | 'global', ['import', _, _], *]
         expand_inline_import
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
+      in ['table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['table' | 'memory' | 'global', ['export', _], *]
         expand_inline_export
       else
         case peek
