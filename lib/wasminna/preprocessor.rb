@@ -82,18 +82,16 @@ module Wasminna
       in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
         expand_inline_export
       else
-        [
-          case peek
-          in 'func'
-            process_function
-          in 'type'
-            process_type
-          in 'import'
-            process_import
-          else
-            repeatedly { read }
-          end
-        ]
+        case peek
+        in 'func'
+          process_function
+        in 'type'
+          process_type
+        in 'import'
+          process_import
+        else
+          [repeatedly { read }]
+        end
       end
     end
 
@@ -137,7 +135,9 @@ module Wasminna
       locals = process_locals
       body = process_instructions
 
-      ['func', *id, *typeuse, *locals, *body]
+      [
+        ['func', *id, *typeuse, *locals, *body]
+      ]
     end
 
     def process_typeuse
@@ -211,7 +211,9 @@ module Wasminna
       end
       functype = read_list { process_functype }
 
-      ['type', *id, functype]
+      [
+        ['type', *id, functype]
+      ]
     end
 
     def process_functype
@@ -228,7 +230,9 @@ module Wasminna
       read => name
       descriptor = read_list { process_import_descriptor }
 
-      ['import', module_name, name, descriptor]
+      [
+        ['import', module_name, name, descriptor]
+      ]
     end
 
     def process_import_descriptor
