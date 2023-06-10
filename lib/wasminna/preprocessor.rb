@@ -75,18 +75,14 @@ module Wasminna
     end
 
     def process_field
-      case peek
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-        read_list do
+      read_list do
+        case s_expression
+        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
           expand_inline_import
-        end
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-        read_list do
+        in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
           expand_inline_export
-        end
-      else
-        [
-          read_list do
+        else
+          [
             case peek
             in 'func'
               process_function
@@ -97,8 +93,8 @@ module Wasminna
             else
               repeatedly { read }
             end
-          end
-        ]
+          ]
+        end
       end
     end
 
