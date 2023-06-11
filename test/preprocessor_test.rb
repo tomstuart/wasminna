@@ -385,6 +385,18 @@ assert_preprocess_module_fields <<'--', <<'--'
   (data (memory $__fresh_0) (offset i32.const 0) "hello" "world")
 --
 
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
+  (global $g i32
+    (call_indirect (type $t) (param i32 i64) (result f32 f64))
+  )
+--
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
+  (global $g i32
+    (call_indirect (type $t) (param i32) (param i64) (result f32) (result f64))
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

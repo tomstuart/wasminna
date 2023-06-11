@@ -221,10 +221,11 @@ module Wasminna
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'global', id:)
       else
-        rest = repeatedly { read }
+        read => type
+        instructions = process_instructions
 
         [
-          ['global', *id, *rest]
+          ['global', *id, type, *instructions]
         ]
       end
     end
