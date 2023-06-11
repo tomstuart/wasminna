@@ -91,15 +91,14 @@ module Wasminna
     end
 
     def process_function_definition
+      read => 'func'
+
       case s_expression
-      in ['func', ID_REGEXP, ['import', _, _], *] | ['func', ['import', _, _], *]
-        read => 'func'
+      in [ID_REGEXP, ['import', _, _], *] | [['import', _, _], *]
         expand_inline_import(kind: 'func')
-      in ['func', ID_REGEXP, ['export', _], *] | ['func', ['export', _], *]
-        read => 'func'
+      in [ID_REGEXP, ['export', _], *] | [['export', _], *]
         expand_inline_export(kind: 'func')
       else
-        read => 'func'
         if peek in ID_REGEXP
           read => ID_REGEXP => id
         end
@@ -114,15 +113,19 @@ module Wasminna
     end
 
     def process_table_memory_global_definition
+      read => 'table' | 'memory' | 'global' => kind
+
       case s_expression
-      in ['table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['table' | 'memory' | 'global', ['import', _, _], *]
-        read => 'table' | 'memory' | 'global' => kind
+      in [ID_REGEXP, ['import', _, _], *] | [['import', _, _], *]
         expand_inline_import(kind:)
-      in ['table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['table' | 'memory' | 'global', ['export', _], *]
-        read => 'table' | 'memory' | 'global' => kind
+      in [ID_REGEXP, ['export', _], *] | [['export', _], *]
         expand_inline_export(kind:)
       else
-        [repeatedly { read }]
+        rest = repeatedly { read }
+
+        [
+          [kind, *rest]
+        ]
       end
     end
 
