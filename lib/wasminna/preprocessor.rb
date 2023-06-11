@@ -94,7 +94,10 @@ module Wasminna
       read => 'func'
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'func')
+        if peek in ID_REGEXP
+          read => ID_REGEXP => id
+        end
+        expand_inline_import_export(kind: 'func', id:)
       else
         if peek in ID_REGEXP
           read => ID_REGEXP => id
@@ -113,7 +116,10 @@ module Wasminna
       read => 'table' | 'memory' | 'global' => kind
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind:)
+        if peek in ID_REGEXP
+          read => ID_REGEXP => id
+        end
+        expand_inline_import_export(kind:, id:)
       else
         rest = repeatedly { read }
 
@@ -130,15 +136,11 @@ module Wasminna
     end
 
     def expand_inline_import_export(**)
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
-
       case s_expression
       in [['import', _, _], *]
-        expand_inline_import(**, id:)
+        expand_inline_import(**)
       in [['export', _], *]
-        expand_inline_export(**, id:)
+        expand_inline_export(**)
       end
     end
 
