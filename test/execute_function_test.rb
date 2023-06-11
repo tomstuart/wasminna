@@ -5,9 +5,7 @@ source = <<'--'
     )
   )
 --
-mod = Wasminna.load(source)
-raise unless mod.add(2, 3) == 5
-print "\e[32m.\e[0m"
+assert_execute source, :add, [2, 3], 5
 
 source = <<'--'
   (module
@@ -17,9 +15,7 @@ source = <<'--'
     )
   )
 --
-mod = Wasminna.load(source)
-raise unless mod.dup(6) == [6, 6]
-print "\e[32m.\e[0m"
+assert_execute source, :dup, 6, [6, 6]
 
 source = <<'--'
   (module
@@ -28,9 +24,7 @@ source = <<'--'
     )
   )
 --
-mod = Wasminna.load(source)
-raise unless mod.add(2.0, 3.0) == 5.0
-print "\e[32m.\e[0m"
+assert_execute source, :add, [2.0, 3.0], 5.0
 
 source = <<'--'
   (module
@@ -39,9 +33,7 @@ source = <<'--'
     )
   )
 --
-mod = Wasminna.load(source)
-raise unless mod.add(-2, 3) == 1
-print "\e[32m.\e[0m"
+assert_execute source, :add, [-2, 3], 1
 
 source = <<'--'
   (func $fac (export "fac") (param i64) (result i64)
@@ -81,12 +73,18 @@ source = <<'--'
     )
   )
 --
-mod = Wasminna.load(source)
-raise unless 10.times.map { mod.fac(_1) } == [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880]
-raise unless 10.times.map { mod.fib(_1) } == [1, 1, 2, 3, 5, 8, 13, 21, 34, 55]
-raise unless 10.times.map { mod.even(_1) } == [44, 99, 44, 99, 44, 99, 44, 99, 44, 99]
-raise unless 10.times.map { mod.odd(_1) } == [99, 44, 99, 44, 99, 44, 99, 44, 99, 44]
-print "\e[32m.\e[0m"
+[1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880].each.with_index do
+  assert_execute source, :fac, _2, _1
+end
+[1, 1, 2, 3, 5, 8, 13, 21, 34, 55].each.with_index do
+  assert_execute source, :fib, _2, _1
+end
+[44, 99, 44, 99, 44, 99, 44, 99, 44, 99].each.with_index do
+  assert_execute source, :even, _2, _1
+end
+[99, 44, 99, 44, 99, 44, 99, 44, 99, 44].each.with_index do
+  assert_execute source, :odd, _2, _1
+end
 
 BEGIN {
   require 'wasminna/ast_parser'
@@ -94,6 +92,17 @@ BEGIN {
   require 'wasminna/interpreter'
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
+
+  def assert_execute(source, function, arguments, expected)
+    mod = Wasminna.load(source)
+    actual = mod.send(function, *arguments)
+
+    if actual == expected
+      print "\e[32m.\e[0m"
+    else
+      raise "expected #{expected}, got #{actual}"
+    end
+  end
 
   module Wasminna
     def self.load(source)
