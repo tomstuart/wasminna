@@ -79,8 +79,12 @@ module Wasminna
       case peek
       in 'func'
         process_function_definition
-      in 'table' | 'memory' | 'global'
-        process_table_memory_global_definition
+      in 'table'
+        process_table_definition
+      in 'memory'
+        process_memory_definition
+      in 'global'
+        process_global_definition
       in 'type'
         process_type_definition
       in 'import'
@@ -109,19 +113,53 @@ module Wasminna
       end
     end
 
-    def process_table_memory_global_definition
-      read => 'table' | 'memory' | 'global' => kind
+    def process_table_definition
+      read => 'table'
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind:, id:)
+        expand_inline_import_export(kind: 'table', id:)
       else
         rest = repeatedly { read }
 
         [
-          [kind, *id, *rest]
+          ['table', *id, *rest]
+        ]
+      end
+    end
+
+    def process_memory_definition
+      read => 'memory'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'memory', id:)
+      else
+        rest = repeatedly { read }
+
+        [
+          ['memory', *id, *rest]
+        ]
+      end
+    end
+
+    def process_global_definition
+      read => 'global'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'global', id:)
+      else
+        rest = repeatedly { read }
+
+        [
+          ['global', *id, *rest]
         ]
       end
     end
