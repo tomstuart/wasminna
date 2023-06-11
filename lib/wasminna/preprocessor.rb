@@ -11,8 +11,10 @@ module Wasminna
     def process_script(s_expression)
       read_list(from: s_expression) do
         repeatedly do
-          read_list(from: read_command) do
-            process_command
+          if can_read_field?
+            expand_inline_module
+          else
+            read_list { process_command }
           end
         end
       end
@@ -23,14 +25,6 @@ module Wasminna
     ID_REGEXP = %r{\A\$}
 
     attr_accessor :fresh_id, :s_expression
-
-    def read_command
-      if can_read_field?
-        expand_inline_module
-      else
-        read
-      end
-    end
 
     def can_read_field?
       peek in ['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *]
@@ -43,8 +37,9 @@ module Wasminna
             fields.push(read)
           end
         end
+      expanded = ['module', *fields]
 
-      ['module', *fields]
+      read_list(from: expanded) { process_command }
     end
 
     def process_command
@@ -69,44 +64,120 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = repeatedly { process_field }.flatten(1)
+        fields = process_fields
         ['module', *id, *fields]
       end
     end
 
+    def process_fields
+      repeatedly do
+        read_list { process_field }
+      end.flatten(1)
+    end
+
     def process_field
       case peek
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['func' | 'table' | 'memory' | 'global', ['import', _, _], *]
-        read_list do
-          expand_inline_import
-        end
-      in ['func' | 'table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['func' | 'table' | 'memory' | 'global', ['export', _], *]
-        read_list do
-          expand_inline_export
-        end
+      in 'func'
+        process_function_definition
+      in 'table'
+        process_table_definition
+      in 'memory'
+        process_memory_definition
+      in 'global'
+        process_global_definition
+      in 'type'
+        process_type_definition
+      in 'import'
+        process_import
       else
+        [repeatedly { read }]
+      end
+    end
+
+    def process_function_definition
+      read => 'func'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'func', id:)
+      else
+        typeuse = process_typeuse
+        locals = process_locals
+        body = process_instructions
+
         [
-          read_list do
-            case peek
-            in 'func'
-              process_function
-            in 'type'
-              process_type
-            in 'import'
-              process_import
-            else
-              repeatedly { read }
-            end
-          end
+          ['func', *id, *typeuse, *locals, *body]
         ]
       end
     end
 
-    def expand_inline_import
-      read => 'func' | 'table' | 'memory' | 'global' => kind
+    def process_table_definition
+      read => 'table'
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'table', id:)
+      else
+        rest = repeatedly { read }
+
+        [
+          ['table', *id, *rest]
+        ]
+      end
+    end
+
+    def process_memory_definition
+      read => 'memory'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'memory', id:)
+      else
+        rest = repeatedly { read }
+
+        [
+          ['memory', *id, *rest]
+        ]
+      end
+    end
+
+    def process_global_definition
+      read => 'global'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_inline_import_export?
+        expand_inline_import_export(kind: 'global', id:)
+      else
+        rest = repeatedly { read }
+
+        [
+          ['global', *id, *rest]
+        ]
+      end
+    end
+
+    def can_read_inline_import_export?
+      peek in ['import', _, _] | ['export', _]
+    end
+
+    def expand_inline_import_export(**)
+      case peek
+      in ['import', _, _]
+        expand_inline_import(**)
+      in ['export', _]
+        expand_inline_export(**)
+      end
+    end
+
+    def expand_inline_import(kind:, id:)
       read => ['import', module_name, name]
       description = repeatedly { read }
 
@@ -115,34 +186,21 @@ module Wasminna
       ]
     end
 
-    def expand_inline_export
-      read => 'func' | 'table' | 'memory' | 'global' => kind
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      else
+    def expand_inline_export(kind:, id:)
+      read => ['export', name]
+      description = repeatedly { read }
+
+      if id.nil?
         id = "$__fresh_#{fresh_id}" # TODO find a better way
         self.fresh_id += 1
       end
-      read => ['export', name]
-      field = [kind, id, *repeatedly { read }]
-      processed_field = read_list(from: [field]) { process_field }
+      expanded =
+        [
+          ['export', name, [kind, id]],
+          [kind, id, *description]
+        ]
 
-      [
-        ['export', name, [kind, id]],
-        *processed_field
-      ]
-    end
-
-    def process_function
-      read => 'func'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
-      typeuse = process_typeuse
-      locals = process_locals
-      body = process_instructions
-
-      ['func', *id, *typeuse, *locals, *body]
+      read_list(from: expanded) { process_fields }
     end
 
     def process_typeuse
@@ -209,14 +267,16 @@ module Wasminna
       end.flatten(1)
     end
 
-    def process_type
+    def process_type_definition
       read => 'type'
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
       functype = read_list { process_functype }
 
-      ['type', *id, functype]
+      [
+        ['type', *id, functype]
+      ]
     end
 
     def process_functype
@@ -233,7 +293,9 @@ module Wasminna
       read => name
       descriptor = read_list { process_import_descriptor }
 
-      ['import', module_name, name, descriptor]
+      [
+        ['import', module_name, name, descriptor]
+      ]
     end
 
     def process_import_descriptor
