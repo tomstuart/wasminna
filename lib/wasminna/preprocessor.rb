@@ -84,9 +84,9 @@ module Wasminna
       else
         case peek
         in 'func'
-          process_function
+          process_function_definition
         in 'type'
-          process_type
+          process_type_definition
         in 'import'
           process_import
         else
@@ -126,7 +126,7 @@ module Wasminna
       read_list(from: expanded) { process_fields }
     end
 
-    def process_function
+    def process_function_definition
       read => 'func'
       if peek in ID_REGEXP
         read => ID_REGEXP => id
@@ -204,7 +204,7 @@ module Wasminna
       end.flatten(1)
     end
 
-    def process_type
+    def process_type_definition
       read => 'type'
       if peek in ID_REGEXP
         read => ID_REGEXP => id
