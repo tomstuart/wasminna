@@ -130,16 +130,14 @@ module Wasminna
     end
 
     def expand_inline_import_export(**)
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
       case s_expression
-      in [ID_REGEXP, ['import', _, _], *] | [['import', _, _], *]
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
+      in [['import', _, _], *]
         expand_inline_import(**, id:)
-      in [ID_REGEXP, ['export', _], *] | [['export', _], *]
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
+      in [['export', _], *]
         expand_inline_export(**, id:)
       end
     end
