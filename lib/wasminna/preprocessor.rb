@@ -76,24 +76,17 @@ module Wasminna
     end
 
     def process_field
-      case s_expression
-      in ['table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['table' | 'memory' | 'global', ['import', _, _], *]
-        expand_inline_import
-      in ['table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['table' | 'memory' | 'global', ['export', _], *]
-        expand_inline_export
+      case peek
+      in 'func'
+        process_function_definition
+      in 'table' | 'memory' | 'global'
+        process_table_memory_global_definition
+      in 'type'
+        process_type_definition
+      in 'import'
+        process_import
       else
-        case peek
-        in 'func'
-          process_function_definition
-        in 'table' | 'memory' | 'global'
-          process_table_memory_global_definition
-        in 'type'
-          process_type_definition
-        in 'import'
-          process_import
-        else
-          [repeatedly { read }]
-        end
+        [repeatedly { read }]
       end
     end
 
