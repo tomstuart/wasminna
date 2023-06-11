@@ -92,16 +92,13 @@ module Wasminna
 
     def process_function_definition
       read => 'func'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
 
       if can_read_inline_import_export?
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
         expand_inline_import_export(kind: 'func', id:)
       else
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
         typeuse = process_typeuse
         locals = process_locals
         body = process_instructions
@@ -114,25 +111,23 @@ module Wasminna
 
     def process_table_memory_global_definition
       read => 'table' | 'memory' | 'global' => kind
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
 
       if can_read_inline_import_export?
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
         expand_inline_import_export(kind:, id:)
       else
         rest = repeatedly { read }
 
         [
-          [kind, *rest]
+          [kind, *id, *rest]
         ]
       end
     end
 
     def can_read_inline_import_export?
-      s_expression in
-        [ID_REGEXP, ['import', _, _], *] | [['import', _, _], *] |
-        [ID_REGEXP, ['export', _], *] | [['export', _], *]
+      s_expression in [['import', _, _], *] | [['export', _], *]
     end
 
     def expand_inline_import_export(**)
