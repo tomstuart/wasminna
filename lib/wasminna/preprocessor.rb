@@ -153,7 +153,8 @@ module Wasminna
     def expand_inline_export(kind:)
       if peek in ID_REGEXP
         read => ID_REGEXP => id
-      else
+      end
+      if id.nil?
         id = "$__fresh_#{fresh_id}" # TODO find a better way
         self.fresh_id += 1
       end
