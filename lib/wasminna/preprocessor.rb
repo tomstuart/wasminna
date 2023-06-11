@@ -69,9 +69,15 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = repeatedly { read_list { process_field } }.flatten(1)
+        fields = process_fields
         ['module', *id, *fields]
       end
+    end
+
+    def process_fields
+      repeatedly do
+        read_list { process_field }
+      end.flatten(1)
     end
 
     def process_field
