@@ -85,6 +85,8 @@ module Wasminna
         case peek
         in 'func'
           process_function_definition
+        in 'table' | 'memory' | 'global'
+          process_table_memory_global_definition
         in 'type'
           process_type_definition
         in 'import'
@@ -144,6 +146,17 @@ module Wasminna
         [
           ['func', *id, *typeuse, *locals, *body]
         ]
+      end
+    end
+
+    def process_table_memory_global_definition
+      case s_expression
+      in ['table' | 'memory' | 'global', ID_REGEXP, ['import', _, _], *] | ['table' | 'memory' | 'global', ['import', _, _], *]
+        expand_inline_import
+      in ['table' | 'memory' | 'global', ID_REGEXP, ['export', _], *] | ['table' | 'memory' | 'global', ['export', _], *]
+        expand_inline_export
+      else
+        [repeatedly { read }]
       end
     end
 
