@@ -154,15 +154,17 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP => id
       end
+      read => ['export', name]
+      description = repeatedly { read }
+
       if id.nil?
         id = "$__fresh_#{fresh_id}" # TODO find a better way
         self.fresh_id += 1
       end
-      read => ['export', name]
       expanded =
         [
           ['export', name, [kind, id]],
-          [kind, id, *repeatedly { read }]
+          [kind, id, *description]
         ]
 
       read_list(from: expanded) { process_fields }
