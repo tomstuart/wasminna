@@ -343,18 +343,19 @@ module Wasminna
     end
 
     def process_declarative_element_segment(id:)
-      rest = repeatedly { read }
+      read => 'declare'
+      element_list = process_element_list(func_optional: false)
 
       [
-        ['elem', *id, *rest]
+        ['elem', *id, 'declare', *element_list]
       ]
     end
 
     def process_passive_element_segment(id:)
-      rest = repeatedly { read }
+      element_list = process_element_list(func_optional: false)
 
       [
-        ['elem', *id, *rest]
+        ['elem', *id, *element_list]
       ]
     end
 
