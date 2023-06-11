@@ -127,17 +127,24 @@ module Wasminna
     end
 
     def process_function_definition
-      read => 'func'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
-      typeuse = process_typeuse
-      locals = process_locals
-      body = process_instructions
+      case s_expression
+      in ['func', ID_REGEXP, ['import', _, _], *] | ['func', ['import', _, _], *]
+        expand_inline_import
+      in ['func', ID_REGEXP, ['export', _], *] | ['func', ['export', _], *]
+        expand_inline_export
+      else
+        read => 'func'
+        if peek in ID_REGEXP
+          read => ID_REGEXP => id
+        end
+        typeuse = process_typeuse
+        locals = process_locals
+        body = process_instructions
 
-      [
-        ['func', *id, *typeuse, *locals, *body]
-      ]
+        [
+          ['func', *id, *typeuse, *locals, *body]
+        ]
+      end
     end
 
     def process_typeuse
