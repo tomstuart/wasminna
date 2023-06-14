@@ -4,7 +4,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [['module', '$mymodule', ['func', %w[import "spectest" "print_i32"], %w[param i32]]]]
@@ -13,7 +13,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [['module', ['func', '$myfunction', %w[import "spectest" "print_i32"], %w[param i32]]]]
@@ -22,7 +22,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [['module', ['table', %w[import "spectest" "table"], *%w[0 funcref]]]]
@@ -31,7 +31,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [['module', ['memory', %w[import "spectest" "memory"], *%w[1 2]]]]
@@ -40,7 +40,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [['module', ['global', %w[import "spectest" "global_i32"], 'i32']]]
@@ -49,7 +49,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -67,7 +67,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -88,7 +88,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -108,7 +108,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -128,7 +128,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -146,7 +146,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -166,7 +166,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -188,7 +188,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -205,7 +205,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -222,7 +222,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -239,7 +239,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -256,7 +256,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -281,7 +281,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -308,7 +308,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 input = [
@@ -321,7 +321,7 @@ actual = Wasminna::Preprocessor.new.process_script(input)
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect
+  raise "expected #{expected}, got #{actual}"
 end
 
 BEGIN {
