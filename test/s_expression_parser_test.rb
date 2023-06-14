@@ -4,7 +4,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello)'
@@ -13,7 +13,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello world)'
@@ -22,7 +22,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '((hello goodbye) world)'
@@ -31,7 +31,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = "(module\n  (func (nop))\n)"
@@ -40,7 +40,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = "(module\n  (func(nop))\n)"
@@ -49,7 +49,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = "(module\n  (func (nop)nop)\n)"
@@ -58,7 +58,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(module) (module)'
@@ -67,7 +67,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = ";; Tokens can be delimited by parentheses\n\n(module\n  (func(nop))\n)"
@@ -76,7 +76,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = "(module\n  (func;;bla\n  )\n)"
@@ -85,7 +85,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '"(hello world) ;; comment"'
@@ -94,7 +94,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '"hello \" world"'
@@ -103,7 +103,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello (; cruel ;) world)'
@@ -112,7 +112,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello (; this; is; ( totally; ); fine ;) world)'
@@ -121,7 +121,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello (; cruel (; very cruel ;) extremely cruel ;) world)'
@@ -130,7 +130,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 input = '(hello (; cruel ;) happy (; terrible ;) world)'
@@ -139,7 +139,7 @@ actual = Wasminna::SExpressionParser.new.parse(input).entries
 if actual == expected
   print "\e[32m.\e[0m"
 else
-  raise actual.inspect unless actual == expected
+  raise actual.inspect
 end
 
 BEGIN {
