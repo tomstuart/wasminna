@@ -1,147 +1,33 @@
-require 'wasminna/s_expression_parser'
+assert_parse 'hello', ['hello']
+assert_parse '(hello)', [['hello']]
+assert_parse '(hello world)', [['hello', 'world']]
+assert_parse '((hello goodbye) world)', [[['hello', 'goodbye'], 'world']]
+assert_parse "(module\n  (func (nop))\n)", [['module', ['func', ['nop']]]]
+assert_parse "(module\n  (func(nop))\n)", [['module', ['func', ['nop']]]]
+assert_parse "(module\n  (func (nop)nop)\n)", [['module', ['func', ['nop'], 'nop']]]
+assert_parse '(module) (module)', [['module'], ['module']]
+assert_parse ";; Tokens can be delimited by parentheses\n\n(module\n  (func(nop))\n)", [['module', ['func', ['nop']]]]
+assert_parse "(module\n  (func;;bla\n  )\n)", [['module', ['func']]]
+assert_parse '"(hello world) ;; comment"', ['"(hello world) ;; comment"']
+assert_parse '"hello \" world"', ['"hello \" world"']
+assert_parse '(hello (; cruel ;) world)', [['hello', 'world']]
+assert_parse '(hello (; this; is; ( totally; ); fine ;) world)', [['hello', 'world']]
+assert_parse '(hello (; cruel (; very cruel ;) extremely cruel ;) world)', [['hello', 'world']]
+assert_parse '(hello (; cruel ;) happy (; terrible ;) world)', [['hello', 'happy', 'world']]
 
-input = 'hello'
-expected = ['hello']
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
+BEGIN {
+  require 'wasminna/s_expression_parser'
 
-input = '(hello)'
-expected = [['hello']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
+  def assert_parse(input, expected)
+    actual = Wasminna::SExpressionParser.new.parse(input)
+    if actual == expected
+      print "\e[32m.\e[0m"
+    else
+      raise "expected #{expected}, got #{actual}"
+    end
+  end
+}
 
-input = '(hello world)'
-expected = [['hello', 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '((hello goodbye) world)'
-expected = [[['hello', 'goodbye'], 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = "(module\n  (func (nop))\n)"
-expected = [['module', ['func', ['nop']]]]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = "(module\n  (func(nop))\n)"
-expected = [['module', ['func', ['nop']]]]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = "(module\n  (func (nop)nop)\n)"
-expected = [['module', ['func', ['nop'], 'nop']]]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '(module) (module)'
-expected = [['module'], ['module']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = ";; Tokens can be delimited by parentheses\n\n(module\n  (func(nop))\n)"
-expected = [['module', ['func', ['nop']]]]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = "(module\n  (func;;bla\n  )\n)"
-expected = [['module', ['func']]]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '"(hello world) ;; comment"'
-expected = ['"(hello world) ;; comment"']
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '"hello \" world"'
-expected = ['"hello \" world"']
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '(hello (; cruel ;) world)'
-expected = [['hello', 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '(hello (; this; is; ( totally; ); fine ;) world)'
-expected = [['hello', 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '(hello (; cruel (; very cruel ;) extremely cruel ;) world)'
-expected = [['hello', 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-input = '(hello (; cruel ;) happy (; terrible ;) world)'
-expected = [['hello', 'happy', 'world']]
-actual = Wasminna::SExpressionParser.new.parse(input).entries
-if actual == expected
-  print "\e[32m.\e[0m"
-else
-  raise actual.inspect unless actual == expected
-end
-
-puts
+END {
+  puts
+}
