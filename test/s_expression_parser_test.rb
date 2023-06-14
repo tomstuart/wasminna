@@ -1,5 +1,3 @@
-require 'wasminna/s_expression_parser'
-
 input = 'hello'
 expected = ['hello']
 actual = Wasminna::SExpressionParser.new.parse(input).entries
@@ -144,4 +142,10 @@ else
   raise actual.inspect unless actual == expected
 end
 
-puts
+BEGIN {
+  require 'wasminna/s_expression_parser'
+}
+
+END {
+  puts
+}

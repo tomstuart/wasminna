@@ -1,5 +1,3 @@
-require 'wasminna/preprocessor'
-
 input = [['module', ['func', %w[import "spectest" "print_i32"], %w[param i32]]]]
 expected = [['module', [*%w[import "spectest" "print_i32"], ['func', %w[param i32]]]]]
 actual = Wasminna::Preprocessor.new.process_script(input)
@@ -326,4 +324,10 @@ else
   raise actual.inspect unless actual == expected
 end
 
-puts
+BEGIN {
+  require 'wasminna/preprocessor'
+}
+
+END {
+  puts
+}

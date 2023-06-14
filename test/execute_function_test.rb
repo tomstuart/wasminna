@@ -93,8 +93,6 @@ raise unless 10.times.map { mod.even(_1) } == [44, 99, 44, 99, 44, 99, 44, 99, 4
 raise unless 10.times.map { mod.odd(_1) } == [99, 44, 99, 44, 99, 44, 99, 44, 99, 44]
 print "\e[32m.\e[0m"
 
-puts
-
 BEGIN {
   require 'wasminna/ast_parser'
   require 'wasminna/float'
@@ -164,4 +162,8 @@ BEGIN {
       end
     end
   end
+}
+
+END {
+  puts
 }
