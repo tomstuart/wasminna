@@ -89,6 +89,8 @@ module Wasminna
         process_type_definition
       in 'import'
         process_import
+      in 'elem'
+        process_element_segment
       else
         [repeatedly { read }]
       end
@@ -267,6 +269,10 @@ module Wasminna
       end.flatten(1)
     end
 
+    def process_instruction
+      process_instructions # TODO only process one instruction
+    end
+
     def process_type_definition
       read => 'type'
       if peek in ID_REGEXP
@@ -310,6 +316,108 @@ module Wasminna
       else
         repeatedly { read }
       end
+    end
+
+    def process_element_segment
+      read => 'elem'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_list?
+        process_active_element_segment(id:)
+      elsif peek in 'declare'
+        process_declarative_element_segment(id:)
+      else
+        process_passive_element_segment(id:)
+      end
+    end
+
+    def process_active_element_segment(id:)
+      table_use =
+        if can_read_list?(starting_with: 'table')
+          read
+        end
+      offset = read_list { process_offset }
+      element_list = process_element_list(func_optional: table_use.nil?)
+
+      if table_use.nil?
+        table_use = %w[table 0]
+      end
+
+      [
+        ['elem', *id, table_use, offset, *element_list]
+      ]
+    end
+
+    def process_declarative_element_segment(id:)
+      read => 'declare'
+      element_list = process_element_list(func_optional: false)
+
+      [
+        ['elem', *id, 'declare', *element_list]
+      ]
+    end
+
+    def process_passive_element_segment(id:)
+      element_list = process_element_list(func_optional: false)
+
+      [
+        ['elem', *id, *element_list]
+      ]
+    end
+
+    def process_offset
+      instructions =
+        if peek in 'offset'
+          read => 'offset'
+          process_instructions
+        else
+          process_instruction
+        end
+
+      ['offset', *instructions]
+    end
+
+    def process_element_list(func_optional:)
+      if peek in 'funcref' | 'externref'
+        read => 'funcref' | 'externref' => reftype
+        items = process_element_expressions
+
+        [reftype, *items]
+      else
+        if !func_optional || (peek in 'func')
+          read => 'func'
+        end
+        items =
+          read_list(from: process_function_indexes) do
+            process_element_expressions
+          end
+
+        ['funcref', *items]
+      end
+    end
+
+    def process_element_expressions
+      repeatedly do
+        read_list { process_element_expression }
+      end
+    end
+
+    def process_element_expression
+      instructions =
+        if peek in 'item'
+          read => 'item'
+          process_instructions
+        else
+          process_instruction
+        end
+
+      ['item', *instructions]
+    end
+
+    def process_function_indexes
+      repeatedly { ['ref.func', read] }
     end
 
     def process_assert_trap

@@ -578,53 +578,25 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      if peek in 'declare'
-        read => 'declare'
-      end
-      index =
-        if can_read_list?(starting_with: 'table')
+      if can_read_list?(starting_with: 'table')
+        index =
           read_list(starting_with: 'table') do
             parse_index(context.tables)
           end
-        end
-      offset =
-        if !index.nil? || can_read_list?
-          read_list do
-            case peek
-            in 'offset'
-              read => 'offset'
-              parse_instructions
-            else
-              [parse_instruction]
-            end
+        offset =
+          read_list(starting_with: 'offset') do
+            parse_instructions
           end
-        end
-      reftype =
-        if peek in 'funcref' | 'externref' | 'func'
-          read
-        elsif index.nil?
-          'func'
-        else
-          raise
-        end
+      elsif peek in 'declare'
+        read => 'declare'
+      end
+      read => 'funcref' | 'externref' => reftype
       items =
-        case reftype
-        in 'funcref' | 'externref'
-          repeatedly do
-            read_list do
-              case peek
-              in 'item'
-                read => 'item'
-                parse_instructions
-              else
-                [parse_instruction]
-              end
-            end
+        repeatedly do
+          read_list(starting_with: 'item') do
+            parse_instructions
           end
-        in 'func'
-          repeatedly { [RefFunc.new(index: parse_index(context.functions))] }
         end
-      index ||= 0 unless offset.nil?
 
       Element.new(index:, offset:, items:)
     end

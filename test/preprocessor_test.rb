@@ -256,6 +256,146 @@ assert_preprocess <<'--', <<'--'
   (module $M2 binary "\00asm" "\01\00\00\00")
 --
 
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table $t)
+      (offset
+        (call_indirect (param i32 i64) (result f32 f64))
+      )
+      funcref (item ref.func $f)
+    )
+  )
+--
+  (module
+    (elem (table $t)
+      (offset
+        (call_indirect (param i32) (param i64) (result f32) (result f64))
+      )
+      funcref (item ref.func $f)
+    )
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table $t) (offset i32.const 0) funcref
+      (item (call_indirect (param i32 i64) (result f32 f64)))
+    )
+  )
+--
+  (module
+    (elem (table $t) (offset i32.const 0) funcref
+      (item (call_indirect (param i32) (param i64) (result f32) (result f64)))
+    )
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table $t) (i32.const 0) funcref (item ref.func $f))
+  )
+--
+  (module
+    (elem (table $t) (offset i32.const 0) funcref (item ref.func $f))
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem funcref (ref.func $f))
+  )
+--
+  (module
+    (elem funcref (item ref.func $f))
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table 0) (offset i32.const 0) funcref (ref.func $f))
+  )
+--
+  (module
+    (elem (table 0) (offset i32.const 0) funcref (item ref.func $f))
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem declare funcref (ref.func $f))
+  )
+--
+  (module
+    (elem declare funcref (item ref.func $f))
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem
+      func $f $g
+    )
+  )
+--
+  (module
+    (elem
+      funcref (item ref.func $f) (item ref.func $g)
+    )
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (table 0) (offset i32.const 0)
+      func $f $g
+    )
+  )
+--
+  (module
+    (elem (table 0) (offset i32.const 0)
+      funcref (item ref.func $f) (item ref.func $g)
+    )
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem declare
+      func $f $g
+    )
+  )
+--
+  (module
+    (elem declare
+      funcref (item ref.func $f) (item ref.func $g)
+    )
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (offset i32.const 0) funcref (item ref.func $f))
+  )
+--
+  (module
+    (elem (table 0) (offset i32.const 0) funcref (item ref.func $f))
+  )
+--
+
+assert_preprocess <<'--', <<'--'
+  (module
+    (elem (offset i32.const 0)
+      $f $g
+    )
+  )
+--
+  (module
+    (elem (table 0) (offset i32.const 0)
+      funcref (item ref.func $f) (item ref.func $g)
+    )
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
