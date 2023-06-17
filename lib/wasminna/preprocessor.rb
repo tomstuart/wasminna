@@ -123,6 +123,8 @@ module Wasminna
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'table', id:)
+      elsif can_read_inline_element_segment?
+        expand_inline_element_segment(id:)
       else
         rest = repeatedly { read }
 
@@ -130,6 +132,38 @@ module Wasminna
           ['table', *id, *rest]
         ]
       end
+    end
+
+    def can_read_inline_element_segment?
+      peek in 'funcref' | 'externref'
+    end
+
+    def expand_inline_element_segment(id:)
+      read => 'funcref' | 'externref' => reftype
+      item_type, items =
+        read_list(starting_with: 'elem') do
+          item_type =
+            if can_read_list?
+              reftype
+            else
+              'func'
+            end
+          items = repeatedly { read }
+          [item_type, items]
+        end
+
+      if id.nil?
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+      end
+      limit = items.length.to_s
+      expanded =
+        [
+          ['table', id, limit, limit, reftype],
+          ['elem', ['table', id], %w[i32.const 0], item_type, *items]
+        ]
+
+      read_list(from: expanded) { process_fields }
     end
 
     def process_memory_definition
