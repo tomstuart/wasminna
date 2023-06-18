@@ -8,6 +8,7 @@ module Wasminna
     include AST
     include Helpers::Mask
     include Helpers::ReadFromSExpression
+    include Helpers::StringValue
 
     def parse_script(s_expression)
       read_list(from: s_expression) do
@@ -1010,15 +1011,7 @@ module Wasminna
     end
 
     def parse_string
-      read => string
-      encoding = string.encoding
-      string.
-        delete_prefix('"').delete_suffix('"').
-        force_encoding(Encoding::ASCII_8BIT).
-        gsub(%r{\\\h{2}}) do |digits|
-          digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
-        end.
-        force_encoding(encoding)
+      string_value(read)
     end
 
     def unzip_pairs(pairs)
