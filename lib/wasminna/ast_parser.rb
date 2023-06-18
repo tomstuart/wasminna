@@ -409,7 +409,7 @@ module Wasminna
         parse_limits => [minimum_size, maximum_size]
       end
 
-      Memory.new(string:, minimum_size:, maximum_size:)
+      AST::Memory.new(string:, minimum_size:, maximum_size:)
     end
 
     def parse_memory_data
