@@ -7,10 +7,6 @@ module Wasminna
     include Helpers::SizeOf
     include Helpers::StringValue
 
-    def initialize
-      self.fresh_id = 0
-    end
-
     def process_script(s_expression)
       read_list(from: s_expression) do
         repeatedly do
@@ -27,7 +23,7 @@ module Wasminna
 
     ID_REGEXP = %r{\A\$}
 
-    attr_accessor :fresh_id, :s_expression
+    attr_accessor :s_expression
 
     def can_read_field?
       peek in ['type' | 'import' | 'func' | 'table' | 'memory' | 'global' | 'export' | 'start' | 'elem' | 'data', *]
@@ -158,8 +154,7 @@ module Wasminna
         end
 
       if id.nil?
-        id = "$__fresh_#{fresh_id}" # TODO find a better way
-        self.fresh_id += 1
+        id = fresh_id
       end
       limit = items.length.to_s
       expanded =
@@ -198,8 +193,7 @@ module Wasminna
       strings = read_list(starting_with: 'data') { repeatedly { read } }
 
       if id.nil?
-        id = "$__fresh_#{fresh_id}" # TODO find a better way
-        self.fresh_id += 1
+        id = fresh_id
       end
       bytes = strings.sum { string_value(_1).bytesize }
       limit = size_of(bytes, in: Memory::BYTES_PER_PAGE).to_s
@@ -260,8 +254,7 @@ module Wasminna
       description = repeatedly { read }
 
       if id.nil?
-        id = "$__fresh_#{fresh_id}" # TODO find a better way
-        self.fresh_id += 1
+        id = fresh_id
       end
       expanded =
         [
@@ -547,6 +540,14 @@ module Wasminna
         rest = repeatedly { read }
 
         ['assert_trap', *rest]
+      end
+    end
+
+    def fresh_id
+      # TODO find a better way
+      @fresh_id_index ||= 0
+      "$__fresh_#{@fresh_id_index}".tap do
+        @fresh_id_index += 1
       end
     end
   end
