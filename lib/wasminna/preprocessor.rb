@@ -96,8 +96,8 @@ module Wasminna
         process_element_segment
       in 'data'
         process_data_segment
-      else
-        [repeatedly { read }]
+      in 'export' | 'start'
+        process_unabbreviated_field
       end
     end
 
@@ -520,6 +520,15 @@ module Wasminna
 
       [
         ['data', *id, *rest]
+      ]
+    end
+
+    def process_unabbreviated_field
+      read => 'export' | 'start' => kind
+      rest = repeatedly { read }
+
+      [
+        [kind, *rest]
       ]
     end
 
