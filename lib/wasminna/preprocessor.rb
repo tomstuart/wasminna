@@ -417,11 +417,11 @@ module Wasminna
       read => 'import'
       read => module_name
       read => name
-      descriptor = read_list { process_import_descriptor.call(DUMMY_TYPE_DEFINITIONS) }
+      descriptor = read_list { process_import_descriptor }
 
-      after_all_fields do
+      after_all_fields do |type_definitions|
         [
-          ['import', module_name, name, descriptor]
+          ['import', module_name, name, descriptor.call(type_definitions)]
         ]
       end
     end
