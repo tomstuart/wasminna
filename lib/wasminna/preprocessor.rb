@@ -473,7 +473,7 @@ module Wasminna
     def process_element_list(func_optional:)
       if peek in 'funcref' | 'externref'
         read => 'funcref' | 'externref' => reftype
-        items = process_element_expressions
+        items = process_element_expressions.call(DUMMY_TYPE_DEFINITIONS)
 
         [reftype, *items]
       else
@@ -482,7 +482,7 @@ module Wasminna
         end
         items =
           read_list(from: process_function_indexes) do
-            process_element_expressions
+            process_element_expressions.call(DUMMY_TYPE_DEFINITIONS)
           end
 
         ['funcref', *items]
@@ -492,6 +492,10 @@ module Wasminna
     def process_element_expressions
       repeatedly do
         read_list { process_element_expression.call(DUMMY_TYPE_DEFINITIONS) }
+      end.then do |results|
+        after_all_fields do
+          results
+        end
       end
     end
 
