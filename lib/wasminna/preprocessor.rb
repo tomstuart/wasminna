@@ -437,7 +437,7 @@ module Wasminna
         if can_read_list?(starting_with: 'table')
           read
         end
-      offset = read_list { process_offset }
+      offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
       element_list = process_element_list(func_optional: table_use.nil?)
 
       if table_use.nil?
@@ -475,7 +475,9 @@ module Wasminna
           process_instruction.call(DUMMY_TYPE_DEFINITIONS)
         end
 
-      ['offset', *instructions]
+      after_all_fields do
+        ['offset', *instructions]
+      end
     end
 
     def process_element_list(func_optional:)
@@ -545,7 +547,7 @@ module Wasminna
         else
           %w[memory 0]
         end
-      offset = read_list { process_offset }
+      offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
       strings = repeatedly { read }
 
       [
