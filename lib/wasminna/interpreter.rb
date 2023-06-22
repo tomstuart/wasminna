@@ -243,12 +243,14 @@ module Wasminna
     end
 
     def initialise_memory(datas:)
-      datas.select { _1.mode.is_a?(DataSegment::Mode::Active) }.each do |data|
-        evaluate_expression(data.mode.offset, locals: [])
-        stack.pop(1) => [offset]
-        raise if offset + data.string.bytesize > current_module.memory.bytes.bytesize
-        data.string.each_byte.with_index do |value, index|
-          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+      datas.each do |data|
+        if data in string:, mode: DataSegment::Mode::Active(index:, offset:)
+          evaluate_expression(offset, locals: [])
+          stack.pop(1) => [offset]
+          raise if offset + string.bytesize > current_module.memory.bytes.bytesize
+          string.each_byte.with_index do |value, index|
+            current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+          end
         end
       end
     end
