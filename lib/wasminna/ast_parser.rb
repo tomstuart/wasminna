@@ -100,25 +100,25 @@ module Wasminna
           read_list do
             case peek
             in 'func'
-              functions << parse_function
+              functions << parse_function_definition
             in 'memory'
-              memory = parse_memory
+              memory = parse_memory_definition
             in 'table'
-              tables << parse_table
+              tables << parse_table_definition
             in 'global'
-              globals << parse_global
+              globals << parse_global_definition
             in 'type'
-              parse_type
+              parse_type_definition
             in 'data'
-              datas << parse_data
+              datas << parse_data_segment
             in 'export'
               exports << parse_export
             in 'import'
               imports << parse_import
             in 'elem'
-              elements << parse_element
+              elements << parse_element_segment
             in 'start'
-              start = parse_start
+              start = parse_start_function
             end
           end
         end
@@ -281,7 +281,7 @@ module Wasminna
 
     ID_REGEXP = %r{\A\$}
 
-    def parse_type
+    def parse_type_definition
       read => 'type'
       if peek in ID_REGEXP
         read => ID_REGEXP => name
@@ -329,7 +329,7 @@ module Wasminna
       [name, type]
     end
 
-    def parse_function
+    def parse_function_definition
       read => 'func'
       if peek in ID_REGEXP
         read => ID_REGEXP
@@ -397,7 +397,7 @@ module Wasminna
       end
     end
 
-    def parse_memory
+    def parse_memory_definition
       read => 'memory'
       if peek in ID_REGEXP
         read => ID_REGEXP
@@ -407,7 +407,7 @@ module Wasminna
       AST::Memory.new(minimum_size:, maximum_size:)
     end
 
-    def parse_data
+    def parse_data_segment
       read => 'data'
       if peek in ID_REGEXP
         read => ID_REGEXP
@@ -443,7 +443,7 @@ module Wasminna
         \z
       }x
 
-    def parse_table
+    def parse_table_definition
       read => 'table'
       if peek in ID_REGEXP
         read => ID_REGEXP => name
@@ -468,7 +468,7 @@ module Wasminna
       [minimum_size, maximum_size]
     end
 
-    def parse_global
+    def parse_global_definition
       read => 'global'
       if peek in ID_REGEXP
         read => ID_REGEXP
@@ -535,7 +535,7 @@ module Wasminna
       Import.new(module_name:, name:, kind:, type:)
     end
 
-    def parse_element
+    def parse_element_segment
       read => 'elem'
       if peek in ID_REGEXP
         read => ID_REGEXP
@@ -568,7 +568,7 @@ module Wasminna
       ElementSegment.new(items:, mode:)
     end
 
-    def parse_start
+    def parse_start_function
       read => 'start'
       parse_index(context.functions)
     end
