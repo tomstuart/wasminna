@@ -243,8 +243,8 @@ module Wasminna
     end
 
     def initialise_memory(datas:)
-      datas.reject { _1.offset.nil? }.each do |data|
-        evaluate_expression(data.offset, locals: [])
+      datas.select { _1.mode.is_a?(DataSegment::Mode::Active) }.each do |data|
+        evaluate_expression(data.mode.offset, locals: [])
         stack.pop(1) => [offset]
         raise if offset + data.string.bytesize > current_module.memory.bytes.bytesize
         data.string.each_byte.with_index do |value, index|
