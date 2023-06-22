@@ -293,9 +293,16 @@ module Wasminna
       else
         parameters = process_parameters
         results = process_results
+        functype = ['func', *parameters, *results]
 
-        after_all_fields do
-          [*parameters, *results]
+        after_all_fields do |type_definitions|
+          index = type_definitions.index { _1.last == functype }
+
+          if index.nil?
+            [*parameters, *results]
+          else
+            [['type', index.to_s], *parameters, *results]
+          end
         end
       end
     end
