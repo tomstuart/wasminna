@@ -254,16 +254,18 @@ module Wasminna
     end
 
     def initialise_tables(elements:)
-      elements.select { _1.mode.is_a?(ElementSegment::Mode::Active) }.each do |element|
-        table_instance = current_module.tables.slice(element.mode.index)
-        evaluate_expression(element.mode.offset, locals: [])
-        stack.pop(1) => [offset]
-        raise if offset + element.items.length > table_instance.elements.length
+      elements.each do |element|
+        if element in items:, mode: ElementSegment::Mode::Active(index:, offset:)
+          table_instance = current_module.tables.slice(index)
+          evaluate_expression(offset, locals: [])
+          stack.pop(1) => [offset]
+          raise if offset + items.length > table_instance.elements.length
 
-        element.items.each.with_index do |item, item_index|
-          evaluate_expression(item, locals: [])
-          stack.pop(1) => [value]
-          table_instance.elements[offset + item_index] = value
+          items.each.with_index do |item, item_index|
+            evaluate_expression(item, locals: [])
+            stack.pop(1) => [value]
+            table_instance.elements[offset + item_index] = value
+          end
         end
       end
     end
