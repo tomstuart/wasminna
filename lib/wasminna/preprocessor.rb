@@ -366,7 +366,7 @@ module Wasminna
     end
 
     def process_instruction
-      process_instructions.call(DUMMY_TYPE_DEFINITIONS) # TODO only process one instruction
+      process_instructions # TODO only process one instruction
     end
 
     def process_type_definition
@@ -464,7 +464,7 @@ module Wasminna
           read => 'offset'
           process_instructions.call(DUMMY_TYPE_DEFINITIONS)
         else
-          process_instruction
+          process_instruction.call(DUMMY_TYPE_DEFINITIONS)
         end
 
       ['offset', *instructions]
@@ -501,7 +501,7 @@ module Wasminna
           read => 'item'
           process_instructions.call(DUMMY_TYPE_DEFINITIONS)
         else
-          process_instruction
+          process_instruction.call(DUMMY_TYPE_DEFINITIONS)
         end
 
       ['item', *instructions]
