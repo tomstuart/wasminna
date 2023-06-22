@@ -424,7 +424,7 @@ module Wasminna
       end
       string = repeatedly { parse_string }.join
 
-      MemoryData.new(offset:, string:)
+      DataSegment.new(offset:, string:)
     end
 
     UNSIGNED_INTEGER_REGEXP =
