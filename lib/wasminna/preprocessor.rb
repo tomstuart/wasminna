@@ -470,13 +470,13 @@ module Wasminna
       instructions =
         if peek in 'offset'
           read => 'offset'
-          process_instructions.call(DUMMY_TYPE_DEFINITIONS)
+          process_instructions
         else
-          process_instruction.call(DUMMY_TYPE_DEFINITIONS)
+          process_instruction
         end
 
-      after_all_fields do
-        ['offset', *instructions]
+      after_all_fields do |type_definitions|
+        ['offset', *instructions.call(type_definitions)]
       end
     end
 
