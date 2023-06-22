@@ -327,9 +327,9 @@ module Wasminna
             ['select', *results]
           end
         in [*]
-          read_list { process_instructions.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
-            after_all_fields do
-              [result]
+          read_list { process_instructions }.then do |result|
+            after_all_fields do |type_definitions|
+              [result.call(type_definitions)]
             end
           end
         else
