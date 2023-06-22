@@ -46,7 +46,12 @@ module Wasminna
     Register = Data.define(:module_name, :name)
     TableGet = Data.define(:index)
     TableSet = Data.define(:index)
-    ElementSegment = Data.define(:index, :offset, :items)
+    ElementSegment = Data.define(:index, :offset, :items, :mode)
+    module ElementSegment::Mode
+      Passive = Data.define
+      Active = Data.define(:index, :offset)
+      Declarative = Data.define
+    end
     MemoryFill = Data.define
     MemoryCopy = Data.define
     MemoryInit = Data.define(:index)

@@ -535,18 +535,23 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      if can_read_list?(starting_with: 'table')
-        index =
-          read_list(starting_with: 'table') do
-            parse_index(context.tables)
-          end
-        offset =
-          read_list(starting_with: 'offset') do
-            parse_instructions
-          end
-      elsif peek in 'declare'
-        read => 'declare'
-      end
+      mode =
+        if can_read_list?(starting_with: 'table')
+          index =
+            read_list(starting_with: 'table') do
+              parse_index(context.tables)
+            end
+          offset =
+            read_list(starting_with: 'offset') do
+              parse_instructions
+            end
+          ElementSegment::Mode::Active.new(index:, offset:)
+        elsif peek in 'declare'
+          read => 'declare'
+          ElementSegment::Mode::Declarative.new
+        else
+          ElementSegment::Mode::Passive.new
+        end
       read => 'funcref' | 'externref' => reftype
       items =
         repeatedly do
@@ -555,7 +560,7 @@ module Wasminna
           end
         end
 
-      ElementSegment.new(index:, offset:, items:)
+      ElementSegment.new(index:, offset:, items:, mode:)
     end
 
     def parse_start
