@@ -297,13 +297,7 @@ module Wasminna
       repeatedly do
         case peek
         in ['param' | 'result', *]
-          read_list do
-            read => 'param' | 'result' => kind
-            repeatedly do
-              read => type
-              [kind, type]
-            end
-          end
+          process_typeuse
         in [*]
           read_list { [process_instructions] }
         else
