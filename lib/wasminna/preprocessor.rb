@@ -419,10 +419,10 @@ module Wasminna
       when 'func'
         read => 'func'
         read_optional_id => id
-        typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
+        typeuse = process_typeuse
 
-        after_all_fields do
-          ['func', *id, *typeuse]
+        after_all_fields do |type_definitions|
+          ['func', *id, *typeuse.call(type_definitions)]
         end
       else
         repeatedly { read }.then do |result|
