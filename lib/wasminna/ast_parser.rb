@@ -413,18 +413,23 @@ module Wasminna
         read => ID_REGEXP
       end
 
-      if can_read_list?(starting_with: 'memory')
-        read_list(starting_with: 'memory') do
-          parse_index(context.mems)
+      mode =
+        if can_read_list?(starting_with: 'memory')
+          index =
+            read_list(starting_with: 'memory') do
+              parse_index(context.mems)
+            end
+          offset =
+            read_list(starting_with: 'offset') do
+              parse_instructions
+            end
+          DataSegment::Mode::Active.new(index:, offset:)
+        else
+          DataSegment::Mode::Passive.new
         end
-        offset =
-          read_list(starting_with: 'offset') do
-            parse_instructions
-          end
-      end
       string = repeatedly { parse_string }.join
 
-      DataSegment.new(offset:, string:)
+      DataSegment.new(offset:, string:, mode:)
     end
 
     UNSIGNED_INTEGER_REGEXP =
