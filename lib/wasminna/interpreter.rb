@@ -244,7 +244,8 @@ module Wasminna
 
     def initialise_memory(datas:)
       datas.each do |data|
-        if data in string:, mode: DataSegment::Mode::Active(index:, offset:)
+        if data in string:, mode: DataSegment::Mode::Active(offset:) => mode
+          mode => { index: 0 }
           evaluate_expression(offset, locals: [])
           stack.pop(1) => [offset]
           raise if offset + string.bytesize > current_module.memory.bytes.bytesize
