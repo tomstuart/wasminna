@@ -77,5 +77,13 @@ module Wasminna
           force_encoding(encoding)
       end
     end
+
+    module ReadOptionalId
+      private
+
+      def read_optional_id
+        read if peek in %r{\A\$}
+      end
+    end
   end
 end

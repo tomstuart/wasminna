@@ -4,6 +4,7 @@ require 'wasminna/memory'
 module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
+    include Helpers::ReadOptionalId
     include Helpers::SizeOf
     include Helpers::StringValue
 
@@ -20,8 +21,6 @@ module Wasminna
     end
 
     private
-
-    ID_REGEXP = %r{\A\$}
 
     attr_accessor :s_expression
 
@@ -54,9 +53,7 @@ module Wasminna
 
     def process_module
       read => 'module'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if peek in 'binary'
         read => 'binary'
@@ -99,9 +96,7 @@ module Wasminna
 
     def process_function_definition
       read => 'func'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'func', id:)
@@ -118,9 +113,7 @@ module Wasminna
 
     def process_table_definition
       read => 'table'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'table', id:)
@@ -168,9 +161,7 @@ module Wasminna
 
     def process_memory_definition
       read => 'memory'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'memory', id:)
@@ -208,9 +199,7 @@ module Wasminna
 
     def process_global_definition
       read => 'global'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'global', id:)
@@ -292,15 +281,15 @@ module Wasminna
         while can_read_list?(starting_with: kind)
           declarations.concat(
             read_list(starting_with: kind) do
-              if peek in ID_REGEXP
-                read => ID_REGEXP => id
-                read => type
-                [[kind, id, type]]
-              else
+              read_optional_id => id
+              if id.nil?
                 repeatedly do
                   read => type
                   [kind, type]
                 end
+              else
+                read => type
+                [[kind, id, type]]
               end
             end
           )
@@ -335,9 +324,7 @@ module Wasminna
 
     def process_type_definition
       read => 'type'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
       functype = read_list { process_functype }
 
       [
@@ -368,9 +355,7 @@ module Wasminna
       case peek
       when 'func'
         read => 'func'
-        if peek in ID_REGEXP
-          read => ID_REGEXP => id
-        end
+        read_optional_id => id
         typeuse = process_typeuse
 
         ['func', *id, *typeuse]
@@ -381,9 +366,7 @@ module Wasminna
 
     def process_element_segment
       read => 'elem'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_list?
         process_active_element_segment(id:)
@@ -485,9 +468,7 @@ module Wasminna
 
     def process_data_segment
       read => 'data'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => id
-      end
+      read_optional_id => id
 
       if can_read_list?
         process_active_data_segment(id:)

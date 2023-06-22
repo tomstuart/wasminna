@@ -8,6 +8,7 @@ module Wasminna
     include AST
     include Helpers::Mask
     include Helpers::ReadFromSExpression
+    include Helpers::ReadOptionalId
     include Helpers::StringValue
 
     def parse_script(s_expression)
@@ -45,9 +46,7 @@ module Wasminna
 
     def parse_module
       read => 'module'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       fields =
         case peek
         in 'binary'
@@ -132,9 +131,7 @@ module Wasminna
         read_list do
           case read
           in 'type'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
+            read_optional_id => name
             type =
               read_list(starting_with: 'func') do
                 _, parameters = unzip_pairs(parse_parameters)
@@ -143,9 +140,7 @@ module Wasminna
               end
             Context.new(types: [name], typedefs: [type])
           in 'func' | 'table' | 'memory' | 'global' | 'elem' | 'data' => field_name
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
+            read_optional_id => name
             repeatedly { read }
             index_space_name =
               {
@@ -168,9 +163,7 @@ module Wasminna
                   'memory' => :mems,
                   'global' => :globals
                 }.fetch(kind)
-              if peek in ID_REGEXP
-                read => ID_REGEXP => name
-              end
+              read_optional_id => name
               repeatedly { read }
               Context.new(index_space_name => [name])
             end
@@ -186,9 +179,7 @@ module Wasminna
 
     def parse_invoke
       read => 'invoke'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => module_name
-      end
+      read_optional_id => module_name
       parse_string => name
       arguments = with_context(Context.new) { parse_instructions }
 
@@ -197,9 +188,7 @@ module Wasminna
 
     def parse_get
       read => 'get'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => module_name
-      end
+      read_optional_id => module_name
       parse_string => name
 
       Get.new(module_name:, name:)
@@ -272,20 +261,14 @@ module Wasminna
     def parse_register
       read => 'register'
       module_name = parse_string
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
 
       Register.new(module_name:, name:)
     end
 
-    ID_REGEXP = %r{\A\$}
-
     def parse_type_definition
       read => 'type'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
 
       read_list do
         read => 'func'
@@ -321,9 +304,7 @@ module Wasminna
 
     def parse_declaration(kind:)
       read => ^kind
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       read => type
 
       [name, type]
@@ -331,9 +312,7 @@ module Wasminna
 
     def parse_function_definition
       read => 'func'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       parse_typeuse => [type_index, parameter_names]
       local_names, locals = unzip_pairs(parse_locals)
@@ -399,9 +378,7 @@ module Wasminna
 
     def parse_memory_definition
       read => 'memory'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
       parse_limits => [minimum_size, maximum_size]
 
       AST::Memory.new(minimum_size:, maximum_size:)
@@ -409,9 +386,7 @@ module Wasminna
 
     def parse_data_segment
       read => 'data'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       mode =
         if can_read_list?(starting_with: 'memory')
@@ -445,9 +420,7 @@ module Wasminna
 
     def parse_table_definition
       read => 'table'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       minimum_size, maximum_size, reftype = parse_tabletype
 
       Table.new(name:, minimum_size:, maximum_size:)
@@ -470,9 +443,7 @@ module Wasminna
 
     def parse_global_definition
       read => 'global'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       parse_globaltype
       value = parse_instructions
@@ -515,9 +486,7 @@ module Wasminna
       kind, type =
         read_list do
           read => 'func' | 'table' | 'memory' | 'global' => kind
-          if peek in ID_REGEXP
-            read => ID_REGEXP
-          end
+          read_optional_id
 
           case kind
           in 'func'
@@ -537,9 +506,7 @@ module Wasminna
 
     def parse_element_segment
       read => 'elem'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
       mode =
         if can_read_list?(starting_with: 'table')
           index =
@@ -813,11 +780,12 @@ module Wasminna
         read => ^atom
       end
 
-      if peek in ID_REGEXP
+      read_optional_id => id
+      unless id.nil?
         if label.nil?
-          read => ID_REGEXP => label
+          id => label
         else
-          read => ^label
+          id => ^label
         end
       end
 
