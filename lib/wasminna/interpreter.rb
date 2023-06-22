@@ -468,12 +468,16 @@ module Wasminna
         current_module.datas[index] = nil
       in TableInit(table_index:, element_index:)
         stack.pop(3) => [destination, source, length]
-        table = current_module.tables.slice(table_index)
-        element = current_module.elements.slice(element_index)
-        length.times do |index|
-          evaluate_expression(element.items.slice(source + index), locals: [])
-          stack.pop(1) => [value]
-          table.elements[destination + index] = value
+        unless length.zero?
+          table = current_module.tables.slice(table_index)
+          case current_module.elements.slice(element_index)
+          in ElementSegment(items:, mode: ElementSegment::Mode::Passive)
+            length.times do |index|
+              evaluate_expression(items.slice(source + index), locals: [])
+              stack.pop(1) => [value]
+              table.elements[destination + index] = value
+            end
+          end
         end
       in ElemDrop(index:)
         current_module.elements[index] = nil
