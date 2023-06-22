@@ -491,10 +491,10 @@ module Wasminna
 
     def process_element_expressions
       repeatedly do
-        read_list { process_element_expression.call(DUMMY_TYPE_DEFINITIONS) }
+        read_list { process_element_expression }
       end.then do |results|
-        after_all_fields do
-          results
+        after_all_fields do |type_definitions|
+          results.map { |result| result.call(type_definitions) }
         end
       end
     end
