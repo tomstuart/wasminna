@@ -254,9 +254,9 @@ module Wasminna
     end
 
     def initialise_tables(elements:)
-      elements.reject { _1.offset.nil? }.each do |element|
-        table_instance = current_module.tables.slice(element.index)
-        evaluate_expression(element.offset, locals: [])
+      elements.select { _1.mode.is_a?(ElementSegment::Mode::Active) }.each do |element|
+        table_instance = current_module.tables.slice(element.mode.index)
+        evaluate_expression(element.mode.offset, locals: [])
         stack.pop(1) => [offset]
         raise if offset + element.items.length > table_instance.elements.length
 
