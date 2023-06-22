@@ -407,7 +407,7 @@ module Wasminna
       read => 'import'
       read => module_name
       read => name
-      descriptor = read_list { process_import_descriptor }
+      descriptor = read_list { process_import_descriptor.call(DUMMY_TYPE_DEFINITIONS) }
 
       [
         ['import', module_name, name, descriptor]
@@ -421,9 +421,15 @@ module Wasminna
         read_optional_id => id
         typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
 
-        ['func', *id, *typeuse]
+        after_all_fields do
+          ['func', *id, *typeuse]
+        end
       else
-        repeatedly { read }
+        repeatedly { read }.then do |result|
+          after_all_fields do
+            result
+          end
+        end
       end
     end
 
