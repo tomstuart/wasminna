@@ -202,11 +202,11 @@ assert_preprocess <<'--', <<'--'
 
 assert_preprocess <<'--', <<'--'
   (module
-    (import a b (func (param i32 i64) (result f32 f64)))
+    (import "a" "b" (func (param i32 i64) (result f32 f64)))
   )
 --
   (module
-    (import a b (func (param i32) (param i64) (result f32) (result f64)))
+    (import "a" "b" (func (param i32) (param i64) (result f32) (result f64)))
   )
 --
 
@@ -214,7 +214,7 @@ assert_preprocess <<'--', <<'--'
   (module
     (func
       (block (param i32 i32) (result i32 i32)
-        (i32 add)
+        (i32.add)
         (i32.const 1)
       )
     )
@@ -223,7 +223,7 @@ assert_preprocess <<'--', <<'--'
   (module
     (func
       (block (param i32) (param i32) (result i32) (result i32)
-        (i32 add)
+        (i32.add)
         (i32.const 1)
       )
     )
