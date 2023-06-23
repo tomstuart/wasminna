@@ -734,17 +734,8 @@ module Wasminna
           end
         raise unless parameter_names.all?(&:nil?)
 
-        type = updated_typedefs.slice(type_index)
-        if (
-          type.parameters.none? &&
-          (type.results.none? || type.results.one?) &&
-          context.typedefs.find_index(type).nil?
-        )
-          type.results
-        else
-          self.context = context.with(typedefs: updated_typedefs)
-          type_index
-        end
+        self.context = context.with(typedefs: updated_typedefs)
+        type_index
       else
         parse_results => [] | [_] => results
         results
