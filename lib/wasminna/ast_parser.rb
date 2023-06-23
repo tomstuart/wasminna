@@ -736,23 +736,28 @@ module Wasminna
     end
 
     def parse_blocktype
-      type_index, parameter_names, updated_typedefs =
-        with_context(context) do
-          parse_typeuse => [type_index, parameter_names]
-          [type_index, parameter_names, context.typedefs]
-        end
-      raise unless parameter_names.all?(&:nil?)
+      if can_read_list?(starting_with: 'type')
+        type_index, parameter_names, updated_typedefs =
+          with_context(context) do
+            parse_typeuse => [type_index, parameter_names]
+            [type_index, parameter_names, context.typedefs]
+          end
+        raise unless parameter_names.all?(&:nil?)
 
-      type = updated_typedefs.slice(type_index)
-      if (
-        type.parameters.none? &&
-        (type.results.none? || type.results.one?) &&
-        context.typedefs.find_index(type).nil?
-      )
-        type.results
+        type = updated_typedefs.slice(type_index)
+        if (
+          type.parameters.none? &&
+          (type.results.none? || type.results.one?) &&
+          context.typedefs.find_index(type).nil?
+        )
+          type.results
+        else
+          self.context = context.with(typedefs: updated_typedefs)
+          type_index
+        end
       else
-        self.context = context.with(typedefs: updated_typedefs)
-        type_index
+        parse_results => [] | [_] => results
+        results
       end
     end
 
