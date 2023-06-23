@@ -298,6 +298,11 @@ module Wasminna
         case peek
         in ['param' | 'result', *]
           process_typeuse
+        in 'select'
+          read => 'select'
+          results = process_results
+
+          ['select', *results]
         in [*]
           read_list { [process_instructions] }
         else
