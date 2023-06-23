@@ -389,6 +389,15 @@ BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
 
+  def pretty_print(s_expression)
+    case s_expression
+    in [*items]
+      "(#{items.map { pretty_print(_1) }.join(' ')})"
+    else
+      s_expression
+    end
+  end
+
   def parse(string)
     Wasminna::SExpressionParser.new.parse(string)
   end
@@ -401,7 +410,7 @@ BEGIN {
     if actual == expected
       print "\e[32m.\e[0m"
     else
-      raise "expected #{expected}, got #{actual}"
+      raise "expected #{pretty_print(expected)}, got #{pretty_print(actual)}"
     end
   end
 
