@@ -334,21 +334,11 @@ module Wasminna
     end
 
     def parse_typeuse
-      if can_read_list?(starting_with: 'type')
-        index = read_list(starting_with: 'type') { parse_index(context.types) }
-      end
+      index = read_list(starting_with: 'type') { parse_index(context.types) }
       parameter_names, parameters = parse_parameters
       results = parse_results
 
-      if index.nil?
-        generated_type = Type.new(parameters:, results:)
-        index = context.typedefs.find_index(generated_type)
-
-        if index.nil?
-          index = context.typedefs.length
-          self.context = context + Context.new(typedefs: [generated_type])
-        end
-      elsif [parameters, results].all?(&:empty?)
+      if [parameters, results].all?(&:empty?)
         context.typedefs.slice(index) => { parameters: }
         parameter_names = parameters.map { nil }
       end
