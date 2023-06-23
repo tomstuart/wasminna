@@ -323,12 +323,10 @@ module Wasminna
       local_names, locals = parse_locals
       locals_context = Context.new(locals: parameter_names + local_names)
       raise unless locals_context.well_formed?
-      body, updated_typedefs =
+      body =
         with_context(context + locals_context) do
-          body = parse_instructions
-          [body, context.typedefs]
+          parse_instructions
         end
-      self.context = context.with(typedefs: updated_typedefs)
 
       Function.new(type_index:, locals:, body:)
     end
@@ -727,14 +725,8 @@ module Wasminna
 
     def parse_blocktype
       if can_read_list?(starting_with: 'type')
-        type_index, parameter_names, updated_typedefs =
-          with_context(context) do
-            parse_typeuse => [type_index, parameter_names]
-            [type_index, parameter_names, context.typedefs]
-          end
+        parse_typeuse => [type_index, parameter_names]
         raise unless parameter_names.all?(&:nil?)
-
-        self.context = context.with(typedefs: updated_typedefs)
         type_index
       else
         parse_results => [] | [_] => results
