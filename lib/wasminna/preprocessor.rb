@@ -560,7 +560,7 @@ module Wasminna
       if can_read_list?
         process_active_data_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       else
-        process_passive_data_segment(id:)
+        process_passive_data_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       end
     end
 
@@ -584,9 +584,11 @@ module Wasminna
     def process_passive_data_segment(id:)
       rest = repeatedly { read }
 
-      [
-        ['data', *id, *rest]
-      ]
+      after_all_fields do
+        [
+          ['data', *id, *rest]
+        ]
+      end
     end
 
     def process_unabbreviated_field
