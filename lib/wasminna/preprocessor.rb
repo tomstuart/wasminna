@@ -30,10 +30,9 @@ module Wasminna
 
     def expand_inline_module
       fields =
-        [].tap do |fields|
-          while can_read_field?
-            fields.push(read)
-          end
+        repeatedly do
+          raise StopIteration unless can_read_field?
+          read
         end
       expanded = ['module', *fields]
 
@@ -277,24 +276,21 @@ module Wasminna
     end
 
     def expand_anonymous_declarations(kind:)
-      [].tap do |declarations|
-        while can_read_list?(starting_with: kind)
-          declarations.concat(
-            read_list(starting_with: kind) do
-              read_optional_id => id
-              if id.nil?
-                repeatedly do
-                  read => type
-                  [kind, type]
-                end
-              else
-                read => type
-                [[kind, id, type]]
-              end
+      repeatedly do
+        raise StopIteration unless can_read_list?(starting_with: kind)
+        read_list(starting_with: kind) do
+          read_optional_id => id
+          if id.nil?
+            repeatedly do
+              read => type
+              [kind, type]
             end
-          )
+          else
+            read => type
+            [[kind, id, type]]
+          end
         end
-      end
+      end.flatten(1)
     end
 
     def process_instructions

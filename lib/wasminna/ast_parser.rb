@@ -298,10 +298,9 @@ module Wasminna
     end
 
     def parse_declarations(kind:)
-      [].tap do |results|
-        while can_read_list?(starting_with: kind)
-          results << read_list { parse_declaration(kind:) }
-        end
+      repeatedly do
+        raise StopIteration unless can_read_list?(starting_with: kind)
+        read_list { parse_declaration(kind:) }
       end
     end
 
@@ -590,10 +589,11 @@ module Wasminna
           body = parse_instructions
           [Loop.new(type:, body:)]
         in 'if'
-          condition = []
-          until can_read_list?(starting_with: 'then')
-            condition.concat(parse_folded_instruction)
-          end
+          condition =
+            repeatedly do
+              raise StopIteration if can_read_list?(starting_with: 'then')
+              parse_folded_instruction
+            end.flatten(1)
           consequent =
             read_list(starting_with: 'then') do
               parse_instructions
