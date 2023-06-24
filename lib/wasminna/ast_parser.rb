@@ -946,12 +946,8 @@ module Wasminna
     end
 
     def unzip_pairs(pairs)
-      pairs.transpose.then do |unzipped|
-        if unzipped.empty?
-          [[], []]
-        else
-          unzipped
-        end
+      pairs.transpose.then do |lefts = [], rights = []|
+        [lefts, rights]
       end
     end
   end
