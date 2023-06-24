@@ -287,10 +287,7 @@ module Wasminna
     end
 
     def parse_results
-      parse_declarations(kind: 'result').map do |result|
-        result => [nil, type]
-        type
-      end
+      unzip_pairs(parse_declarations(kind: 'result')).last
     end
 
     def parse_locals
