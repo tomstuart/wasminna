@@ -135,7 +135,7 @@ module Wasminna
             read_optional_id => name
             type =
               read_list(starting_with: 'func') do
-                _, parameters = unzip_pairs(parse_parameters)
+                _, parameters = parse_parameters
                 results = parse_results
                 Type.new(parameters:, results:)
               end
@@ -275,7 +275,7 @@ module Wasminna
 
       read_list do
         read => 'func'
-        _, parameters = unzip_pairs(parse_parameters)
+        _, parameters = parse_parameters
         results = parse_results
 
         Type.new(parameters:, results:)
@@ -283,7 +283,7 @@ module Wasminna
     end
 
     def parse_parameters
-      parse_declarations(kind: 'param')
+      unzip_pairs(parse_declarations(kind: 'param'))
     end
 
     def parse_results
@@ -294,7 +294,7 @@ module Wasminna
     end
 
     def parse_locals
-      parse_declarations(kind: 'local')
+      unzip_pairs(parse_declarations(kind: 'local'))
     end
 
     def parse_declarations(kind:)
@@ -317,7 +317,7 @@ module Wasminna
       read_optional_id
 
       parse_typeuse => [type_index, parameter_names]
-      local_names, locals = unzip_pairs(parse_locals)
+      local_names, locals = parse_locals
       locals_context = Context.new(locals: parameter_names + local_names)
       raise unless locals_context.well_formed?
       body, updated_typedefs =
@@ -334,7 +334,7 @@ module Wasminna
       if can_read_list?(starting_with: 'type')
         index = read_list(starting_with: 'type') { parse_index(context.types) }
       end
-      parameter_names, parameters = unzip_pairs(parse_parameters)
+      parameter_names, parameters = parse_parameters
       results = parse_results
 
       if index.nil?
