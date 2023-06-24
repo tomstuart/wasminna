@@ -20,7 +20,7 @@ module Wasminna
 
     private
 
-    attr_accessor :s_expression, :context
+    attr_accessor :s_expression
 
     def parse_commands
       repeatedly { parse_command }
@@ -530,14 +530,6 @@ module Wasminna
           [parse_instruction(context:)]
         end
       end.flatten(1)
-    end
-
-    def with_context(context)
-      previous_context, self.context = self.context, context
-
-      yield.tap do
-        self.context = previous_context
-      end
     end
 
     def parse_instruction(context:)
