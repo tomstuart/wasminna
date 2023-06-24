@@ -856,22 +856,7 @@ module Wasminna
           else
             0
           end
-        type_index =
-          if can_read_list?(starting_with: 'type')
-            read_list(starting_with: 'type') do
-              parse_index(context.types)
-            end
-          end
-        while can_read_list?(starting_with: 'param')
-          read_list(starting_with: 'param') do
-            repeatedly { read }
-          end
-        end
-        while can_read_list?(starting_with: 'result')
-          read_list(starting_with: 'result') do
-            repeatedly { read }
-          end
-        end
+        parse_typeuse => [type_index, _]
 
         CallIndirect.new(table_index:, type_index:)
       in 'select'
