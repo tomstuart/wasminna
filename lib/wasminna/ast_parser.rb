@@ -198,12 +198,13 @@ module Wasminna
     def parse_assert_return
       read => 'assert_return'
       action =
-        if can_read_list?(starting_with: 'invoke')
-          read_list { parse_invoke }
-        elsif can_read_list?(starting_with: 'get')
-          read_list { parse_get }
-        else
-          raise
+        read_list do
+          case peek
+          in 'invoke'
+            parse_invoke
+          in 'get'
+            parse_get
+          end
         end
       expecteds = parse_expecteds
 
@@ -213,14 +214,15 @@ module Wasminna
     def parse_assert_trap
       read => 'assert_trap'
       action =
-        if can_read_list?(starting_with: 'invoke')
-          read_list { parse_invoke }
-        elsif can_read_list?(starting_with: 'get')
-          read_list { parse_get }
-        elsif can_read_list?(starting_with: 'module')
-          read_list { parse_module }
-        else
-          raise
+        read_list do
+          case peek
+          in 'invoke'
+            parse_invoke
+          in 'get'
+            parse_get
+          in 'module'
+            parse_module
+          end
         end
       failure = parse_string
 
