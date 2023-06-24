@@ -283,22 +283,22 @@ module Wasminna
     end
 
     def parse_parameters
-      unzip_pairs(parse_declarations(kind: 'param'))
+      parse_declarations(kind: 'param')
     end
 
     def parse_results
-      unzip_pairs(parse_declarations(kind: 'result')).last
+      parse_declarations(kind: 'result').last
     end
 
     def parse_locals
-      unzip_pairs(parse_declarations(kind: 'local'))
+      parse_declarations(kind: 'local')
     end
 
     def parse_declarations(kind:)
       repeatedly do
         raise StopIteration unless can_read_list?(starting_with: kind)
         read_list { parse_declaration(kind:) }
-      end
+      end.then { unzip_pairs(_1) }
     end
 
     def parse_declaration(kind:)
