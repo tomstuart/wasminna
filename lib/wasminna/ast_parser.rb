@@ -876,24 +876,12 @@ module Wasminna
         read_index => index
         if can_read_index?
           table_index =
-            if index.start_with?('$')
-              context.tables.index(index) || raise
-            elsif index.start_with?('0x')
-              index.to_i(16)
-            else
-              index.to_i(10)
-            end
+            read_list(from: [index]) { parse_index(context.tables) }
           element_index = parse_index(context.elem)
         else
           table_index = 0
           element_index =
-            if index.start_with?('$')
-              context.elem.index(index) || raise
-            elsif index.start_with?('0x')
-              index.to_i(16)
-            else
-              index.to_i(10)
-            end
+            read_list(from: [index]) { parse_index(context.elem) }
         end
 
         TableInit.new(table_index:, element_index:)
