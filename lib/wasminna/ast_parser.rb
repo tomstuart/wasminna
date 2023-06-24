@@ -298,7 +298,9 @@ module Wasminna
       repeatedly do
         raise StopIteration unless can_read_list?(starting_with: kind)
         read_list { parse_declaration(kind:) }
-      end.then { unzip_pairs(_1) }
+      end.transpose.then do |names = [], types = []|
+        [names, types]
+      end
     end
 
     def parse_declaration(kind:)
@@ -940,12 +942,6 @@ module Wasminna
 
     def parse_string
       string_value(read)
-    end
-
-    def unzip_pairs(pairs)
-      pairs.transpose.then do |lefts = [], rights = []|
-        [lefts, rights]
-      end
     end
   end
 end
