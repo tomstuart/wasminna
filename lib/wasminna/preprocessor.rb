@@ -296,17 +296,17 @@ module Wasminna
     def process_instructions
       repeatedly do
         if can_read_list?
-          read_list do
-            case peek
-            in 'param' | 'result'
+          case peek
+          in ['param' | 'result', *]
+            read_list do
               read => 'param' | 'result' => kind
               repeatedly do
                 read => type
                 [kind, type]
               end
-            else
-              [process_instructions]
             end
+          else
+            read_list { [process_instructions] }
           end
         else
           [read]
