@@ -236,7 +236,7 @@ module Wasminna
       in ['import', _, _]
         expand_inline_import(**).first
       in ['export', _]
-        expand_inline_export(**)
+        expand_inline_export(**).first
       end
     end
 
@@ -268,7 +268,10 @@ module Wasminna
           [kind, id, *description]
         ]
 
-      read_list(from: expanded) { process_fields }
+      [
+        read_list(from: expanded) { process_fields },
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_typeuse
