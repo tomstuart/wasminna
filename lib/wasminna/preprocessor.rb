@@ -558,7 +558,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_list?
-        process_active_data_segment(id:)
+        process_active_data_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       else
         process_passive_data_segment(id:)
       end
@@ -574,9 +574,11 @@ module Wasminna
       offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
       strings = repeatedly { read }
 
-      [
-        ['data', *id, memory_use, offset, *strings]
-      ]
+      after_all_fields do
+        [
+          ['data', *id, memory_use, offset, *strings]
+        ]
+      end
     end
 
     def process_passive_data_segment(id:)
