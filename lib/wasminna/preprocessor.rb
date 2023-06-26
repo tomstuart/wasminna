@@ -571,12 +571,12 @@ module Wasminna
         else
           %w[memory 0]
         end
-      offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
+      offset = read_list { process_offset }
       strings = repeatedly { read }
 
-      after_all_fields do
+      after_all_fields do |type_definitions|
         [
-          ['data', *id, memory_use, offset, *strings]
+          ['data', *id, memory_use, offset.call(type_definitions), *strings]
         ]
       end
     end
