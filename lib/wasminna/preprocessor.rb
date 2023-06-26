@@ -340,8 +340,8 @@ module Wasminna
           end
         end
       end.then do |results|
-        after_all_fields do
-          results.flat_map { |result| result.call(DUMMY_TYPE_DEFINITIONS) }
+        after_all_fields do |type_definitions|
+          results.flat_map { |result| result.call(type_definitions) }
         end
       end
     end
