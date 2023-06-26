@@ -88,7 +88,7 @@ module Wasminna
       in 'import'
         process_import.call(DUMMY_TYPE_DEFINITIONS)
       in 'elem'
-        process_element_segment
+        process_element_segment.call(DUMMY_TYPE_DEFINITIONS)
       in 'data'
         process_data_segment
       in 'export' | 'start'
@@ -450,11 +450,11 @@ module Wasminna
       read_optional_id => id
 
       if can_read_list?
-        process_active_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
+        process_active_element_segment(id:)
       elsif peek in 'declare'
-        process_declarative_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
+        process_declarative_element_segment(id:)
       else
-        process_passive_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
+        process_passive_element_segment(id:)
       end
     end
 
