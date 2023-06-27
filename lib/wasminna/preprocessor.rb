@@ -69,30 +69,30 @@ module Wasminna
 
     def process_fields
       repeatedly do
-        read_list { process_field }
+        read_list { process_field.call(DUMMY_TYPE_DEFINITIONS) }
       end.flatten(1)
     end
 
     def process_field
       case peek
       in 'func'
-        process_function_definition.call(DUMMY_TYPE_DEFINITIONS)
+        process_function_definition
       in 'table'
-        process_table_definition.call(DUMMY_TYPE_DEFINITIONS)
+        process_table_definition
       in 'memory'
-        process_memory_definition.call(DUMMY_TYPE_DEFINITIONS)
+        process_memory_definition
       in 'global'
-        process_global_definition.call(DUMMY_TYPE_DEFINITIONS)
+        process_global_definition
       in 'type'
-        process_type_definition.call(DUMMY_TYPE_DEFINITIONS)
+        process_type_definition
       in 'import'
-        process_import.call(DUMMY_TYPE_DEFINITIONS)
+        process_import
       in 'elem'
-        process_element_segment.call(DUMMY_TYPE_DEFINITIONS)
+        process_element_segment
       in 'data'
-        process_data_segment.call(DUMMY_TYPE_DEFINITIONS)
+        process_data_segment
       in 'export' | 'start'
-        process_unabbreviated_field.call(DUMMY_TYPE_DEFINITIONS)
+        process_unabbreviated_field
       end
     end
 
