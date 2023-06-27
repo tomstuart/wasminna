@@ -499,13 +499,13 @@ module Wasminna
       instructions =
         if peek in 'item'
           read => 'item'
-          process_instructions.call(DUMMY_TYPE_DEFINITIONS)
+          process_instructions
         else
-          process_instruction.call(DUMMY_TYPE_DEFINITIONS)
+          process_instruction
         end
 
-      after_all_fields do
-        ['item', *instructions]
+      after_all_fields do |type_definitions|
+        ['item', *instructions.call(type_definitions)]
       end
     end
 
