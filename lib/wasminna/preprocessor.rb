@@ -76,7 +76,7 @@ module Wasminna
     def process_field
       case peek
       in 'func'
-        process_function_definition
+        process_function_definition.call(DUMMY_TYPE_DEFINITIONS)
       in 'table'
         process_table_definition
       in 'memory'
@@ -101,15 +101,21 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'func', id:).call(DUMMY_TYPE_DEFINITIONS)
+        expand_inline_import_export(kind: 'func', id:).call(DUMMY_TYPE_DEFINITIONS).then do |result|
+          after_all_fields do
+            result
+          end
+        end
       else
         typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
         locals = process_locals
         body = process_instructions.call(DUMMY_TYPE_DEFINITIONS)
 
-        [
-          ['func', *id, *typeuse, *locals, *body]
-        ]
+        after_all_fields do
+          [
+            ['func', *id, *typeuse, *locals, *body]
+          ]
+        end
       end
     end
 
