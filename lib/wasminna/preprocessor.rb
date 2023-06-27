@@ -69,8 +69,8 @@ module Wasminna
 
     def process_fields
       repeatedly do
-        read_list { process_field.first }
-      end.then do |fields|
+        read_list { process_field }
+      end.transpose.then do |fields = [], _|
         after_all_fields do |type_definitions|
           fields.flat_map { |field| field.call(type_definitions) }
         end
