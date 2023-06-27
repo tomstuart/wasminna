@@ -440,7 +440,7 @@ module Wasminna
       if can_read_list?
         process_active_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       elsif peek in 'declare'
-        process_declarative_element_segment(id:)
+        process_declarative_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       else
         process_passive_element_segment(id:)
       end
@@ -469,9 +469,11 @@ module Wasminna
       read => 'declare'
       element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
 
-      [
-        ['elem', *id, 'declare', *element_list]
-      ]
+      after_all_fields do
+        [
+          ['elem', *id, 'declare', *element_list]
+        ]
+      end
     end
 
     def process_passive_element_segment(id:)
