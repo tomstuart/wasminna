@@ -69,7 +69,7 @@ module Wasminna
 
     def process_fields
       repeatedly do
-        read_list { process_field }
+        read_list { process_field.first }
       end.then do |fields|
         after_all_fields do |type_definitions|
           fields.flat_map { |field| field.call(type_definitions) }
@@ -80,23 +80,23 @@ module Wasminna
     def process_field
       case peek
       in 'func'
-        process_function_definition.first
+        process_function_definition
       in 'table'
-        process_table_definition.first
+        process_table_definition
       in 'memory'
-        process_memory_definition.first
+        process_memory_definition
       in 'global'
-        process_global_definition.first
+        process_global_definition
       in 'type'
-        process_type_definition.first
+        process_type_definition
       in 'import'
-        process_import.first
+        process_import
       in 'elem'
-        process_element_segment.first
+        process_element_segment
       in 'data'
-        process_data_segment.first
+        process_data_segment
       in 'export' | 'start'
-        process_unabbreviated_field.first
+        process_unabbreviated_field
       end
     end
 
