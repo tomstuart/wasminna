@@ -218,18 +218,14 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'global', id:).call(DUMMY_TYPE_DEFINITIONS).then do |result|
-          after_all_fields do
-            result
-          end
-        end
+        expand_inline_import_export(kind: 'global', id:)
       else
         read => type
-        instructions = process_instructions.call(DUMMY_TYPE_DEFINITIONS)
+        instructions = process_instructions
 
-        after_all_fields do
+        after_all_fields do |type_definitions|
           [
-            ['global', *id, type, *instructions]
+            ['global', *id, type, *instructions.call(type_definitions)]
           ]
         end
       end
