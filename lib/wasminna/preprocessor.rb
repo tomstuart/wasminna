@@ -224,7 +224,7 @@ module Wasminna
       in ['import', _, _]
         expand_inline_import(**).call(DUMMY_TYPE_DEFINITIONS)
       in ['export', _]
-        expand_inline_export(**)
+        expand_inline_export(**).call(DUMMY_TYPE_DEFINITIONS)
       end
     end
 
@@ -257,7 +257,11 @@ module Wasminna
           [kind, id, *description]
         ]
 
-      read_list(from: expanded) { process_fields }
+      read_list(from: expanded) { process_fields }.then do |result|
+        after_all_fields do
+          result
+        end
+      end
     end
 
     def process_typeuse
