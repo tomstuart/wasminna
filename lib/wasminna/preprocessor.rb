@@ -51,8 +51,6 @@ module Wasminna
       end
     end
 
-    DUMMY_TYPE_DEFINITIONS = []
-
     def process_module
       read => 'module'
       read_optional_id => id
