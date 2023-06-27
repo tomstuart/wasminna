@@ -477,11 +477,11 @@ module Wasminna
     end
 
     def process_passive_element_segment(id:)
-      element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
+      element_list = process_element_list(func_optional: false)
 
-      after_all_fields do
+      after_all_fields do |type_definitions|
         [
-          ['elem', *id, *element_list]
+          ['elem', *id, *element_list.call(type_definitions)]
         ]
       end
     end
