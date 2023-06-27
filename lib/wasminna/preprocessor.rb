@@ -438,7 +438,7 @@ module Wasminna
           read
         end
       offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
-      element_list = process_element_list(func_optional: table_use.nil?)
+      element_list = process_element_list(func_optional: table_use.nil?).call(DUMMY_TYPE_DEFINITIONS)
 
       if table_use.nil?
         table_use = %w[table 0]
@@ -451,7 +451,7 @@ module Wasminna
 
     def process_declarative_element_segment(id:)
       read => 'declare'
-      element_list = process_element_list(func_optional: false)
+      element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
 
       [
         ['elem', *id, 'declare', *element_list]
@@ -459,7 +459,7 @@ module Wasminna
     end
 
     def process_passive_element_segment(id:)
-      element_list = process_element_list(func_optional: false)
+      element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
 
       [
         ['elem', *id, *element_list]
@@ -485,7 +485,9 @@ module Wasminna
         read => 'funcref' | 'externref' => reftype
         items = process_element_expressions.call(DUMMY_TYPE_DEFINITIONS)
 
-        [reftype, *items]
+        after_all_fields do
+          [reftype, *items]
+        end
       else
         if !func_optional || (peek in 'func')
           read => 'func'
@@ -495,7 +497,9 @@ module Wasminna
             process_element_expressions.call(DUMMY_TYPE_DEFINITIONS)
           end
 
-        ['funcref', *items]
+        after_all_fields do
+          ['funcref', *items]
+        end
       end
     end
 
