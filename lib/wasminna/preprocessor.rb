@@ -172,7 +172,7 @@ module Wasminna
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'memory', id:)
       elsif can_read_inline_data_segment?
-        expand_inline_data_segment(id:)
+        expand_inline_data_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       else
         rest = repeatedly { read }
 
@@ -200,7 +200,11 @@ module Wasminna
           ['data', ['memory', id], %w[i32.const 0], *strings]
         ]
 
-      read_list(from: expanded) { process_fields }
+      read_list(from: expanded) { process_fields }.then do |result|
+        after_all_fields do
+          result
+        end
+      end
     end
 
     def process_global_definition
