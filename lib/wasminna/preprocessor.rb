@@ -299,10 +299,11 @@ module Wasminna
           index = type_definitions.index { function_type(_1.last) == type }
 
           if index.nil?
-            [*parameters, *results]
-          else
-            [['type', index.to_s], *parameters, *results]
+            index = type_definitions.length
+            type_definitions << ['type', ['func', *parameters, *results]]
           end
+
+          [['type', index.to_s], *parameters, *results]
         end
       end
     end
