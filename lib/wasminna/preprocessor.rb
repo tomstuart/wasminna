@@ -442,7 +442,7 @@ module Wasminna
       elsif peek in 'declare'
         process_declarative_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       else
-        process_passive_element_segment(id:)
+        process_passive_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       end
     end
 
@@ -479,9 +479,11 @@ module Wasminna
     def process_passive_element_segment(id:)
       element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
 
-      [
-        ['elem', *id, *element_list]
-      ]
+      after_all_fields do
+        [
+          ['elem', *id, *element_list]
+        ]
+      end
     end
 
     def process_offset
