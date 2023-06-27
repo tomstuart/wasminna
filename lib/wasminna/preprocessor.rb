@@ -293,10 +293,10 @@ module Wasminna
       else
         parameters = process_parameters
         results = process_results
-        functype = ['func', *parameters, *results]
+        type = function_type(['func', *parameters, *results])
 
         after_all_fields do |type_definitions|
-          index = type_definitions.index { _1.last == functype }
+          index = type_definitions.index { function_type(_1.last) == type }
 
           if index.nil?
             [*parameters, *results]
@@ -305,6 +305,14 @@ module Wasminna
           end
         end
       end
+    end
+
+    def function_type(functype)
+      functype => ['func', *parameters_and_results]
+      parameters, results =
+        parameters_and_results.partition { _1 in ['param', *] }
+
+      [parameters, results]
     end
 
     def process_parameters
