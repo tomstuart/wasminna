@@ -62,8 +62,8 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = process_fields.first.call(DUMMY_TYPE_DEFINITIONS)
-        ['module', *id, *fields]
+        fields, type_definitions = process_fields
+        ['module', *id, *fields.call(type_definitions)]
       end
     end
 
