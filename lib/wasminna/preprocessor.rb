@@ -467,11 +467,11 @@ module Wasminna
 
     def process_declarative_element_segment(id:)
       read => 'declare'
-      element_list = process_element_list(func_optional: false).call(DUMMY_TYPE_DEFINITIONS)
+      element_list = process_element_list(func_optional: false)
 
-      after_all_fields do
+      after_all_fields do |type_definitions|
         [
-          ['elem', *id, 'declare', *element_list]
+          ['elem', *id, 'declare', *element_list.call(type_definitions)]
         ]
       end
     end
