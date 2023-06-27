@@ -378,8 +378,9 @@ module Wasminna
         if peek in ID_REGEXP
           read => ID_REGEXP => id
         end
+        typeuse = process_typeuse
 
-        ['func', *id, *process_typeuse]
+        ['func', *id, *typeuse]
       else
         repeatedly { read }
       end
@@ -484,7 +485,9 @@ module Wasminna
     end
 
     def process_function_indexes
-      repeatedly { ['ref.func', read] }
+      indexes = repeatedly { read }
+
+      indexes.map { |index| ['ref.func', index] }
     end
 
     def process_data_segment
@@ -541,7 +544,9 @@ module Wasminna
 
         ['assert_trap', mod, failure]
       else
-        ['assert_trap', *repeatedly { read }]
+        rest = repeatedly { read }
+
+        ['assert_trap', *rest]
       end
     end
   end
