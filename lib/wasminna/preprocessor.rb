@@ -491,7 +491,7 @@ module Wasminna
 
     def process_element_expressions
       repeatedly do
-        read_list { process_element_expression }
+        read_list { process_element_expression.call(DUMMY_TYPE_DEFINITIONS) }
       end
     end
 
@@ -504,7 +504,9 @@ module Wasminna
           process_instruction.call(DUMMY_TYPE_DEFINITIONS)
         end
 
-      ['item', *instructions]
+      after_all_fields do
+        ['item', *instructions]
+      end
     end
 
     def process_function_indexes
