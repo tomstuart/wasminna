@@ -101,19 +101,15 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'func', id:).call(DUMMY_TYPE_DEFINITIONS).then do |result|
-          after_all_fields do
-            result
-          end
-        end
+        expand_inline_import_export(kind: 'func', id:)
       else
-        typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
+        typeuse = process_typeuse
         locals = process_locals
-        body = process_instructions.call(DUMMY_TYPE_DEFINITIONS)
+        body = process_instructions
 
-        after_all_fields do
+        after_all_fields do |type_definitions|
           [
-            ['func', *id, *typeuse, *locals, *body]
+            ['func', *id, *typeuse.call(type_definitions), *locals, *body.call(type_definitions)]
           ]
         end
       end
