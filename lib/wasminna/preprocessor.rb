@@ -84,7 +84,7 @@ module Wasminna
       in 'global'
         process_global_definition.call(DUMMY_TYPE_DEFINITIONS)
       in 'type'
-        process_type_definition
+        process_type_definition.call(DUMMY_TYPE_DEFINITIONS)
       in 'import'
         process_import
       in 'elem'
@@ -398,9 +398,11 @@ module Wasminna
       read_optional_id => id
       functype = read_list { process_functype }
 
-      [
-        ['type', *id, functype]
-      ]
+      after_all_fields do
+        [
+          ['type', *id, functype]
+        ]
+      end
     end
 
     def process_functype
