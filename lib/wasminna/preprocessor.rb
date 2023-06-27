@@ -62,7 +62,7 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = process_fields
+        fields = process_fields.call(DUMMY_TYPE_DEFINITIONS)
         ['module', *id, *fields]
       end
     end
@@ -70,7 +70,11 @@ module Wasminna
     def process_fields
       repeatedly do
         read_list { process_field.call(DUMMY_TYPE_DEFINITIONS) }
-      end.flatten(1)
+      end.flatten(1).then do |result|
+        after_all_fields do
+          result
+        end
+      end
     end
 
     def process_field
@@ -162,7 +166,7 @@ module Wasminna
           ['elem', ['table', id], %w[i32.const 0], item_type, *items]
         ]
 
-      read_list(from: expanded) { process_fields }.then do |result|
+      read_list(from: expanded) { process_fields.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
         after_all_fields do
           result
         end
@@ -206,7 +210,7 @@ module Wasminna
           ['data', ['memory', id], %w[i32.const 0], *strings]
         ]
 
-      read_list(from: expanded) { process_fields }.then do |result|
+      read_list(from: expanded) { process_fields.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
         after_all_fields do
           result
         end
@@ -253,7 +257,7 @@ module Wasminna
           ['import', module_name, name, [kind, *id, *description]]
         ]
 
-      read_list(from: expanded) { process_fields }.then do |result|
+      read_list(from: expanded) { process_fields.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
         after_all_fields do
           result
         end
@@ -273,7 +277,7 @@ module Wasminna
           [kind, id, *description]
         ]
 
-      read_list(from: expanded) { process_fields }.then do |result|
+      read_list(from: expanded) { process_fields.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
         after_all_fields do
           result
         end
