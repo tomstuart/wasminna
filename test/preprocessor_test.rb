@@ -1,27 +1,33 @@
 assert_preprocess <<'--', <<'--'
   (module
-    (func (import "spectest" "print_i32") (param i32))
+    (type $t (func (param i32)))
+    (func (import "spectest" "print_i32") (type $t))
   )
 --
   (module
-    (import "spectest" "print_i32" (func (param i32)))
+    (type $t (func (param i32)))
+    (import "spectest" "print_i32" (func (type $t)))
   )
 --
 
 assert_preprocess <<'--', <<'--'
   (module $mymodule
-    (func (import "spectest" "print_i32") (param i32))
+    (type $t (func (param i32)))
+    (func (import "spectest" "print_i32") (type $t))
   )
 --
   (module $mymodule
-    (import "spectest" "print_i32" (func (param i32)))
+    (type $t (func (param i32)))
+    (import "spectest" "print_i32" (func (type $t)))
   )
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func $myfunction (import "spectest" "print_i32") (param i32))
+  (type $t (func (param i32)))
+  (func $myfunction (import "spectest" "print_i32") (type $t))
 --
-  (import "spectest" "print_i32" (func $myfunction (param i32)))
+  (type $t (func (param i32)))
+  (import "spectest" "print_i32" (func $myfunction (type $t)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
@@ -43,50 +49,58 @@ assert_preprocess_module_fields <<'--', <<'--'
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func (export "i32.test") (result i32) (return (i32.const 0x0bAdD00D)))
+  (type $t (func (result i32)))
+  (func (export "i32.test") (type $t) (return (i32.const 0x0bAdD00D)))
 --
+  (type $t (func (result i32)))
   (export "i32.test" (func $__fresh_0))
-  (func $__fresh_0 (result i32) (return (i32.const 0x0bAdD00D)))
+  (func $__fresh_0 (type $t) (return (i32.const 0x0bAdD00D)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func (export "i32.test") (result i32) (return (i32.const 0x0bAdD00D)))
-  (func (export "i32.umax") (result i32) (return (i32.const 0xffffffff)))
+  (type $t (func (result i32)))
+  (func (export "i32.test") (type $t) (return (i32.const 0x0bAdD00D)))
+  (func (export "i32.umax") (type $t) (return (i32.const 0xffffffff)))
 --
+  (type $t (func (result i32)))
   (export "i32.test" (func $__fresh_0))
-  (func $__fresh_0 (result i32) (return (i32.const 0x0bAdD00D)))
+  (func $__fresh_0 (type $t) (return (i32.const 0x0bAdD00D)))
   (export "i32.umax" (func $__fresh_1))
-  (func $__fresh_1 (result i32) (return (i32.const 0xffffffff)))
+  (func $__fresh_1 (type $t) (return (i32.const 0xffffffff)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (result i32)))
   (func
     (export "i32.test1")
     (export "i32.test2")
     (export "i32.test3")
-    (result i32)
+    (type $t)
     (return (i32.const 0x0bAdD00D))
   )
 --
+  (type $t (func (result i32)))
   (export "i32.test1" (func $__fresh_0))
   (export "i32.test2" (func $__fresh_0))
   (export "i32.test3" (func $__fresh_0))
-  (func $__fresh_0 (result i32) (return (i32.const 0x0bAdD00D)))
+  (func $__fresh_0 (type $t) (return (i32.const 0x0bAdD00D)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (result i32)))
   (func
     (export "i32.test1")
     (export "i32.test2")
     (export "i32.test3")
     (import "mymodule" "bad_dude")
-    (result i32)
+    (type $t)
   )
 --
+  (type $t (func (result i32)))
   (export "i32.test1" (func $__fresh_0))
   (export "i32.test2" (func $__fresh_0))
   (export "i32.test3" (func $__fresh_0))
-  (import "mymodule" "bad_dude" (func $__fresh_0 (result i32)))
+  (import "mymodule" "bad_dude" (func $__fresh_0 (type $t)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
@@ -97,50 +111,58 @@ assert_preprocess_module_fields <<'--', <<'--'
 --
 
 assert_preprocess <<'--', <<'--'
-  (func)
+  (type $t (func))
+  (func (type $t))
   (memory 0)
-  (func (export "f"))
+  (func (export "f") (type $t))
 --
   (module
-    (func)
+    (type $t (func))
+    (func (type $t))
     (memory 0)
     (export "f" (func $__fresh_0))
-    (func $__fresh_0)
+    (func $__fresh_0 (type $t))
   )
 --
 
 assert_preprocess <<'--', <<'--'
-  (func)
+  (type $t (func))
+  (func (type $t))
   (memory 0)
-  (func (export "f"))
+  (func (export "f") (type $t))
   (invoke "f")
 --
   (module
-    (func)
+    (type $t (func))
+    (func (type $t))
     (memory 0)
     (export "f" (func $__fresh_0))
-    (func $__fresh_0)
+    (func $__fresh_0 (type $t))
   )
   (invoke "f")
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func (result i32) (local i32 f64 funcref)
+  (type $t (func (result i32)))
+  (func (type $t) (local i32 f64 funcref)
     (return (i32.const 0x0bAdD00D))
   )
 --
-  (func (result i32) (local i32) (local f64) (local funcref)
+  (type $t (func (result i32)))
+  (func (type $t) (local i32) (local f64) (local funcref)
     (return (i32.const 0x0bAdD00D))
   )
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func (param i32 i64) (result i64 i32)
+  (type $t (func (param i32) (param i64) (result i64) (result i32)))
+  (func (type $t) (param i32 i64) (result i64 i32)
     (i64.const 1)
     (i32.const 2)
   )
 --
-  (func (param i32) (param i64) (result i64) (result i32)
+  (type $t (func (param i32) (param i64) (result i64) (result i32)))
+  (func (type $t) (param i32) (param i64) (result i64) (result i32)
     (i64.const 1)
     (i32.const 2)
   )
@@ -153,21 +175,27 @@ assert_preprocess_module_fields <<'--', <<'--'
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (import "a" "b" (func (param i32 i64) (result f32 f64)))
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
+  (import "a" "b" (func (type $t) (param i32 i64) (result f32 f64)))
 --
-  (import "a" "b" (func (param i32) (param i64) (result f32) (result f64)))
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
+  (import "a" "b" (func (type $t) (param i32) (param i64) (result f32) (result f64)))
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func
-    (block (param i32 i32) (result i32 i32)
+  (type $t1 (func))
+  (type $t2 (func (param i32) (param i32) (result i32) (result i32)))
+  (func (type $t1)
+    (block (type $t2) (param i32 i32) (result i32 i32)
       (i32.add)
       (i32.const 1)
     )
   )
 --
-  (func
-    (block (param i32) (param i32) (result i32) (result i32)
+  (type $t1 (func))
+  (type $t2 (func (param i32) (param i32) (result i32) (result i32)))
+  (func (type $t1)
+    (block (type $t2) (param i32) (param i32) (result i32) (result i32)
       (i32.add)
       (i32.const 1)
     )
@@ -175,15 +203,25 @@ assert_preprocess_module_fields <<'--', <<'--'
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
-  (func
-    (call_indirect
+  (type $t1 (func))
+  (type $t2 (func
+    (param i64) (param f64) (param i32) (param i64)
+    (result f32) (result f64) (result i32))
+  )
+  (func (type $t1)
+    (call_indirect (type $t2)
       (param i64) (param) (param f64 i32 i64)
       (result f32 f64) (result i32)
     )
   )
 --
-  (func
-    (call_indirect
+  (type $t1 (func))
+  (type $t2 (func
+    (param i64) (param f64) (param i32) (param i64)
+    (result f32) (result f64) (result i32))
+  )
+  (func (type $t1)
+    (call_indirect (type $t2)
       (param i64) (param f64) (param i32) (param i64)
       (result f32) (result f64) (result i32)
     )
@@ -197,28 +235,32 @@ assert_preprocess <<'--', <<'--'
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
+  (type $t1 (func (param i32) (param i64) (result f32) (result f64)))
   (elem (table $t)
     (offset
-      (call_indirect (param i32 i64) (result f32 f64))
+      (call_indirect (type $t1) (param i32 i64) (result f32 f64))
     )
     funcref (item ref.func $f)
   )
 --
+  (type $t1 (func (param i32) (param i64) (result f32) (result f64)))
   (elem (table $t)
     (offset
-      (call_indirect (param i32) (param i64) (result f32) (result f64))
+      (call_indirect (type $t1) (param i32) (param i64) (result f32) (result f64))
     )
     funcref (item ref.func $f)
   )
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
+  (type $t1 (func (param i32) (param i64) (result f32) (result f64)))
   (elem (table $t) (offset i32.const 0) funcref
-    (item (call_indirect (param i32 i64) (result f32 f64)))
+    (item (call_indirect (type $t1) (param i32 i64) (result f32 f64)))
   )
 --
+  (type $t1 (func (param i32) (param i64) (result f32) (result f64)))
   (elem (table $t) (offset i32.const 0) funcref
-    (item (call_indirect (param i32) (param i64) (result f32) (result f64)))
+    (item (call_indirect (type $t1) (param i32) (param i64) (result f32) (result f64)))
   )
 --
 
@@ -307,16 +349,18 @@ assert_preprocess_module_fields <<'--', <<'--'
 --
 
 assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
   (data (memory $m)
     (offset
-      (call_indirect (param i32 i64) (result f32 f64))
+      (call_indirect (type $t) (param i32 i64) (result f32 f64))
     )
     "hello" "world"
   )
 --
+  (type $t (func (param i32) (param i64) (result f32) (result f64)))
   (data (memory $m)
     (offset
-      (call_indirect (param i32) (param i64) (result f32) (result f64))
+      (call_indirect (type $t) (param i32) (param i64) (result f32) (result f64))
     )
     "hello" "world"
   )
