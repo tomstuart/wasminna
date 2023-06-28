@@ -94,7 +94,7 @@ module Wasminna
       in 'elem'
         process_element_segment.first
       in 'data'
-        process_data_segment
+        process_data_segment.first
       in 'export' | 'start'
         process_unabbreviated_field
       end
@@ -590,11 +590,14 @@ module Wasminna
       read => 'data'
       read_optional_id => id
 
-      if can_read_list?
-        process_active_data_segment(id:)
-      else
-        process_passive_data_segment(id:)
-      end
+      [
+        if can_read_list?
+          process_active_data_segment(id:)
+        else
+          process_passive_data_segment(id:)
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_active_data_segment(id:)
