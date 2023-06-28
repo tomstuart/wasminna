@@ -438,7 +438,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_list?
-        process_active_element_segment(id:)
+        process_active_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS)
       elsif peek in 'declare'
         process_declarative_element_segment(id:)
       else
@@ -458,9 +458,11 @@ module Wasminna
         table_use = %w[table 0]
       end
 
-      [
-        ['elem', *id, table_use, offset, *element_list]
-      ]
+      after_all_fields do
+        [
+          ['elem', *id, table_use, offset, *element_list]
+        ]
+      end
     end
 
     def process_declarative_element_segment(id:)
