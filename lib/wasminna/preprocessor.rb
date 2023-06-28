@@ -86,7 +86,7 @@ module Wasminna
       in 'memory'
         process_memory_definition.first
       in 'global'
-        process_global_definition
+        process_global_definition.first
       in 'type'
         process_type_definition.first
       in 'import'
@@ -229,16 +229,19 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'global', id:).first
+        expand_inline_import_export(kind: 'global', id:)
       else
         read => type
         instructions = process_instructions
 
-        after_all_fields do |type_definitions|
-          [
-            ['global', *id, type, *instructions.call(type_definitions)]
-          ]
-        end
+        [
+          after_all_fields do |type_definitions|
+            [
+              ['global', *id, type, *instructions.call(type_definitions)]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
