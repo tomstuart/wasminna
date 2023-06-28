@@ -247,9 +247,12 @@ module Wasminna
       read => ['import', module_name, name]
       description = repeatedly { read }
 
-      [
-        ['import', module_name, name, [kind, *id, *description]]
-      ]
+      expanded =
+        [
+          ['import', module_name, name, [kind, *id, *description]]
+        ]
+
+      read_list(from: expanded) { process_fields }
     end
 
     def expand_inline_export(kind:, id:)
