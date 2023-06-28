@@ -90,7 +90,7 @@ module Wasminna
       in 'type'
         process_type_definition.first
       in 'import'
-        process_import
+        process_import.first
       in 'elem'
         process_element_segment
       in 'data'
@@ -434,11 +434,14 @@ module Wasminna
       read => name
       descriptor = read_list { process_import_descriptor }
 
-      after_all_fields do |type_definitions|
-        [
-          ['import', module_name, name, descriptor.call(type_definitions)]
-        ]
-      end
+      [
+        after_all_fields do |type_definitions|
+          [
+            ['import', module_name, name, descriptor.call(type_definitions)]
+          ]
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_import_descriptor
