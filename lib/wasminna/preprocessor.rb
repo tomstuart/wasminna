@@ -234,7 +234,7 @@ module Wasminna
     def expand_inline_import_export(**)
       case peek
       in ['import', _, _]
-        expand_inline_import(**)
+        expand_inline_import(**).first
       in ['export', _]
         expand_inline_export(**)
       end
@@ -249,7 +249,10 @@ module Wasminna
           ['import', module_name, name, [kind, *id, *description]]
         ]
 
-      read_list(from: expanded) { process_fields }
+      [
+        read_list(from: expanded) { process_fields },
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def expand_inline_export(kind:, id:)
