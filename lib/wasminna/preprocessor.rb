@@ -120,7 +120,7 @@ module Wasminna
               ['func', *id, *typeuse.call(type_definitions), *locals, *body.call(type_definitions)]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -142,7 +142,7 @@ module Wasminna
               ['table', *id, *rest]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -195,7 +195,7 @@ module Wasminna
               ['memory', *id, *rest]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -237,7 +237,7 @@ module Wasminna
               ['global', *id, type, *instructions.call(type_definitions)]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -430,7 +430,7 @@ module Wasminna
             ['import', module_name, name, descriptor.call(type_definitions)]
           ]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -465,7 +465,7 @@ module Wasminna
         else
           process_passive_element_segment(id:)
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -586,7 +586,7 @@ module Wasminna
         else
           process_passive_data_segment(id:)
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -627,7 +627,7 @@ module Wasminna
             [kind, *rest]
           ]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
