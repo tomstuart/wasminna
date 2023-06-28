@@ -311,8 +311,10 @@ module Wasminna
       functype => ['func', *parameters_and_results]
       parameters, results =
         parameters_and_results.partition { _1 in ['param', *] }
+      parameter_value_types = parameters.map(&:last)
+      result_value_types = results.map(&:last)
 
-      [parameters, results]
+      [parameter_value_types, result_value_types]
     end
 
     def process_parameters
