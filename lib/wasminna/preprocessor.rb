@@ -92,7 +92,7 @@ module Wasminna
       in 'data'
         process_data_segment.call(DUMMY_TYPE_DEFINITIONS)
       in 'export' | 'start'
-        process_unabbreviated_field
+        process_unabbreviated_field.call(DUMMY_TYPE_DEFINITIONS)
       end
     end
 
@@ -607,9 +607,11 @@ module Wasminna
       read => 'export' | 'start' => kind
       rest = repeatedly { read }
 
-      [
-        [kind, *rest]
-      ]
+      after_all_fields do
+        [
+          [kind, *rest]
+        ]
+      end
     end
 
     def process_assert_trap
