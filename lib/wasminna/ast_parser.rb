@@ -422,21 +422,13 @@ module Wasminna
         read => ID_REGEXP
       end
 
-      if can_read_list?
-        if can_read_list?(starting_with: 'memory')
-          read_list(starting_with: 'memory') do
-            parse_index(context.mems)
-          end
+      if can_read_list?(starting_with: 'memory')
+        read_list(starting_with: 'memory') do
+          parse_index(context.mems)
         end
         offset =
-          read_list do
-            case peek
-            in 'offset'
-              read => 'offset'
-              parse_instructions
-            else
-              [parse_instruction]
-            end
+          read_list(starting_with: 'offset') do
+            parse_instructions
           end
       end
       string = repeatedly { parse_string }.join

@@ -91,6 +91,8 @@ module Wasminna
         process_import
       in 'elem'
         process_element_segment
+      in 'data'
+        process_data_segment
       else
         [repeatedly { read }]
       end
@@ -452,6 +454,42 @@ module Wasminna
 
     def process_function_indexes
       repeatedly { ['ref.func', read] }
+    end
+
+    def process_data_segment
+      read => 'data'
+      if peek in ID_REGEXP
+        read => ID_REGEXP => id
+      end
+
+      if can_read_list?
+        process_active_data_segment(id:)
+      else
+        process_passive_data_segment(id:)
+      end
+    end
+
+    def process_active_data_segment(id:)
+      memory_use =
+        if can_read_list?(starting_with: 'memory')
+          read
+        else
+          %w[memory 0]
+        end
+      offset = read_list { process_offset }
+      strings = repeatedly { read }
+
+      [
+        ['data', *id, memory_use, offset, *strings]
+      ]
+    end
+
+    def process_passive_data_segment(id:)
+      rest = repeatedly { read }
+
+      [
+        ['data', *id, *rest]
+      ]
     end
 
     def process_assert_trap
