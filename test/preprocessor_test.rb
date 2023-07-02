@@ -741,6 +741,41 @@ assert_preprocess_module_fields <<'--', <<'--'
   (type (func (param $y i32) (result i64)))
 --
 
+assert_preprocess_module_fields <<'--', <<'--'
+  (func (param i32) (result i64)
+    (i64.const 1)
+  )
+--
+  (func (type 0) (param i32) (result i64)
+    (i64.const 1)
+  )
+  (type (func (param i32) (result i64)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (func (param i32) (result i64)
+    (i64.const 1)
+  )
+  (func (param i64) (result i32)
+    (i32.const 2)
+  )
+  (func (param i32) (result i64)
+    (i64.const 3)
+  )
+--
+  (func (type 0) (param i32) (result i64)
+    (i64.const 1)
+  )
+  (func (type 1) (param i64) (result i32)
+    (i32.const 2)
+  )
+  (func (type 0) (param i32) (result i64)
+    (i64.const 3)
+  )
+  (type (func (param i32) (result i64)))
+  (type (func (param i64) (result i32)))
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

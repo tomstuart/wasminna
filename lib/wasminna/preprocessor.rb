@@ -58,10 +58,26 @@ module Wasminna
       if peek in 'binary'
         read => 'binary'
         strings = repeatedly { read }
+
         ['module', *id, 'binary', *strings]
       else
         fields, type_definitions = process_fields
-        ['module', *id, *fields.call(type_definitions)]
+        original_type_definitions = type_definitions.length
+        fields = fields.call(type_definitions)
+        generated_type_definitions =
+          type_definitions.drop(original_type_definitions)
+        fields = fields + deep_copy(generated_type_definitions)
+
+        ['module', *id, *fields]
+      end
+    end
+
+    def deep_copy(s_expression)
+      case s_expression
+      in [*s_expressions]
+        s_expressions.map { deep_copy(_1) }
+      else
+        s_expression
       end
     end
 
