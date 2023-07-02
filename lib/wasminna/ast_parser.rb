@@ -555,7 +555,7 @@ module Wasminna
           end
         end
 
-      Element.new(index:, offset:, items:)
+      ElementSegment.new(index:, offset:, items:)
     end
 
     def parse_start
