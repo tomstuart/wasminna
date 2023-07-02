@@ -3,67 +3,13 @@ require 'wasminna/float'
 require 'wasminna/float/format'
 require 'wasminna/float/nan'
 require 'wasminna/helpers'
+require 'wasminna/memory'
 require 'wasminna/sign'
 
 module Wasminna
   class Interpreter
     include AST
     include Helpers::Mask
-
-    class Memory < Data.define(:bytes, :maximum_size)
-      include Helpers::Mask
-      include Helpers::SizeOf
-      extend Helpers::SizeOf
-
-      BITS_PER_BYTE = 8
-      BYTES_PER_PAGE = 0x10000
-      MAXIMUM_PAGES = 0x10000
-
-      def self.from_string(string:)
-        size_in_pages = size_of(string.bytesize, in: BYTES_PER_PAGE)
-        bytes = "\0" * (size_in_pages * BYTES_PER_PAGE)
-        bytes[0, string.length] = string
-        new(bytes:, maximum_size: nil)
-      end
-
-      def self.from_limits(minimum_size:, maximum_size:)
-        bytes = "\0" * (minimum_size * BYTES_PER_PAGE)
-        maximum_size =
-          if maximum_size.nil?
-            MAXIMUM_PAGES
-          else
-            maximum_size.clamp(..MAXIMUM_PAGES)
-          end
-        new(bytes:, maximum_size:)
-      end
-
-      def load(offset:, bits:)
-        size_of(bits, in: BITS_PER_BYTE).times
-          .map { |index| bytes.getbyte(offset + index) }
-          .map.with_index { |byte, index| byte << index * BITS_PER_BYTE }
-          .inject(0, &:|)
-      end
-
-      def store(value:, offset:, bits:)
-        size_of(bits, in: BITS_PER_BYTE).times do |index|
-          byte = mask(value >> index * BITS_PER_BYTE, bits: BITS_PER_BYTE)
-          bytes.setbyte(offset + index, byte)
-        end
-      end
-
-      def grow_by(pages:)
-        if maximum_size.nil? || size_in_pages + pages <= maximum_size
-          bytes << "\0" * (pages * BYTES_PER_PAGE)
-          true
-        else
-          false
-        end
-      end
-
-      def size_in_pages
-        size_of(bytes.bytesize, in: BYTES_PER_PAGE)
-      end
-    end
 
     attr_accessor :current_module, :modules, :exports, :stack, :tags
 
@@ -250,13 +196,9 @@ module Wasminna
         imported_memory
       in [], _
         unless memory.nil?
-          if memory.string.nil?
-            Memory.from_limits \
-              minimum_size: memory.minimum_size,
-              maximum_size: memory.maximum_size
-          else
-            Memory.from_string(string: memory.string)
-          end
+          Memory.from_limits \
+            minimum_size: memory.minimum_size,
+            maximum_size: memory.maximum_size
         end
       end
     end

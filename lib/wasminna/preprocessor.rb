@@ -1,8 +1,11 @@
 require 'wasminna/helpers'
+require 'wasminna/memory'
 
 module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
+    include Helpers::SizeOf
+    include Helpers::StringValue
 
     def initialize
       self.fresh_id = 0
@@ -176,6 +179,8 @@ module Wasminna
 
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'memory', id:)
+      elsif can_read_inline_data_segment?
+        expand_inline_data_segment(id:)
       else
         rest = repeatedly { read }
 
@@ -183,6 +188,28 @@ module Wasminna
           ['memory', *id, *rest]
         ]
       end
+    end
+
+    def can_read_inline_data_segment?
+      can_read_list?(starting_with: 'data')
+    end
+
+    def expand_inline_data_segment(id:)
+      strings = read_list(starting_with: 'data') { repeatedly { read } }
+
+      if id.nil?
+        id = "$__fresh_#{fresh_id}" # TODO find a better way
+        self.fresh_id += 1
+      end
+      bytes = strings.sum { string_value(_1).bytesize }
+      limit = size_of(bytes, in: Memory::BYTES_PER_PAGE).to_s
+      expanded =
+        [
+          ['memory', id, limit, limit],
+          ['data', ['memory', id], %w[i32.const 0], *strings]
+        ]
+
+      read_list(from: expanded) { process_fields }
     end
 
     def process_global_definition

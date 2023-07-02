@@ -8,6 +8,7 @@ module Wasminna
     include AST
     include Helpers::Mask
     include Helpers::ReadFromSExpression
+    include Helpers::StringValue
 
     def parse_script(s_expression)
       read_list(from: s_expression) do
@@ -401,19 +402,9 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
+      parse_limits => [minimum_size, maximum_size]
 
-      if can_read_list?(starting_with: 'data')
-        string = read_list { parse_memory_data }
-      else
-        parse_limits => [minimum_size, maximum_size]
-      end
-
-      Memory.new(string:, minimum_size:, maximum_size:)
-    end
-
-    def parse_memory_data
-      read => 'data'
-      repeatedly { parse_string }.join
+      AST::Memory.new(minimum_size:, maximum_size:)
     end
 
     def parse_data
@@ -1010,15 +1001,7 @@ module Wasminna
     end
 
     def parse_string
-      read => string
-      encoding = string.encoding
-      string.
-        delete_prefix('"').delete_suffix('"').
-        force_encoding(Encoding::ASCII_8BIT).
-        gsub(%r{\\\h{2}}) do |digits|
-          digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
-        end.
-        force_encoding(encoding)
+      string_value(read)
     end
 
     def unzip_pairs(pairs)
