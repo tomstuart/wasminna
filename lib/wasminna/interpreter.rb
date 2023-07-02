@@ -243,27 +243,32 @@ module Wasminna
     end
 
     def initialise_memory(datas:)
-      datas.reject { _1.offset.nil? }.each do |data|
-        evaluate_expression(data.offset, locals: [])
-        stack.pop(1) => [offset]
-        raise if offset + data.string.bytesize > current_module.memory.bytes.bytesize
-        data.string.each_byte.with_index do |value, index|
-          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+      datas.each do |data|
+        if data in string:, mode: DataSegment::Mode::Active(offset:) => mode
+          mode => { index: 0 }
+          evaluate_expression(offset, locals: [])
+          stack.pop(1) => [offset]
+          raise if offset + string.bytesize > current_module.memory.bytes.bytesize
+          string.each_byte.with_index do |value, index|
+            current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+          end
         end
       end
     end
 
     def initialise_tables(elements:)
-      elements.reject { _1.offset.nil? }.each do |element|
-        table_instance = current_module.tables.slice(element.index)
-        evaluate_expression(element.offset, locals: [])
-        stack.pop(1) => [offset]
-        raise if offset + element.items.length > table_instance.elements.length
+      elements.each do |element|
+        if element in items:, mode: ElementSegment::Mode::Active(index:, offset:)
+          table_instance = current_module.tables.slice(index)
+          evaluate_expression(offset, locals: [])
+          stack.pop(1) => [offset]
+          raise if offset + items.length > table_instance.elements.length
 
-        element.items.each.with_index do |item, item_index|
-          evaluate_expression(item, locals: [])
-          stack.pop(1) => [value]
-          table_instance.elements[offset + item_index] = value
+          items.each.with_index do |item, item_index|
+            evaluate_expression(item, locals: [])
+            stack.pop(1) => [value]
+            table_instance.elements[offset + item_index] = value
+          end
         end
       end
     end
@@ -459,21 +464,27 @@ module Wasminna
       in MemoryInit(index:)
         stack.pop(3) => [destination, source, length]
         unless length.zero?
-          data = current_module.datas.slice(index)
-          data.string.byteslice(source, length).each_byte.with_index do |value, index|
-            current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+          case current_module.datas.slice(index)
+          in DataSegment(string:, mode: DataSegment::Mode::Passive)
+            string.byteslice(source, length).each_byte.with_index do |value, index|
+              current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+            end
           end
         end
       in DataDrop(index:)
         current_module.datas[index] = nil
       in TableInit(table_index:, element_index:)
         stack.pop(3) => [destination, source, length]
-        table = current_module.tables.slice(table_index)
-        element = current_module.elements.slice(element_index)
-        length.times do |index|
-          evaluate_expression(element.items.slice(source + index), locals: [])
-          stack.pop(1) => [value]
-          table.elements[destination + index] = value
+        unless length.zero?
+          table = current_module.tables.slice(table_index)
+          case current_module.elements.slice(element_index)
+          in ElementSegment(items:, mode: ElementSegment::Mode::Passive)
+            length.times do |index|
+              evaluate_expression(items.slice(source + index), locals: [])
+              stack.pop(1) => [value]
+              table.elements[destination + index] = value
+            end
+          end
         end
       in ElemDrop(index:)
         current_module.elements[index] = nil

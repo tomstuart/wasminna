@@ -35,7 +35,11 @@ module Wasminna
     SkippedAssertion = Data.define
     Type = Data.define(:parameters, :results)
     MemorySize = Data.define
-    MemoryData = Data.define(:offset, :string)
+    DataSegment = Data.define(:string, :mode)
+    module DataSegment::Mode
+      Passive = Data.define
+      Active = Data.define(:index, :offset)
+    end
     RefNull = Data.define
     RefExtern = Data.define(:value)
     Get = Data.define(:module_name, :name)
@@ -46,7 +50,12 @@ module Wasminna
     Register = Data.define(:module_name, :name)
     TableGet = Data.define(:index)
     TableSet = Data.define(:index)
-    Element = Data.define(:index, :offset, :items)
+    ElementSegment = Data.define(:items, :mode)
+    module ElementSegment::Mode
+      Passive = Data.define
+      Active = Data.define(:index, :offset)
+      Declarative = Data.define
+    end
     MemoryFill = Data.define
     MemoryCopy = Data.define
     MemoryInit = Data.define(:index)

@@ -413,18 +413,23 @@ module Wasminna
         read => ID_REGEXP
       end
 
-      if can_read_list?(starting_with: 'memory')
-        read_list(starting_with: 'memory') do
-          parse_index(context.mems)
+      mode =
+        if can_read_list?(starting_with: 'memory')
+          index =
+            read_list(starting_with: 'memory') do
+              parse_index(context.mems)
+            end
+          offset =
+            read_list(starting_with: 'offset') do
+              parse_instructions
+            end
+          DataSegment::Mode::Active.new(index:, offset:)
+        else
+          DataSegment::Mode::Passive.new
         end
-        offset =
-          read_list(starting_with: 'offset') do
-            parse_instructions
-          end
-      end
       string = repeatedly { parse_string }.join
 
-      MemoryData.new(offset:, string:)
+      DataSegment.new(string:, mode:)
     end
 
     UNSIGNED_INTEGER_REGEXP =
@@ -535,18 +540,23 @@ module Wasminna
       if peek in ID_REGEXP
         read => ID_REGEXP
       end
-      if can_read_list?(starting_with: 'table')
-        index =
-          read_list(starting_with: 'table') do
-            parse_index(context.tables)
-          end
-        offset =
-          read_list(starting_with: 'offset') do
-            parse_instructions
-          end
-      elsif peek in 'declare'
-        read => 'declare'
-      end
+      mode =
+        if can_read_list?(starting_with: 'table')
+          index =
+            read_list(starting_with: 'table') do
+              parse_index(context.tables)
+            end
+          offset =
+            read_list(starting_with: 'offset') do
+              parse_instructions
+            end
+          ElementSegment::Mode::Active.new(index:, offset:)
+        elsif peek in 'declare'
+          read => 'declare'
+          ElementSegment::Mode::Declarative.new
+        else
+          ElementSegment::Mode::Passive.new
+        end
       read => 'funcref' | 'externref' => reftype
       items =
         repeatedly do
@@ -555,7 +565,7 @@ module Wasminna
           end
         end
 
-      Element.new(index:, offset:, items:)
+      ElementSegment.new(items:, mode:)
     end
 
     def parse_start
