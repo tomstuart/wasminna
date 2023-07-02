@@ -35,7 +35,7 @@ module Wasminna
     SkippedAssertion = Data.define
     Type = Data.define(:parameters, :results)
     MemorySize = Data.define
-    DataSegment = Data.define(:offset, :string, :mode)
+    DataSegment = Data.define(:string, :mode)
     module DataSegment::Mode
       Passive = Data.define
       Active = Data.define(:index, :offset)

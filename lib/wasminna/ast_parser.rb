@@ -429,7 +429,7 @@ module Wasminna
         end
       string = repeatedly { parse_string }.join
 
-      DataSegment.new(offset:, string:, mode:)
+      DataSegment.new(string:, mode:)
     end
 
     UNSIGNED_INTEGER_REGEXP =
