@@ -318,7 +318,15 @@ module Wasminna
     end
 
     def process_blocktype
-      process_typeuse
+      type =
+        if can_read_list?(starting_with: 'type')
+          [read]
+        end
+      parameters = process_parameters
+      results = process_results
+      blocktype = [*type, *parameters, *results]
+
+      read_list(from: blocktype) { process_typeuse }
     end
 
     def process_instruction
