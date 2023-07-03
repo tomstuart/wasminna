@@ -856,7 +856,8 @@ module Wasminna
           else
             0
           end
-        parse_typeuse => [type_index, _]
+        parse_typeuse => [type_index, parameter_names]
+        raise unless parameter_names.all?(&:nil?)
 
         CallIndirect.new(table_index:, type_index:)
       in 'select'
