@@ -843,7 +843,8 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =
-          repeatedly(until: -> _ { !can_read_index? }) do
+          repeatedly do
+            raise StopIteration unless can_read_index?
             parse_index(context.labels)
           end
         indexes => [*target_indexes, default_index]
@@ -900,8 +901,11 @@ module Wasminna
     end
 
     def read_until(terminator)
-      repeatedly(until: terminator) do
-        if peek in 'block' | 'loop' | 'if'
+      repeatedly do
+        case peek
+        in ^terminator
+          raise StopIteration
+        in 'block' | 'loop' | 'if'
           [read, *read_until('end'), read]
         else
           [read]
