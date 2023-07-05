@@ -36,7 +36,8 @@ module Wasminna
         terminator = kwargs[:until]
 
         [].tap do |results|
-          until finished? || (!terminator.nil? && peek in ^terminator)
+          loop do
+            break if finished? || (!terminator.nil? && peek in ^terminator)
             results << yield
           end
         end
