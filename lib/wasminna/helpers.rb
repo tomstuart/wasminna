@@ -32,12 +32,10 @@ module Wasminna
         end
       end
 
-      def repeatedly(**kwargs)
-        terminator = kwargs[:until]
-
+      def repeatedly
         [].tap do |results|
           loop do
-            break if finished? || (!terminator.nil? && peek in ^terminator)
+            break if finished?
             results << yield
           end
         end
