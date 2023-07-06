@@ -71,8 +71,8 @@ module Wasminna
       repeatedly do
         read_list { process_field }
       end.then do |fields|
-        after_all_fields do
-          fields.flat_map { |field| field.call(DUMMY_TYPE_DEFINITIONS) }
+        after_all_fields do |type_definitions|
+          fields.flat_map { |field| field.call(type_definitions) }
         end
       end
     end
