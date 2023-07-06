@@ -63,7 +63,7 @@ module Wasminna
       # TODO
       repeatedly { read }
 
-      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [], start: nil }
+      { functions: [], memories: [], tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [], start: nil }
     end
 
     Context = Data.define(:types, :functions, :tables, :mems, :globals, :elem, :data, :locals, :labels, :typedefs) do
@@ -88,8 +88,8 @@ module Wasminna
     end
 
     def parse_text_fields
-      functions, memory, tables, globals, datas, exports, imports, elements, start =
-        [], nil, [], [], [], [], [], [], nil
+      functions, memories, tables, globals, datas, exports, imports, elements, start =
+        [], [], [], [], [], [], [], [], nil
       initial_context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
@@ -102,7 +102,7 @@ module Wasminna
             in 'func'
               functions << parse_function_definition
             in 'memory'
-              memory = parse_memory_definition
+              memories << parse_memory_definition
             in 'table'
               tables << parse_table_definition
             in 'global'
@@ -123,7 +123,7 @@ module Wasminna
           end
         end
 
-        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
+        { functions:, memories:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
       end
     end
 

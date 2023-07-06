@@ -139,7 +139,7 @@ module Wasminna
         build_functions(imports: mod.imports, functions: mod.functions)
       tables = build_tables(imports: mod.imports, tables: mod.tables)
       types = mod.types
-      memory = build_memory(imports: mod.imports, memory: mod.memory)
+      memory = build_memory(imports: mod.imports, memory: mod.memories.slice(0))
       globals = build_globals(imports: mod.imports, globals: mod.globals)
       exports = build_exports(functions:, globals:, tables:, memories: [memory], exports: mod.exports)
       datas = mod.datas
