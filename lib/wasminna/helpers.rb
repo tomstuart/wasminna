@@ -92,10 +92,10 @@ module Wasminna
       INDEX_REGEXP =
         %r{
           \A
-          (
-            \d (_? \d)*
+          (?:
+            \d (?: _? \d)*
             |
-            0x \h (_? \h)*
+            0x \h (?: _? \h)*
             |
             \$ .+
           )
