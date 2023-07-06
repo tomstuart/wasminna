@@ -69,10 +69,10 @@ module Wasminna
 
     def process_fields
       repeatedly do
-        read_list { process_field.call(DUMMY_TYPE_DEFINITIONS) }
-      end.flatten(1).then do |result|
+        read_list { process_field }
+      end.then do |fields|
         after_all_fields do
-          result
+          fields.flat_map { |field| field.call(DUMMY_TYPE_DEFINITIONS) }
         end
       end
     end
