@@ -246,11 +246,12 @@ module Wasminna
       datas.each do |data|
         if data in string:, mode: DataSegment::Mode::Active(offset:) => mode
           mode => { index: 0 }
+          memory_instance = current_module.memory
           evaluate_expression(offset, locals: [])
           stack.pop(1) => [offset]
-          raise if offset + string.bytesize > current_module.memory.bytes.bytesize
+          raise if offset + string.bytesize > memory_instance.bytes.bytesize
           string.each_byte.with_index do |value, index|
-            current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+            memory_instance.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
           end
         end
       end
@@ -342,8 +343,9 @@ module Wasminna
         stack.push(number)
       in Load(type:, bits:, storage_size:, sign_extension_mode:, offset: static_offset)
         stack.pop(1) => [offset]
+        memory = current_module.memory
         value =
-          current_module.memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
+          memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
             case sign_extension_mode
             in :unsigned
               value
@@ -354,7 +356,8 @@ module Wasminna
         stack.push(value)
       in Store(type:, bits:, storage_size:, offset: static_offset)
         stack.pop(2) => [offset, value]
-        current_module.memory.store(value:, offset: offset + static_offset, bits: storage_size)
+        memory = current_module.memory
+        memory.store(value:, offset: offset + static_offset, bits: storage_size)
       in UnaryOp(type: :integer) | BinaryOp(type: :integer)
         evaluate_integer_instruction(instruction)
       in UnaryOp(type: :float) | BinaryOp(type: :float)
@@ -424,14 +427,16 @@ module Wasminna
         throw(tags.slice(index))
       in MemoryGrow
         stack.pop(1) => [pages]
-        previous_size = current_module.memory.size_in_pages
-        if current_module.memory.grow_by(pages:)
+        memory = current_module.memory
+        previous_size = memory.size_in_pages
+        if memory.grow_by(pages:)
           stack.push(previous_size)
         else
           stack.push(unsigned(-1, bits: 32))
         end
       in MemorySize
-        stack.push(current_module.memory.size_in_pages)
+        memory = current_module.memory
+        stack.push(memory.size_in_pages)
       in RefNull
         stack.push(nil)
       in RefExtern(value:)
@@ -449,25 +454,28 @@ module Wasminna
         table.elements[offset] = value
       in MemoryFill
         stack.pop(3) => [offset, value, length]
+        memory = current_module.memory
         length.times do |index|
-          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+          memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
         end
       in MemoryCopy
         stack.pop(3) => [destination, source, length]
+        memory = current_module.memory
         values =
           length.times.map do |index|
-            current_module.memory.load(offset: source + index, bits: Memory::BITS_PER_BYTE)
+            memory.load(offset: source + index, bits: Memory::BITS_PER_BYTE)
           end
         values.each.with_index do |value, index|
-          current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+          memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
         end
       in MemoryInit(index:)
         stack.pop(3) => [destination, source, length]
+        memory = current_module.memory
         unless length.zero?
           case current_module.datas.slice(index)
           in DataSegment(string:, mode: DataSegment::Mode::Passive)
             string.byteslice(source, length).each_byte.with_index do |value, index|
-              current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+              memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
             end
           end
         end
