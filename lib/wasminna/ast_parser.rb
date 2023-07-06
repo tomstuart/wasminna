@@ -853,7 +853,7 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =
-          repeatedly(until: -> { can_read_list? || !INDEX_REGEXP.match(_1) }) do
+          repeatedly(until: -> _ { !(peek in INDEX_REGEXP) }) do
             parse_index(context.labels)
           end
         indexes => [*target_indexes, default_index]
