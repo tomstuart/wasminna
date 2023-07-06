@@ -159,55 +159,44 @@ module Wasminna
     end
 
     def build_functions(imports:, functions:)
-      function_imports =
-        imports.select { |import| import in { kind: :func } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      function_imports + functions.map { Function.new(definition: _1) }
+      allocate_instances(kind: :func, imports:, fields: functions) do |function|
+        Function.new \
+          definition: function
+      end
     end
 
     def build_tables(imports:, tables:)
-      table_imports =
-        imports.select { |import| import in { kind: :table } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      table_imports +
-        tables.map do |table|
-          Table.new(elements: Array.new(table.minimum_size), maximum_size: table.maximum_size)
-        end
+      allocate_instances(kind: :table, imports:, fields: tables) do |table|
+        Table.new \
+          elements: Array.new(table.minimum_size),
+          maximum_size: table.maximum_size
+      end
     end
 
     def build_memories(imports:, memories:)
-      memory_imports =
-        imports.select { |import| import in { kind: :memory } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      memory_imports +
-        memories.map do |memory|
-          Memory.from_limits \
-            minimum_size: memory.minimum_size,
-            maximum_size: memory.maximum_size
-        end
+      allocate_instances(kind: :memory, imports:, fields: memories) do |memory|
+        Memory.from_limits \
+          minimum_size: memory.minimum_size,
+          maximum_size: memory.maximum_size
+      end
     end
 
     def build_globals(imports:, globals:)
-      global_imports =
-        imports.select { |import| import in { kind: :global } }.
+      allocate_instances(kind: :global, imports:, fields: globals) do
+        Global.new
+      end
+    end
+
+    def allocate_instances(kind:, imports:, fields:, &)
+      imported_instances =
+        imports.select { |import| import in { kind: ^kind } }.
           map do |import|
             import => { module_name:, name: }
             exports.fetch(module_name).fetch(name)
           end
+      allocated_instances = fields.map(&)
 
-      global_imports + globals.map { Global.new }
+      imported_instances + allocated_instances
     end
 
     def build_exports(functions:, globals:, tables:, memories:, exports:)
