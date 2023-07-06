@@ -8,6 +8,7 @@ module Wasminna
     include AST
     include Helpers::Mask
     include Helpers::ReadFromSExpression
+    include Helpers::ReadIndex
     include Helpers::ReadOptionalId
     include Helpers::StringValue
 
@@ -352,21 +353,8 @@ module Wasminna
       [index, parameter_names]
     end
 
-    INDEX_REGEXP =
-      %r{
-        \A
-        (
-          \d (_? \d)*
-          |
-          0x \h (_? \h)*
-          |
-          \$ .+
-        )
-        \z
-      }x
-
     def parse_index(index_space)
-      read => INDEX_REGEXP => index
+      read_index => index
       if index.start_with?('$')
         index_space.index(index) || raise
       elsif index.start_with?('0x')
@@ -838,7 +826,7 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => opcode
         index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             parse_index(context.tables)
           else
             0
@@ -853,7 +841,7 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =
-          repeatedly(until: -> _ { !(peek in INDEX_REGEXP) }) do
+          repeatedly(until: -> _ { !can_read_index? }) do
             parse_index(context.labels)
           end
         indexes => [*target_indexes, default_index]
@@ -861,7 +849,7 @@ module Wasminna
         BrTable.new(target_indexes:, default_index:)
       in 'call_indirect'
         table_index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             parse_index(context.tables)
           else
             0
@@ -902,8 +890,8 @@ module Wasminna
         index = parse_index(context.functions)
         RefFunc.new(index:)
       in 'table.init'
-        read => INDEX_REGEXP => index
-        if peek in INDEX_REGEXP
+        read_index => index
+        if can_read_index?
           table_index =
             if index.start_with?('$')
               context.tables.index(index) || raise
@@ -928,7 +916,7 @@ module Wasminna
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
         destination_index, source_index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             [parse_index(context.tables), parse_index(context.tables)]
           else
             [0, 0]

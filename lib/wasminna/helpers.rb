@@ -85,5 +85,31 @@ module Wasminna
         read if peek in %r{\A\$}
       end
     end
+
+    module ReadIndex
+      private
+
+      INDEX_REGEXP =
+        %r{
+          \A
+          (
+            \d (_? \d)*
+            |
+            0x \h (_? \h)*
+            |
+            \$ .+
+          )
+          \z
+        }x
+
+      def can_read_index?
+        peek in INDEX_REGEXP
+      end
+
+      def read_index
+        read => INDEX_REGEXP => index
+        index
+      end
+    end
   end
 end
