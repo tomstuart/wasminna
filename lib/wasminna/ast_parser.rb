@@ -62,8 +62,11 @@ module Wasminna
     def parse_binary_fields
       # TODO
       repeatedly { read }
+      functions, memories, tables, globals, types, datas, exports, imports, elements =
+        9.times.map { [] }
+      start = nil
 
-      { functions: [], memories: [], tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [], start: nil }
+      { functions:, memories:, tables:, globals:, types:, datas:, exports:, imports:, elements:, start: }
     end
 
     Context = Data.define(:types, :functions, :tables, :mems, :globals, :elem, :data, :locals, :labels, :typedefs) do
@@ -88,8 +91,9 @@ module Wasminna
     end
 
     def parse_text_fields
-      functions, memories, tables, globals, datas, exports, imports, elements, start =
-        [], [], [], [], [], [], [], [], nil
+      functions, memories, tables, globals, datas, exports, imports, elements =
+        8.times.map { [] }
+      start = nil
       initial_context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
