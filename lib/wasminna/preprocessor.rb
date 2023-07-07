@@ -400,14 +400,13 @@ module Wasminna
       read => 'type'
       read_optional_id => id
       functype = read_list { process_functype }
+      type_definition = ['type', *id, functype]
 
       [
         after_all_fields do
-          [
-            ['type', *id, functype]
-          ]
+          [type_definition]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        [type_definition]
       ]
     end
 
