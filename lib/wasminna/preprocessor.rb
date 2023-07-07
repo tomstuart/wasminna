@@ -249,11 +249,7 @@ module Wasminna
           ['import', module_name, name, [kind, *id, *description]]
         ]
 
-      read_list(from: expanded) { process_fields.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
-        after_all_fields do
-          result
-        end
-      end
+      read_list(from: expanded) { process_fields }
     end
 
     def expand_inline_export(kind:, id:)
