@@ -326,7 +326,12 @@ module Wasminna
       results = process_results
       blocktype = [*type, *parameters, *results]
 
-      read_list(from: blocktype) { process_typeuse }
+      case blocktype
+      in []
+        blocktype
+      else
+        read_list(from: blocktype) { process_typeuse }
+      end
     end
 
     def process_instruction

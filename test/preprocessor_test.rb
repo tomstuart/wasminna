@@ -457,6 +457,30 @@ assert_preprocess_module_fields <<'--', <<'--'
   (type (func (result i32) (result i32)))
 --
 
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block (result))
+  )
+--
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
