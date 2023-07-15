@@ -4,6 +4,7 @@ require 'wasminna/memory'
 module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
+    include Helpers::ReadIndex
     include Helpers::ReadOptionalId
     include Helpers::SizeOf
     include Helpers::StringValue
@@ -304,6 +305,14 @@ module Wasminna
           blocktype = process_blocktype
 
           [kind, *id, *blocktype]
+        in 'call_indirect'
+          read => 'call_indirect'
+          if can_read_index?
+            read_index => index
+          end
+          typeuse = process_typeuse
+
+          ['call_indirect', *index, *typeuse]
         in 'select'
           read => 'select'
           results = process_results
