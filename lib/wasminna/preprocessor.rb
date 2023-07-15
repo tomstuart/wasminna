@@ -283,13 +283,20 @@ module Wasminna
 
     def process_typeuse
       if can_read_list?(starting_with: 'type')
-        type = [read]
-      end
-      parameters = process_parameters
-      results = process_results
+        read => type
+        parameters = process_parameters
+        results = process_results
 
-      after_all_fields do
-        [*type, *parameters, *results]
+        after_all_fields do
+          [type, *parameters, *results]
+        end
+      else
+        parameters = process_parameters
+        results = process_results
+
+        after_all_fields do
+          [*parameters, *results]
+        end
       end
     end
 
