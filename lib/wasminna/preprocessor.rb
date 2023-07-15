@@ -304,20 +304,20 @@ module Wasminna
         in 'block' | 'loop' | 'if'
           read => 'block' | 'loop' | 'if' => kind
           read_optional_id => id
-          blocktype = process_blocktype.call(DUMMY_TYPE_DEFINITIONS)
+          blocktype = process_blocktype
 
-          after_all_fields do
-            [kind, *id, *blocktype]
+          after_all_fields do |type_definitions|
+            [kind, *id, *blocktype.call(type_definitions)]
           end
         in 'call_indirect'
           read => 'call_indirect'
           if can_read_index?
             read_index => index
           end
-          typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
+          typeuse = process_typeuse
 
-          after_all_fields do
-            ['call_indirect', *index, *typeuse]
+          after_all_fields do |type_definitions|
+            ['call_indirect', *index, *typeuse.call(type_definitions)]
           end
         in 'select'
           read => 'select'
