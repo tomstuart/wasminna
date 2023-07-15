@@ -327,7 +327,7 @@ module Wasminna
       blocktype = [*type, *parameters, *results]
 
       case blocktype
-      in []
+      in [] | [['result', _]]
         blocktype
       else
         read_list(from: blocktype) { process_typeuse }
