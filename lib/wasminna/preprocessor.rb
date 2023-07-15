@@ -51,6 +51,8 @@ module Wasminna
       end
     end
 
+    DUMMY_TYPE_DEFINITIONS = []
+
     def process_module
       read => 'module'
       read_optional_id => id
@@ -101,7 +103,7 @@ module Wasminna
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'func', id:)
       else
-        typeuse = process_typeuse
+        typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
         locals = process_locals
         body = process_instructions
 
@@ -261,7 +263,9 @@ module Wasminna
       parameters = process_parameters
       results = process_results
 
-      [*type, *parameters, *results]
+      after_all_fields do
+        [*type, *parameters, *results]
+      end
     end
 
     def process_parameters
@@ -308,7 +312,7 @@ module Wasminna
           if can_read_index?
             read_index => index
           end
-          typeuse = process_typeuse
+          typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
 
           ['call_indirect', *index, *typeuse]
         in 'select'
@@ -337,7 +341,7 @@ module Wasminna
       in [] | [['result', _]]
         blocktype
       else
-        read_list(from: blocktype) { process_typeuse }
+        read_list(from: blocktype) { process_typeuse.call(DUMMY_TYPE_DEFINITIONS) }
       end
     end
 
@@ -379,7 +383,7 @@ module Wasminna
       when 'func'
         read => 'func'
         read_optional_id => id
-        typeuse = process_typeuse
+        typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
 
         ['func', *id, *typeuse]
       else
@@ -553,6 +557,10 @@ module Wasminna
       "$__fresh_#{@fresh_id_index}".tap do
         @fresh_id_index += 1
       end
+    end
+
+    def after_all_fields
+      -> type_definitions { yield type_definitions }
     end
   end
 end
