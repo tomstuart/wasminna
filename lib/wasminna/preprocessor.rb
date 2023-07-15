@@ -304,7 +304,7 @@ module Wasminna
         in 'block' | 'loop' | 'if'
           read => 'block' | 'loop' | 'if' => kind
           read_optional_id => id
-          blocktype = process_blocktype
+          blocktype = process_blocktype.call(DUMMY_TYPE_DEFINITIONS)
 
           [kind, *id, *blocktype]
         in 'call_indirect'
@@ -339,9 +339,13 @@ module Wasminna
 
       case blocktype
       in [] | [['result', _]]
-        blocktype
+        after_all_fields do
+          blocktype
+        end
       else
-        read_list(from: blocktype) { process_typeuse.call(DUMMY_TYPE_DEFINITIONS) }
+        after_all_fields do
+          read_list(from: blocktype) { process_typeuse.call(DUMMY_TYPE_DEFINITIONS) }
+        end
       end
     end
 
