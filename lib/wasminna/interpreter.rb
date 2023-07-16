@@ -16,7 +16,7 @@ module Wasminna
     Function = Struct.new(:definition, :module)
     Global = Struct.new(:value)
     Table = Data.define(:elements, :maximum_size)
-    Module = Data.define(:name, :functions, :tables, :memory, :globals, :types, :exports, :datas, :elements)
+    Module = Data.define(:name, :functions, :tables, :memories, :globals, :types, :exports, :datas, :elements)
 
     def evaluate_script(script)
       self.current_module = nil
@@ -139,18 +139,18 @@ module Wasminna
         build_functions(imports: mod.imports, functions: mod.functions)
       tables = build_tables(imports: mod.imports, tables: mod.tables)
       types = mod.types
-      memory = build_memory(imports: mod.imports, memory: mod.memory)
+      memories = build_memories(imports: mod.imports, memories: mod.memories)
       globals = build_globals(imports: mod.imports, globals: mod.globals)
-      exports = build_exports(functions:, globals:, tables:, memories: [memory], exports: mod.exports)
+      exports = build_exports(functions:, globals:, tables:, memories:, exports: mod.exports)
       datas = mod.datas
       elements = mod.elements
 
       self.modules <<
-        Module.new(name:, functions:, memory:, tables:, globals:, types:, exports:, datas:, elements:)
+        Module.new(name:, functions:, memories:, tables:, globals:, types:, exports:, datas:, elements:)
       self.current_module = modules.last
       initialise_functions
       initialise_globals(imports: mod.imports, globals: mod.globals)
-      initialise_memory(datas: mod.datas)
+      initialise_memories(datas: mod.datas)
       initialise_tables(elements: mod.elements)
 
       if mod.start
@@ -159,59 +159,44 @@ module Wasminna
     end
 
     def build_functions(imports:, functions:)
-      function_imports =
-        imports.select { |import| import in { kind: :func } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      function_imports + functions.map { Function.new(definition: _1) }
+      allocate_instances(kind: :func, imports:, fields: functions) do |function|
+        Function.new \
+          definition: function
+      end
     end
 
     def build_tables(imports:, tables:)
-      table_imports =
-        imports.select { |import| import in { kind: :table } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      table_imports +
-        tables.map do |table|
-          Table.new(elements: Array.new(table.minimum_size), maximum_size: table.maximum_size)
-        end
+      allocate_instances(kind: :table, imports:, fields: tables) do |table|
+        Table.new \
+          elements: Array.new(table.minimum_size),
+          maximum_size: table.maximum_size
+      end
     end
 
-    def build_memory(imports:, memory:)
-      memory_imports =
-        imports.select { |import| import in { kind: :memory } }.
-          map do |import|
-            import => { module_name:, name: }
-            exports.fetch(module_name).fetch(name)
-          end
-
-      case [memory_imports, memory]
-      in [imported_memory], nil
-        imported_memory
-      in [], _
-        unless memory.nil?
-          Memory.from_limits \
-            minimum_size: memory.minimum_size,
-            maximum_size: memory.maximum_size
-        end
+    def build_memories(imports:, memories:)
+      allocate_instances(kind: :memory, imports:, fields: memories) do |memory|
+        Memory.from_limits \
+          minimum_size: memory.minimum_size,
+          maximum_size: memory.maximum_size
       end
     end
 
     def build_globals(imports:, globals:)
-      global_imports =
-        imports.select { |import| import in { kind: :global } }.
+      allocate_instances(kind: :global, imports:, fields: globals) do
+        Global.new
+      end
+    end
+
+    def allocate_instances(kind:, imports:, fields:, &)
+      imported_instances =
+        imports.select { |import| import in { kind: ^kind } }.
           map do |import|
             import => { module_name:, name: }
             exports.fetch(module_name).fetch(name)
           end
+      allocated_instances = fields.map(&)
 
-      global_imports + globals.map { Global.new }
+      imported_instances + allocated_instances
     end
 
     def build_exports(functions:, globals:, tables:, memories:, exports:)
@@ -242,15 +227,15 @@ module Wasminna
       end
     end
 
-    def initialise_memory(datas:)
+    def initialise_memories(datas:)
       datas.each do |data|
-        if data in string:, mode: DataSegment::Mode::Active(offset:) => mode
-          mode => { index: 0 }
+        if data in string:, mode: DataSegment::Mode::Active(index:, offset:)
+          memory_instance = current_module.memories.slice(index)
           evaluate_expression(offset, locals: [])
           stack.pop(1) => [offset]
-          raise if offset + string.bytesize > current_module.memory.bytes.bytesize
+          raise if offset + string.bytesize > memory_instance.bytes.bytesize
           string.each_byte.with_index do |value, index|
-            current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+            memory_instance.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
           end
         end
       end
@@ -342,8 +327,9 @@ module Wasminna
         stack.push(number)
       in Load(type:, bits:, storage_size:, sign_extension_mode:, offset: static_offset)
         stack.pop(1) => [offset]
+        memory = current_module.memories.slice(0)
         value =
-          current_module.memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
+          memory.load(offset: offset + static_offset, bits: storage_size).then do |value|
             case sign_extension_mode
             in :unsigned
               value
@@ -354,7 +340,8 @@ module Wasminna
         stack.push(value)
       in Store(type:, bits:, storage_size:, offset: static_offset)
         stack.pop(2) => [offset, value]
-        current_module.memory.store(value:, offset: offset + static_offset, bits: storage_size)
+        memory = current_module.memories.slice(0)
+        memory.store(value:, offset: offset + static_offset, bits: storage_size)
       in UnaryOp(type: :integer) | BinaryOp(type: :integer)
         evaluate_integer_instruction(instruction)
       in UnaryOp(type: :float) | BinaryOp(type: :float)
@@ -424,14 +411,16 @@ module Wasminna
         throw(tags.slice(index))
       in MemoryGrow
         stack.pop(1) => [pages]
-        previous_size = current_module.memory.size_in_pages
-        if current_module.memory.grow_by(pages:)
+        memory = current_module.memories.slice(0)
+        previous_size = memory.size_in_pages
+        if memory.grow_by(pages:)
           stack.push(previous_size)
         else
           stack.push(unsigned(-1, bits: 32))
         end
       in MemorySize
-        stack.push(current_module.memory.size_in_pages)
+        memory = current_module.memories.slice(0)
+        stack.push(memory.size_in_pages)
       in RefNull
         stack.push(nil)
       in RefExtern(value:)
@@ -449,25 +438,28 @@ module Wasminna
         table.elements[offset] = value
       in MemoryFill
         stack.pop(3) => [offset, value, length]
+        memory = current_module.memories.slice(0)
         length.times do |index|
-          current_module.memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
+          memory.store(value:, offset: offset + index, bits: Memory::BITS_PER_BYTE)
         end
       in MemoryCopy
         stack.pop(3) => [destination, source, length]
+        memory = current_module.memories.slice(0)
         values =
           length.times.map do |index|
-            current_module.memory.load(offset: source + index, bits: Memory::BITS_PER_BYTE)
+            memory.load(offset: source + index, bits: Memory::BITS_PER_BYTE)
           end
         values.each.with_index do |value, index|
-          current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+          memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
         end
       in MemoryInit(index:)
         stack.pop(3) => [destination, source, length]
+        memory = current_module.memories.slice(0)
         unless length.zero?
           case current_module.datas.slice(index)
           in DataSegment(string:, mode: DataSegment::Mode::Passive)
             string.byteslice(source, length).each_byte.with_index do |value, index|
-              current_module.memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
+              memory.store(value:, offset: destination + index, bits: Memory::BITS_PER_BYTE)
             end
           end
         end

@@ -73,7 +73,7 @@ module Wasminna
 
     def parse_string
       read %r{"}
-      string = read %r{(\\"|[^"])*}
+      string = read %r{(?:\\"|[^"])*}
       read %r{"}
       %Q{"#{string}"}
     end

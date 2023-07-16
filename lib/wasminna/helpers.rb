@@ -32,11 +32,10 @@ module Wasminna
         end
       end
 
-      def repeatedly(**kwargs)
-        terminator = kwargs[:until]
-
+      def repeatedly
         [].tap do |results|
-          until finished? || (!terminator.nil? && peek in ^terminator)
+          loop do
+            break if finished?
             results << yield
           end
         end
@@ -75,6 +74,40 @@ module Wasminna
             digits.delete_prefix('\\').to_i(16).chr(Encoding::ASCII_8BIT)
           end.
           force_encoding(encoding)
+      end
+    end
+
+    module ReadOptionalId
+      private
+
+      def read_optional_id
+        read if peek in %r{\A\$}
+      end
+    end
+
+    module ReadIndex
+      private
+
+      INDEX_REGEXP =
+        %r{
+          \A
+          (?:
+            \d (?: _? \d)*
+            |
+            0x \h (?: _? \h)*
+            |
+            \$ .+
+          )
+          \z
+        }x
+
+      def can_read_index?
+        peek in INDEX_REGEXP
+      end
+
+      def read_index
+        read => INDEX_REGEXP => index
+        index
       end
     end
   end

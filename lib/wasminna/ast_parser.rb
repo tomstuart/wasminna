@@ -8,6 +8,8 @@ module Wasminna
     include AST
     include Helpers::Mask
     include Helpers::ReadFromSExpression
+    include Helpers::ReadIndex
+    include Helpers::ReadOptionalId
     include Helpers::StringValue
 
     def parse_script(s_expression)
@@ -45,9 +47,7 @@ module Wasminna
 
     def parse_module
       read => 'module'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       fields =
         case peek
         in 'binary'
@@ -62,8 +62,11 @@ module Wasminna
     def parse_binary_fields
       # TODO
       repeatedly { read }
+      functions, memories, tables, globals, types, datas, exports, imports, elements =
+        9.times.map { [] }
+      start = nil
 
-      { functions: [], memory: nil, tables: [], globals: [], types: [], datas: [], exports: [], imports: [], elements: [], start: nil }
+      { functions:, memories:, tables:, globals:, types:, datas:, exports:, imports:, elements:, start: }
     end
 
     Context = Data.define(:types, :functions, :tables, :mems, :globals, :elem, :data, :locals, :labels, :typedefs) do
@@ -88,8 +91,9 @@ module Wasminna
     end
 
     def parse_text_fields
-      functions, memory, tables, globals, datas, exports, imports, elements, start =
-        [], nil, [], [], [], [], [], [], nil
+      functions, memories, tables, globals, datas, exports, imports, elements =
+        8.times.map { [] }
+      start = nil
       initial_context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
@@ -100,30 +104,30 @@ module Wasminna
           read_list do
             case peek
             in 'func'
-              functions << parse_function
+              functions << parse_function_definition
             in 'memory'
-              memory = parse_memory
+              memories << parse_memory_definition
             in 'table'
-              tables << parse_table
+              tables << parse_table_definition
             in 'global'
-              globals << parse_global
+              globals << parse_global_definition
             in 'type'
-              parse_type
+              parse_type_definition
             in 'data'
-              datas << parse_data
+              datas << parse_data_segment
             in 'export'
               exports << parse_export
             in 'import'
               imports << parse_import
             in 'elem'
-              elements << parse_element
+              elements << parse_element_segment
             in 'start'
-              start = parse_start
+              start = parse_start_function
             end
           end
         end
 
-        { functions:, memory:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
+        { functions:, memories:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
       end
     end
 
@@ -132,20 +136,16 @@ module Wasminna
         read_list do
           case read
           in 'type'
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
+            read_optional_id => name
             type =
               read_list(starting_with: 'func') do
-                _, parameters = unzip_pairs(parse_parameters)
+                _, parameters = parse_parameters
                 results = parse_results
                 Type.new(parameters:, results:)
               end
             Context.new(types: [name], typedefs: [type])
           in 'func' | 'table' | 'memory' | 'global' | 'elem' | 'data' => field_name
-            if peek in ID_REGEXP
-              read => ID_REGEXP => name
-            end
+            read_optional_id => name
             repeatedly { read }
             index_space_name =
               {
@@ -168,9 +168,7 @@ module Wasminna
                   'memory' => :mems,
                   'global' => :globals
                 }.fetch(kind)
-              if peek in ID_REGEXP
-                read => ID_REGEXP => name
-              end
+              read_optional_id => name
               repeatedly { read }
               Context.new(index_space_name => [name])
             end
@@ -186,9 +184,7 @@ module Wasminna
 
     def parse_invoke
       read => 'invoke'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => module_name
-      end
+      read_optional_id => module_name
       parse_string => name
       arguments = with_context(Context.new) { parse_instructions }
 
@@ -197,9 +193,7 @@ module Wasminna
 
     def parse_get
       read => 'get'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => module_name
-      end
+      read_optional_id => module_name
       parse_string => name
 
       Get.new(module_name:, name:)
@@ -208,12 +202,13 @@ module Wasminna
     def parse_assert_return
       read => 'assert_return'
       action =
-        if can_read_list?(starting_with: 'invoke')
-          read_list { parse_invoke }
-        elsif can_read_list?(starting_with: 'get')
-          read_list { parse_get }
-        else
-          raise
+        read_list do
+          case peek
+          in 'invoke'
+            parse_invoke
+          in 'get'
+            parse_get
+          end
         end
       expecteds = parse_expecteds
 
@@ -223,14 +218,15 @@ module Wasminna
     def parse_assert_trap
       read => 'assert_trap'
       action =
-        if can_read_list?(starting_with: 'invoke')
-          read_list { parse_invoke }
-        elsif can_read_list?(starting_with: 'get')
-          read_list { parse_get }
-        elsif can_read_list?(starting_with: 'module')
-          read_list { parse_module }
-        else
-          raise
+        read_list do
+          case peek
+          in 'invoke'
+            parse_invoke
+          in 'get'
+            parse_get
+          in 'module'
+            parse_module
+          end
         end
       failure = parse_string
 
@@ -272,24 +268,18 @@ module Wasminna
     def parse_register
       read => 'register'
       module_name = parse_string
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
 
       Register.new(module_name:, name:)
     end
 
-    ID_REGEXP = %r{\A\$}
-
-    def parse_type
+    def parse_type_definition
       read => 'type'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
 
       read_list do
         read => 'func'
-        _, parameters = unzip_pairs(parse_parameters)
+        _, parameters = parse_parameters
         results = parse_results
 
         Type.new(parameters:, results:)
@@ -301,10 +291,7 @@ module Wasminna
     end
 
     def parse_results
-      parse_declarations(kind: 'result').map do |result|
-        result => [nil, type]
-        type
-      end
+      parse_declarations(kind: 'result').last
     end
 
     def parse_locals
@@ -312,31 +299,28 @@ module Wasminna
     end
 
     def parse_declarations(kind:)
-      [].tap do |results|
-        while can_read_list?(starting_with: kind)
-          results << read_list { parse_declaration(kind:) }
-        end
+      repeatedly do
+        raise StopIteration unless can_read_list?(starting_with: kind)
+        read_list { parse_declaration(kind:) }
+      end.transpose.then do |names = [], types = []|
+        [names, types]
       end
     end
 
     def parse_declaration(kind:)
       read => ^kind
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       read => type
 
       [name, type]
     end
 
-    def parse_function
+    def parse_function_definition
       read => 'func'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       parse_typeuse => [type_index, parameter_names]
-      local_names, locals = unzip_pairs(parse_locals)
+      local_names, locals = parse_locals
       locals_context = Context.new(locals: parameter_names + local_names)
       raise unless locals_context.well_formed?
       body, updated_typedefs =
@@ -353,7 +337,7 @@ module Wasminna
       if can_read_list?(starting_with: 'type')
         index = read_list(starting_with: 'type') { parse_index(context.types) }
       end
-      parameter_names, parameters = unzip_pairs(parse_parameters)
+      parameter_names, parameters = parse_parameters
       results = parse_results
 
       if index.nil?
@@ -373,21 +357,8 @@ module Wasminna
       [index, parameter_names]
     end
 
-    INDEX_REGEXP =
-      %r{
-        \A
-        (
-          \d (_? \d)*
-          |
-          0x \h (_? \h)*
-          |
-          \$ .+
-        )
-        \z
-      }x
-
     def parse_index(index_space)
-      read => INDEX_REGEXP => index
+      read_index => index
       if index.start_with?('$')
         index_space.index(index) || raise
       elsif index.start_with?('0x')
@@ -397,21 +368,17 @@ module Wasminna
       end
     end
 
-    def parse_memory
+    def parse_memory_definition
       read => 'memory'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
       parse_limits => [minimum_size, maximum_size]
 
       AST::Memory.new(minimum_size:, maximum_size:)
     end
 
-    def parse_data
+    def parse_data_segment
       read => 'data'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       mode =
         if can_read_list?(starting_with: 'memory')
@@ -435,19 +402,17 @@ module Wasminna
     UNSIGNED_INTEGER_REGEXP =
       %r{
         \A
-        (
-          \d (_? \d)*
+        (?:
+          \d (?: _? \d)*
           |
-          0x \h (_? \h)*
+          0x \h (?: _? \h)*
         )
         \z
       }x
 
-    def parse_table
+    def parse_table_definition
       read => 'table'
-      if peek in ID_REGEXP
-        read => ID_REGEXP => name
-      end
+      read_optional_id => name
       minimum_size, maximum_size, reftype = parse_tabletype
 
       Table.new(name:, minimum_size:, maximum_size:)
@@ -468,11 +433,9 @@ module Wasminna
       [minimum_size, maximum_size]
     end
 
-    def parse_global
+    def parse_global_definition
       read => 'global'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
 
       parse_globaltype
       value = parse_instructions
@@ -515,9 +478,7 @@ module Wasminna
       kind, type =
         read_list do
           read => 'func' | 'table' | 'memory' | 'global' => kind
-          if peek in ID_REGEXP
-            read => ID_REGEXP
-          end
+          read_optional_id
 
           case kind
           in 'func'
@@ -535,11 +496,9 @@ module Wasminna
       Import.new(module_name:, name:, kind:, type:)
     end
 
-    def parse_element
+    def parse_element_segment
       read => 'elem'
-      if peek in ID_REGEXP
-        read => ID_REGEXP
-      end
+      read_optional_id
       mode =
         if can_read_list?(starting_with: 'table')
           index =
@@ -568,7 +527,7 @@ module Wasminna
       ElementSegment.new(items:, mode:)
     end
 
-    def parse_start
+    def parse_start_function
       read => 'start'
       parse_index(context.functions)
     end
@@ -633,10 +592,11 @@ module Wasminna
           body = parse_instructions
           [Loop.new(type:, body:)]
         in 'if'
-          condition = []
-          until can_read_list?(starting_with: 'then')
-            condition.concat(parse_folded_instruction)
-          end
+          condition =
+            repeatedly do
+              raise StopIteration if can_read_list?(starting_with: 'then')
+              parse_folded_instruction
+            end.flatten(1)
           consequent =
             read_list(starting_with: 'then') do
               parse_instructions
@@ -813,11 +773,12 @@ module Wasminna
         read => ^atom
       end
 
-      if peek in ID_REGEXP
+      read_optional_id => id
+      unless id.nil?
         if label.nil?
-          read => ID_REGEXP => label
+          id => label
         else
-          read => ^label
+          id => ^label
         end
       end
 
@@ -870,7 +831,7 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => opcode
         index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             parse_index(context.tables)
           else
             0
@@ -885,7 +846,8 @@ module Wasminna
         }.fetch(opcode).new(index:)
       in 'br_table'
         indexes =
-          repeatedly(until: -> { can_read_list? || !INDEX_REGEXP.match(_1) }) do
+          repeatedly do
+            raise StopIteration unless can_read_index?
             parse_index(context.labels)
           end
         indexes => [*target_indexes, default_index]
@@ -893,36 +855,17 @@ module Wasminna
         BrTable.new(target_indexes:, default_index:)
       in 'call_indirect'
         table_index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             parse_index(context.tables)
           else
             0
           end
-        type_index =
-          if can_read_list?(starting_with: 'type')
-            read_list(starting_with: 'type') do
-              parse_index(context.types)
-            end
-          end
-        while can_read_list?(starting_with: 'param')
-          read_list(starting_with: 'param') do
-            repeatedly { read }
-          end
-        end
-        while can_read_list?(starting_with: 'result')
-          read_list(starting_with: 'result') do
-            repeatedly { read }
-          end
-        end
+        parse_typeuse => [type_index, parameter_names]
+        raise unless parameter_names.all?(&:nil?)
 
         CallIndirect.new(table_index:, type_index:)
       in 'select'
-        while can_read_list?(starting_with: 'result')
-          read_list(starting_with: 'result') do
-            repeatedly { read }
-          end
-        end
-
+        parse_results
         Select.new
       in 'ref.null'
         read
@@ -934,33 +877,21 @@ module Wasminna
         index = parse_index(context.functions)
         RefFunc.new(index:)
       in 'table.init'
-        read => INDEX_REGEXP => index
-        if peek in INDEX_REGEXP
+        read_index => index
+        if can_read_index?
           table_index =
-            if index.start_with?('$')
-              context.tables.index(index) || raise
-            elsif index.start_with?('0x')
-              index.to_i(16)
-            else
-              index.to_i(10)
-            end
+            read_list(from: [index]) { parse_index(context.tables) }
           element_index = parse_index(context.elem)
         else
           table_index = 0
           element_index =
-            if index.start_with?('$')
-              context.elem.index(index) || raise
-            elsif index.start_with?('0x')
-              index.to_i(16)
-            else
-              index.to_i(10)
-            end
+            read_list(from: [index]) { parse_index(context.elem) }
         end
 
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
         destination_index, source_index =
-          if peek in INDEX_REGEXP
+          if can_read_index?
             [parse_index(context.tables), parse_index(context.tables)]
           else
             [0, 0]
@@ -973,8 +904,11 @@ module Wasminna
     end
 
     def read_until(terminator)
-      repeatedly(until: terminator) do
-        if peek in 'block' | 'loop' | 'if'
+      repeatedly do
+        case peek
+        in ^terminator
+          raise StopIteration
+        in 'block' | 'loop' | 'if'
           [read, *read_until('end'), read]
         else
           [read]
@@ -1012,16 +946,6 @@ module Wasminna
 
     def parse_string
       string_value(read)
-    end
-
-    def unzip_pairs(pairs)
-      pairs.transpose.then do |unzipped|
-        if unzipped.empty?
-          [[], []]
-        else
-          unzipped
-        end
-      end
     end
   end
 end
