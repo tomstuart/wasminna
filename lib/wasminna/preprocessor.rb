@@ -298,6 +298,12 @@ module Wasminna
         case peek
         in ['param' | 'result', *]
           process_typeuse
+        in 'block' | 'loop' | 'if'
+          read => 'block' | 'loop' | 'if' => kind
+          read_optional_id => id
+          blocktype = process_blocktype
+
+          [kind, *id, *blocktype]
         in 'select'
           read => 'select'
           results = process_results
@@ -309,6 +315,10 @@ module Wasminna
           [read]
         end
       end.flatten(1)
+    end
+
+    def process_blocktype
+      process_typeuse
     end
 
     def process_instruction
