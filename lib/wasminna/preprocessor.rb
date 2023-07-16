@@ -295,19 +295,17 @@ module Wasminna
 
     def process_instructions
       repeatedly do
-        if can_read_list?
-          case peek
-          in ['param' | 'result', *]
-            read_list do
-              read => 'param' | 'result' => kind
-              repeatedly do
-                read => type
-                [kind, type]
-              end
+        case peek
+        in ['param' | 'result', *]
+          read_list do
+            read => 'param' | 'result' => kind
+            repeatedly do
+              read => type
+              [kind, type]
             end
-          else
-            read_list { [process_instructions] }
           end
+        in [*]
+          read_list { [process_instructions] }
         else
           [read]
         end
