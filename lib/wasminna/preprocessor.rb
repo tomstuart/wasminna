@@ -297,8 +297,6 @@ module Wasminna
     def process_instructions
       repeatedly do
         case peek
-        in ['param' | 'result', *]
-          process_typeuse
         in 'block' | 'loop' | 'if'
           read => 'block' | 'loop' | 'if' => kind
           read_optional_id => id
