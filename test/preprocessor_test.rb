@@ -405,6 +405,136 @@ assert_preprocess_module_fields <<'--', <<'--'
   (import "a" "b" (func (type $t) (param i32) (param i64) (result f32) (result f64)))
 --
 
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    (select (result i32 i32) (local.get 0) (local.get 1) (local.get 2))
+  )
+  (type (func (result i32) (result i32)))
+--
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    (select (result i32) (result i32) (local.get 0) (local.get 1) (local.get 2))
+  )
+  (type (func (result i32) (result i32)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    (select (result i32 i32) (local.get 0) (local.get 1) (local.get 2) (i32.const 1) (i32.add))
+  )
+  (type (func (result i32) (result i32)))
+--
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    (select (result i32) (result i32) (local.get 0) (local.get 1) (local.get 2) (i32.const 1) (i32.add))
+  )
+  (type (func (result i32) (result i32)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    local.get 0
+    local.get 1
+    local.get 2
+    select (result i32 i32)
+    i32.const 1
+    i32.add
+  )
+  (type (func (result i32) (result i32)))
+--
+  (type $t (func (param i32) (param i32) (param i32) (result i32)))
+  (func (type $t)
+    local.get 0
+    local.get 1
+    local.get 2
+    select (result i32) (result i32)
+    i32.const 1
+    i32.add
+  )
+  (type (func (result i32) (result i32)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block (result))
+  )
+--
+  (type $t (func))
+  (func (type $t)
+    (block)
+  )
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block (result i64)
+      (i64.const 1)
+    )
+  )
+  (type (func (result i64)))
+--
+  (type $t (func))
+  (func (type $t)
+    (block (result i64)
+      (i64.const 1)
+    )
+  )
+  (type (func (result i64)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t (func))
+  (func (type $t)
+    (block (param) (result i64)
+      (i64.const 1)
+    )
+  )
+  (type (func (result i64)))
+--
+  (type $t (func))
+  (func (type $t)
+    (block (result i64)
+      (i64.const 1)
+    )
+  )
+  (type (func (result i64)))
+--
+
+assert_preprocess_module_fields <<'--', <<'--'
+  (type $t1 (func (param i32) (result i32)))
+  (type $t2 (func (param i32) (param i64) (result f32) (result f64)))
+  (func (type $t1)
+    call_indirect (type $t2) (param i32 i64) (result f32 f64)
+    i32.const 1
+    i32.add
+  )
+--
+  (type $t1 (func (param i32) (result i32)))
+  (type $t2 (func (param i32) (param i64) (result f32) (result f64)))
+  (func (type $t1)
+    call_indirect (type $t2) (param i32) (param i64) (result f32) (result f64)
+    i32.const 1
+    i32.add
+  )
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

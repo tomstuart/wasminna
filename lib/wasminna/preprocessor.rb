@@ -4,6 +4,7 @@ require 'wasminna/memory'
 module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
+    include Helpers::ReadIndex
     include Helpers::ReadOptionalId
     include Helpers::SizeOf
     include Helpers::StringValue
@@ -295,23 +296,49 @@ module Wasminna
 
     def process_instructions
       repeatedly do
-        if can_read_list?
-          read_list do
-            case peek
-            in 'param' | 'result'
-              read => 'param' | 'result' => kind
-              repeatedly do
-                read => type
-                [kind, type]
-              end
-            else
-              [process_instructions]
-            end
+        case peek
+        in 'block' | 'loop' | 'if'
+          read => 'block' | 'loop' | 'if' => kind
+          read_optional_id => id
+          blocktype = process_blocktype
+
+          [kind, *id, *blocktype]
+        in 'call_indirect'
+          read => 'call_indirect'
+          if can_read_index?
+            read_index => index
           end
+          typeuse = process_typeuse
+
+          ['call_indirect', *index, *typeuse]
+        in 'select'
+          read => 'select'
+          results = process_results
+
+          ['select', *results]
+        in [*]
+          read_list { [process_instructions] }
         else
           [read]
         end
       end.flatten(1)
+    end
+
+    def process_blocktype
+      type =
+        if can_read_list?(starting_with: 'type')
+          [read]
+        end
+      parameters = process_parameters
+      results = process_results
+      blocktype = [*type, *parameters, *results]
+
+      case blocktype
+      in [] | [['result', _]]
+        blocktype
+      else
+        read_list(from: blocktype) { process_typeuse }
+      end
     end
 
     def process_instruction
