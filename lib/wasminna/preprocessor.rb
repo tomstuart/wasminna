@@ -343,9 +343,7 @@ module Wasminna
           blocktype
         end
       else
-        after_all_fields do
-          read_list(from: blocktype) { process_typeuse.call(DUMMY_TYPE_DEFINITIONS) }
-        end
+        read_list(from: blocktype) { process_typeuse }
       end
     end
 
