@@ -451,16 +451,16 @@ module Wasminna
         if can_read_list?(starting_with: 'table')
           read
         end
-      offset = read_list { process_offset.call(DUMMY_TYPE_DEFINITIONS) }
-      element_list = process_element_list(func_optional: table_use.nil?).call(DUMMY_TYPE_DEFINITIONS)
+      offset = read_list { process_offset }
+      element_list = process_element_list(func_optional: table_use.nil?)
 
       if table_use.nil?
         table_use = %w[table 0]
       end
 
-      after_all_fields do
+      after_all_fields do |type_definitions|
         [
-          ['elem', *id, table_use, offset, *element_list]
+          ['elem', *id, table_use, offset.call(type_definitions), *element_list.call(type_definitions)]
         ]
       end
     end
