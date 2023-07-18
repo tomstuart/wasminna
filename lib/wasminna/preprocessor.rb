@@ -105,7 +105,7 @@ module Wasminna
       else
         typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
         locals = process_locals
-        body = process_instructions
+        body = process_instructions.call(DUMMY_TYPE_DEFINITIONS)
 
         [
           ['func', *id, *typeuse, *locals, *body]
@@ -207,7 +207,7 @@ module Wasminna
         expand_inline_import_export(kind: 'global', id:)
       else
         read => type
-        instructions = process_instructions
+        instructions = process_instructions.call(DUMMY_TYPE_DEFINITIONS)
 
         [
           ['global', *id, type, *instructions]
@@ -321,11 +321,15 @@ module Wasminna
 
           ['select', *results]
         in [*]
-          read_list { [process_instructions] }
+          read_list { [process_instructions.call(DUMMY_TYPE_DEFINITIONS)] }
         else
           [read]
         end
-      end.flatten(1)
+      end.flatten(1).then do |result|
+        after_all_fields do
+          result
+        end
+      end
     end
 
     def process_blocktype
@@ -348,7 +352,7 @@ module Wasminna
     end
 
     def process_instruction
-      process_instructions # TODO only process one instruction
+      process_instructions.call(DUMMY_TYPE_DEFINITIONS) # TODO only process one instruction
     end
 
     def process_type_definition
@@ -444,7 +448,7 @@ module Wasminna
       instructions =
         if peek in 'offset'
           read => 'offset'
-          process_instructions
+          process_instructions.call(DUMMY_TYPE_DEFINITIONS)
         else
           process_instruction
         end
@@ -481,7 +485,7 @@ module Wasminna
       instructions =
         if peek in 'item'
           read => 'item'
-          process_instructions
+          process_instructions.call(DUMMY_TYPE_DEFINITIONS)
         else
           process_instruction
         end
