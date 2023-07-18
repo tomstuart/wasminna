@@ -306,7 +306,9 @@ module Wasminna
           read_optional_id => id
           blocktype = process_blocktype.call(DUMMY_TYPE_DEFINITIONS)
 
-          [kind, *id, *blocktype]
+          after_all_fields do
+            [kind, *id, *blocktype]
+          end
         in 'call_indirect'
           read => 'call_indirect'
           if can_read_index?
@@ -314,20 +316,32 @@ module Wasminna
           end
           typeuse = process_typeuse.call(DUMMY_TYPE_DEFINITIONS)
 
-          ['call_indirect', *index, *typeuse]
+          after_all_fields do
+            ['call_indirect', *index, *typeuse]
+          end
         in 'select'
           read => 'select'
           results = process_results
 
-          ['select', *results]
+          after_all_fields do
+            ['select', *results]
+          end
         in [*]
-          read_list { [process_instructions.call(DUMMY_TYPE_DEFINITIONS)] }
+          read_list { process_instructions.call(DUMMY_TYPE_DEFINITIONS) }.then do |result|
+            after_all_fields do
+              [result]
+            end
+          end
         else
-          [read]
+          read.then do |result|
+            after_all_fields do
+              [result]
+            end
+          end
         end
-      end.flatten(1).then do |result|
+      end.then do |results|
         after_all_fields do
-          result
+          results.flat_map { |result| result.call(DUMMY_TYPE_DEFINITIONS) }
         end
       end
     end
