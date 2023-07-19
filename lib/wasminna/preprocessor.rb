@@ -62,7 +62,7 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = process_fields.call(DUMMY_TYPE_DEFINITIONS)
+        fields = process_fields.first.call(DUMMY_TYPE_DEFINITIONS)
         ['module', *id, *fields]
       end
     end
@@ -70,10 +70,13 @@ module Wasminna
     def process_fields
       repeatedly do
         read_list { process_field }
-      end.transpose.then do |fields = [], _|
-        after_all_fields do |type_definitions|
-          fields.flat_map { |field| field.call(type_definitions) }
-        end
+      end.transpose.then do |fields = [], type_definitions = []|
+        [
+          after_all_fields do |type_definitions|
+            fields.flat_map { |field| field.call(type_definitions) }
+          end,
+          type_definitions.flatten(1)
+        ]
       end
     end
 
@@ -172,10 +175,7 @@ module Wasminna
           ['elem', ['table', id], %w[i32.const 0], item_type, *items]
         ]
 
-      [
-        read_list(from: expanded) { process_fields },
-        DUMMY_TYPE_DEFINITIONS
-      ]
+      read_list(from: expanded) { process_fields }
     end
 
     def process_memory_definition
@@ -218,10 +218,7 @@ module Wasminna
           ['data', ['memory', id], %w[i32.const 0], *strings]
         ]
 
-      [
-        read_list(from: expanded) { process_fields },
-        DUMMY_TYPE_DEFINITIONS
-      ]
+      read_list(from: expanded) { process_fields }
     end
 
     def process_global_definition
@@ -267,10 +264,7 @@ module Wasminna
           ['import', module_name, name, [kind, *id, *description]]
         ]
 
-      [
-        read_list(from: expanded) { process_fields },
-        DUMMY_TYPE_DEFINITIONS
-      ]
+      read_list(from: expanded) { process_fields }
     end
 
     def expand_inline_export(kind:, id:)
@@ -286,10 +280,7 @@ module Wasminna
           [kind, id, *description]
         ]
 
-      [
-        read_list(from: expanded) { process_fields },
-        DUMMY_TYPE_DEFINITIONS
-      ]
+      read_list(from: expanded) { process_fields }
     end
 
     def process_typeuse
