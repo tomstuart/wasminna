@@ -126,7 +126,7 @@ module Wasminna
       if can_read_inline_import_export?
         expand_inline_import_export(kind: 'table', id:).first
       elsif can_read_inline_element_segment?
-        expand_inline_element_segment(id:)
+        expand_inline_element_segment(id:).first
       else
         rest = repeatedly { read }
 
@@ -166,7 +166,10 @@ module Wasminna
           ['elem', ['table', id], %w[i32.const 0], item_type, *items]
         ]
 
-      read_list(from: expanded) { process_fields }
+      [
+        read_list(from: expanded) { process_fields },
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_memory_definition
