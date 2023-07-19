@@ -120,17 +120,9 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'table', id:).call(DUMMY_TYPE_DEFINITIONS) .then do |result|
-          after_all_fields do
-            result
-          end
-        end
+        expand_inline_import_export(kind: 'table', id:)
       elsif can_read_inline_element_segment?
-        expand_inline_element_segment(id:).call(DUMMY_TYPE_DEFINITIONS).then do |result|
-          after_all_fields do
-            result
-          end
-        end
+        expand_inline_element_segment(id:)
       else
         rest = repeatedly { read }
 
