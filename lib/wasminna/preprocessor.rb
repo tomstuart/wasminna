@@ -105,7 +105,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'func', id:)
+        expand_inline_import_export(kind: 'func', id:).first
       else
         typeuse = process_typeuse
         locals = process_locals
@@ -124,7 +124,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'table', id:)
+        expand_inline_import_export(kind: 'table', id:).first
       elsif can_read_inline_element_segment?
         expand_inline_element_segment(id:)
       else
@@ -174,7 +174,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'memory', id:)
+        expand_inline_import_export(kind: 'memory', id:).first
       elsif can_read_inline_data_segment?
         expand_inline_data_segment(id:)
       else
@@ -214,7 +214,7 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'global', id:)
+        expand_inline_import_export(kind: 'global', id:).first
       else
         read => type
         instructions = process_instructions
@@ -234,9 +234,9 @@ module Wasminna
     def expand_inline_import_export(**)
       case peek
       in ['import', _, _]
-        expand_inline_import(**).first
+        expand_inline_import(**)
       in ['export', _]
-        expand_inline_export(**).first
+        expand_inline_export(**)
       end
     end
 
