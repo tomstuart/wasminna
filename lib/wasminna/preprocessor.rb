@@ -82,7 +82,7 @@ module Wasminna
       in 'func'
         process_function_definition.first
       in 'table'
-        process_table_definition
+        process_table_definition.first
       in 'memory'
         process_memory_definition
       in 'global'
@@ -127,17 +127,20 @@ module Wasminna
       read_optional_id => id
 
       if can_read_inline_import_export?
-        expand_inline_import_export(kind: 'table', id:).first
+        expand_inline_import_export(kind: 'table', id:)
       elsif can_read_inline_element_segment?
-        expand_inline_element_segment(id:).first
+        expand_inline_element_segment(id:)
       else
         rest = repeatedly { read }
 
-        after_all_fields do
-          [
-            ['table', *id, *rest]
-          ]
-        end
+        [
+          after_all_fields do
+            [
+              ['table', *id, *rest]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
