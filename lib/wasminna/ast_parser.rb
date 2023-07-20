@@ -741,12 +741,7 @@ module Wasminna
 
         BrTable.new(target_indexes:, default_index:)
       in 'call_indirect'
-        table_index =
-          if can_read_index?
-            parse_index(context.tables)
-          else
-            0
-          end
+        table_index = parse_index(context.tables)
         parse_typeuse(context:) => [type_index, parameter_names]
         raise unless parameter_names.all?(&:nil?)
 
