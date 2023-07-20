@@ -62,18 +62,21 @@ module Wasminna
         strings = repeatedly { read }
         ['module', *id, 'binary', *strings]
       else
-        fields = process_fields.call(DUMMY_TYPE_DEFINITIONS)
-        ['module', *id, *fields]
+        fields, type_definitions = process_fields
+        ['module', *id, *fields.call(type_definitions)]
       end
     end
 
     def process_fields
       repeatedly do
         read_list { process_field }
-      end.then do |fields|
-        after_all_fields do |type_definitions|
-          fields.flat_map { |field| field.call(type_definitions) }
-        end
+      end.transpose.then do |fields = [], type_definitions = []|
+        [
+          after_all_fields do |type_definitions|
+            fields.flat_map { |field| field.call(type_definitions) }
+          end,
+          type_definitions.flatten(1)
+        ]
       end
     end
 
@@ -111,11 +114,14 @@ module Wasminna
         locals = process_locals
         body = process_instructions
 
-        after_all_fields do |type_definitions|
-          [
-            ['func', *id, *typeuse.call(type_definitions), *locals, *body.call(type_definitions)]
-          ]
-        end
+        [
+          after_all_fields do |type_definitions|
+            [
+              ['func', *id, *typeuse.call(type_definitions), *locals, *body.call(type_definitions)]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
@@ -130,11 +136,14 @@ module Wasminna
       else
         rest = repeatedly { read }
 
-        after_all_fields do
-          [
-            ['table', *id, *rest]
-          ]
-        end
+        [
+          after_all_fields do
+            [
+              ['table', *id, *rest]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
@@ -180,11 +189,14 @@ module Wasminna
       else
         rest = repeatedly { read }
 
-        after_all_fields do
-          [
-            ['memory', *id, *rest]
-          ]
-        end
+        [
+          after_all_fields do
+            [
+              ['memory', *id, *rest]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
@@ -219,11 +231,14 @@ module Wasminna
         read => type
         instructions = process_instructions
 
-        after_all_fields do |type_definitions|
-          [
-            ['global', *id, type, *instructions.call(type_definitions)]
-          ]
-        end
+        [
+          after_all_fields do |type_definitions|
+            [
+              ['global', *id, type, *instructions.call(type_definitions)]
+            ]
+          end,
+          DUMMY_TYPE_DEFINITIONS
+        ]
       end
     end
 
@@ -386,11 +401,14 @@ module Wasminna
       read_optional_id => id
       functype = read_list { process_functype }
 
-      after_all_fields do
-        [
-          ['type', *id, functype]
-        ]
-      end
+      [
+        after_all_fields do
+          [
+            ['type', *id, functype]
+          ]
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_functype
@@ -407,11 +425,14 @@ module Wasminna
       read => name
       descriptor = read_list { process_import_descriptor }
 
-      after_all_fields do |type_definitions|
-        [
-          ['import', module_name, name, descriptor.call(type_definitions)]
-        ]
-      end
+      [
+        after_all_fields do |type_definitions|
+          [
+            ['import', module_name, name, descriptor.call(type_definitions)]
+          ]
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_import_descriptor
@@ -437,13 +458,16 @@ module Wasminna
       read => 'elem'
       read_optional_id => id
 
-      if can_read_list?
-        process_active_element_segment(id:)
-      elsif peek in 'declare'
-        process_declarative_element_segment(id:)
-      else
-        process_passive_element_segment(id:)
-      end
+      [
+        if can_read_list?
+          process_active_element_segment(id:)
+        elsif peek in 'declare'
+          process_declarative_element_segment(id:)
+        else
+          process_passive_element_segment(id:)
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_active_element_segment(id:)
@@ -557,11 +581,14 @@ module Wasminna
       read => 'data'
       read_optional_id => id
 
-      if can_read_list?
-        process_active_data_segment(id:)
-      else
-        process_passive_data_segment(id:)
-      end
+      [
+        if can_read_list?
+          process_active_data_segment(id:)
+        else
+          process_passive_data_segment(id:)
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_active_data_segment(id:)
@@ -595,11 +622,14 @@ module Wasminna
       read => 'export' | 'start' => kind
       rest = repeatedly { read }
 
-      after_all_fields do
-        [
-          [kind, *rest]
-        ]
-      end
+      [
+        after_all_fields do
+          [
+            [kind, *rest]
+          ]
+        end,
+        DUMMY_TYPE_DEFINITIONS
+      ]
     end
 
     def process_assert_trap
