@@ -20,7 +20,7 @@ module Wasminna
 
     private
 
-    attr_accessor :s_expression, :context
+    attr_accessor :s_expression
 
     def parse_commands
       repeatedly { parse_command }
@@ -94,41 +94,39 @@ module Wasminna
       functions, memories, tables, globals, datas, exports, imports, elements =
         8.times.map { [] }
       start = nil
-      initial_context =
+      context =
         read_list(from: Marshal.load(Marshal.dump(s_expression))) do
           build_initial_context
         end
 
-      with_context(initial_context) do
-        repeatedly do
-          read_list do
-            case peek
-            in 'func'
-              functions << parse_function_definition
-            in 'memory'
-              memories << parse_memory_definition
-            in 'table'
-              tables << parse_table_definition
-            in 'global'
-              globals << parse_global_definition
-            in 'type'
-              parse_type_definition
-            in 'data'
-              datas << parse_data_segment
-            in 'export'
-              exports << parse_export
-            in 'import'
-              imports << parse_import
-            in 'elem'
-              elements << parse_element_segment
-            in 'start'
-              start = parse_start_function
-            end
+      repeatedly do
+        read_list do
+          case peek
+          in 'func'
+            functions << parse_function_definition(context:)
+          in 'memory'
+            memories << parse_memory_definition
+          in 'table'
+            tables << parse_table_definition
+          in 'global'
+            globals << parse_global_definition(context:)
+          in 'type'
+            parse_type_definition
+          in 'data'
+            datas << parse_data_segment(context:)
+          in 'export'
+            exports << parse_export(context:)
+          in 'import'
+            imports << parse_import(context:)
+          in 'elem'
+            elements << parse_element_segment(context:)
+          in 'start'
+            start = parse_start_function(context:)
           end
         end
-
-        { functions:, memories:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
       end
+
+      { functions:, memories:, tables:, globals:, datas:, exports:, imports:, elements:, start:, types: context.typedefs }
     end
 
     def build_initial_context
@@ -186,7 +184,7 @@ module Wasminna
       read => 'invoke'
       read_optional_id => module_name
       parse_string => name
-      arguments = with_context(Context.new) { parse_instructions }
+      arguments = parse_instructions(context: Context.new)
 
       Invoke.new(module_name:, name:, arguments:)
     end
@@ -240,7 +238,7 @@ module Wasminna
           in 'f32.const' | 'f64.const'
             parse_float_expectation
           else
-            with_context(Context.new) { parse_instructions }
+            parse_instructions(context: Context.new)
           end
         end
       end
@@ -315,40 +313,25 @@ module Wasminna
       [name, type]
     end
 
-    def parse_function_definition
+    def parse_function_definition(context:)
       read => 'func'
       read_optional_id
 
-      parse_typeuse => [type_index, parameter_names]
+      parse_typeuse(context:) => [type_index, parameter_names]
       local_names, locals = parse_locals
       locals_context = Context.new(locals: parameter_names + local_names)
       raise unless locals_context.well_formed?
-      body, updated_typedefs =
-        with_context(context + locals_context) do
-          body = parse_instructions
-          [body, context.typedefs]
-        end
-      self.context = context.with(typedefs: updated_typedefs)
+      body = parse_instructions(context: context + locals_context)
 
       Function.new(type_index:, locals:, body:)
     end
 
-    def parse_typeuse
-      if can_read_list?(starting_with: 'type')
-        index = read_list(starting_with: 'type') { parse_index(context.types) }
-      end
+    def parse_typeuse(context:)
+      index = read_list(starting_with: 'type') { parse_index(context.types) }
       parameter_names, parameters = parse_parameters
       results = parse_results
 
-      if index.nil?
-        generated_type = Type.new(parameters:, results:)
-        index = context.typedefs.find_index(generated_type)
-
-        if index.nil?
-          index = context.typedefs.length
-          self.context = context + Context.new(typedefs: [generated_type])
-        end
-      elsif [parameters, results].all?(&:empty?)
+      if [parameters, results].all?(&:empty?)
         context.typedefs.slice(index) => { parameters: }
         parameter_names = parameters.map { nil }
       end
@@ -376,7 +359,7 @@ module Wasminna
       AST::Memory.new(minimum_size:, maximum_size:)
     end
 
-    def parse_data_segment
+    def parse_data_segment(context:)
       read => 'data'
       read_optional_id
 
@@ -388,7 +371,7 @@ module Wasminna
             end
           offset =
             read_list(starting_with: 'offset') do
-              parse_instructions
+              parse_instructions(context:)
             end
           DataSegment::Mode::Active.new(index:, offset:)
         else
@@ -433,12 +416,12 @@ module Wasminna
       [minimum_size, maximum_size]
     end
 
-    def parse_global_definition
+    def parse_global_definition(context:)
       read => 'global'
       read_optional_id
 
       parse_globaltype
-      value = parse_instructions
+      value = parse_instructions(context:)
 
       Global.new(value:)
     end
@@ -451,7 +434,7 @@ module Wasminna
       end
     end
 
-    def parse_export
+    def parse_export(context:)
       read => 'export'
       parse_string => name
       kind, index =
@@ -471,7 +454,7 @@ module Wasminna
       Export.new(name:, kind:, index:)
     end
 
-    def parse_import
+    def parse_import(context:)
       read => 'import'
       parse_string => module_name
       parse_string => name
@@ -482,7 +465,7 @@ module Wasminna
 
           case kind
           in 'func'
-            parse_typeuse => [type_index, _]
+            parse_typeuse(context:) => [type_index, _]
             [:func, type_index]
           in 'global'
             [:global, parse_globaltype]
@@ -496,7 +479,7 @@ module Wasminna
       Import.new(module_name:, name:, kind:, type:)
     end
 
-    def parse_element_segment
+    def parse_element_segment(context:)
       read => 'elem'
       read_optional_id
       mode =
@@ -507,7 +490,7 @@ module Wasminna
             end
           offset =
             read_list(starting_with: 'offset') do
-              parse_instructions
+              parse_instructions(context:)
             end
           ElementSegment::Mode::Active.new(index:, offset:)
         elsif peek in 'declare'
@@ -520,14 +503,14 @@ module Wasminna
       items =
         repeatedly do
           read_list(starting_with: 'item') do
-            parse_instructions
+            parse_instructions(context:)
           end
         end
 
       ElementSegment.new(items:, mode:)
     end
 
-    def parse_start_function
+    def parse_start_function(context:)
       read => 'start'
       parse_index(context.functions)
     end
@@ -539,83 +522,74 @@ module Wasminna
         \z
       }x
 
-    def parse_instructions
+    def parse_instructions(context:)
       repeatedly do
         if can_read_list?
-          parse_folded_instruction
+          parse_folded_instruction(context:)
         else
-          [parse_instruction]
+          [parse_instruction(context:)]
         end
       end.flatten(1)
     end
 
-    def with_context(context)
-      previous_context, self.context = self.context, context
-
-      yield.tap do
-        self.context = previous_context
-      end
-    end
-
-    def parse_instruction
+    def parse_instruction(context:)
       case peek
       in NUMERIC_OPCODE_REGEXP
         parse_numeric_instruction
       in 'block' | 'loop' | 'if'
-        parse_structured_instruction
+        parse_structured_instruction(context:)
       else
-        parse_normal_instruction
+        parse_normal_instruction(context:)
       end
     end
 
-    def parse_folded_instruction
+    def parse_folded_instruction(context:)
       read_list do
         case peek
         in 'block' | 'loop' | 'if'
-          parse_folded_structured_instruction
+          parse_folded_structured_instruction(context:)
         else
-          parse_folded_plain_instruction
+          parse_folded_plain_instruction(context:)
         end
       end
     end
 
-    def parse_folded_structured_instruction
+    def parse_folded_structured_instruction(context:)
       read_labelled => [opcode, label]
-      type = parse_blocktype
+      type = parse_blocktype(context:)
+      context = Context.new(labels: [label]) + context
 
-      with_context(Context.new(labels: [label]) + context) do
-        case opcode
-        in 'block'
-          body = parse_instructions
-          [Block.new(type:, body:)]
-        in 'loop'
-          body = parse_instructions
-          [Loop.new(type:, body:)]
-        in 'if'
-          condition =
-            repeatedly do
-              raise StopIteration if can_read_list?(starting_with: 'then')
-              parse_folded_instruction
-            end.flatten(1)
-          consequent =
-            read_list(starting_with: 'then') do
-              parse_instructions
+      case opcode
+      in 'block'
+        body = parse_instructions(context:)
+        [Block.new(type:, body:)]
+      in 'loop'
+        body = parse_instructions(context:)
+        [Loop.new(type:, body:)]
+      in 'if'
+        condition =
+          repeatedly do
+            raise StopIteration if can_read_list?(starting_with: 'then')
+            parse_folded_instruction(context:)
+          end.flatten(1)
+        consequent =
+          read_list(starting_with: 'then') do
+            parse_instructions(context:)
+          end
+        alternative =
+          if can_read_list?(starting_with: 'else')
+            read_list(starting_with: 'else') do
+              parse_instructions(context:)
             end
-          alternative =
-            if can_read_list?(starting_with: 'else')
-              read_list(starting_with: 'else') do
-                parse_instructions
-              end
-            else
-              []
-            end
-          [*condition, If.new(type:, consequent:, alternative:)]
-        end
+          else
+            []
+          end
+        [*condition, If.new(type:, consequent:, alternative:)]
       end
     end
 
-    def parse_folded_plain_instruction
-      parse_instructions => [first, *rest]
+    def parse_folded_plain_instruction(context:)
+      parse_instructions(context:) => [first, *rest]
       [*rest, first]
     end
 
@@ -709,61 +683,50 @@ module Wasminna
       end
     end
 
-    def parse_structured_instruction
+    def parse_structured_instruction(context:)
       read_labelled => [opcode, label]
-      type = parse_blocktype
+      type = parse_blocktype(context:)
+      context = Context.new(labels: [label]) + context
 
       read_list(from: read_until('end')) do
-        with_context(Context.new(labels: [label]) + context) do
-          case opcode
-          in 'block'
-            body = parse_instructions
-            Block.new(type:, body:)
-          in 'loop'
-            body = parse_instructions
-            Loop.new(type:, body:)
-          in 'if'
-            consequent = parse_consequent
-            read_labelled('else', label:) if peek in 'else'
-            alternative = parse_alternative
+        case opcode
+        in 'block'
+          body = parse_instructions(context:)
+          Block.new(type:, body:)
+        in 'loop'
+          body = parse_instructions(context:)
+          Loop.new(type:, body:)
+        in 'if'
+          consequent = parse_consequent(context:)
+          read_labelled('else', label:) if peek in 'else'
+          alternative = parse_alternative(context:)
 
-            If.new(type:, consequent:, alternative:)
-          end
+          If.new(type:, consequent:, alternative:)
         end
       end.tap do
         read_labelled('end', label:)
       end
     end
 
-    def parse_blocktype
-      type_index, parameter_names, updated_typedefs =
-        with_context(context) do
-          parse_typeuse => [type_index, parameter_names]
-          [type_index, parameter_names, context.typedefs]
-        end
-      raise unless parameter_names.all?(&:nil?)
-
-      type = updated_typedefs.slice(type_index)
-      if (
-        type.parameters.none? &&
-        (type.results.none? || type.results.one?) &&
-        context.typedefs.find_index(type).nil?
-      )
-        type.results
-      else
-        self.context = context.with(typedefs: updated_typedefs)
+    def parse_blocktype(context:)
+      if can_read_list?(starting_with: 'type')
+        parse_typeuse(context:) => [type_index, parameter_names]
+        raise unless parameter_names.all?(&:nil?)
         type_index
+      else
+        parse_results => [] | [_] => results
+        results
       end
     end
 
-    def parse_consequent
+    def parse_consequent(context:)
       read_list(from: read_until('else')) do
-        parse_instructions
+        parse_instructions(context:)
       end
     end
 
-    def parse_alternative
-      parse_instructions
+    def parse_alternative(context:)
+      parse_instructions(context:)
     end
 
     def read_labelled(atom = nil, label: nil)
@@ -785,7 +748,7 @@ module Wasminna
       [atom, label]
     end
 
-    def parse_normal_instruction
+    def parse_normal_instruction(context:)
       case read
       in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => opcode
         {
@@ -860,7 +823,7 @@ module Wasminna
           else
             0
           end
-        parse_typeuse => [type_index, parameter_names]
+        parse_typeuse(context:) => [type_index, parameter_names]
         raise unless parameter_names.all?(&:nil?)
 
         CallIndirect.new(table_index:, type_index:)

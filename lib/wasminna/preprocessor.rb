@@ -51,8 +51,6 @@ module Wasminna
       end
     end
 
-    DUMMY_TYPE_DEFINITIONS = []
-
     def process_module
       read => 'module'
       read_optional_id => id
@@ -60,10 +58,26 @@ module Wasminna
       if peek in 'binary'
         read => 'binary'
         strings = repeatedly { read }
+
         ['module', *id, 'binary', *strings]
       else
         fields, type_definitions = process_fields
-        ['module', *id, *fields.call(type_definitions)]
+        original_type_definitions = type_definitions.length
+        fields = fields.call(type_definitions)
+        generated_type_definitions =
+          type_definitions.drop(original_type_definitions)
+        fields = fields + deep_copy(generated_type_definitions)
+
+        ['module', *id, *fields]
+      end
+    end
+
+    def deep_copy(s_expression)
+      case s_expression
+      in [*s_expressions]
+        s_expressions.map { deep_copy(_1) }
+      else
+        s_expression
       end
     end
 
@@ -120,7 +134,7 @@ module Wasminna
               ['func', *id, *typeuse.call(type_definitions), *locals, *body.call(type_definitions)]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -142,7 +156,7 @@ module Wasminna
               ['table', *id, *rest]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -195,7 +209,7 @@ module Wasminna
               ['memory', *id, *rest]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -237,7 +251,7 @@ module Wasminna
               ['global', *id, type, *instructions.call(type_definitions)]
             ]
           end,
-          DUMMY_TYPE_DEFINITIONS
+          []
         ]
       end
     end
@@ -285,14 +299,39 @@ module Wasminna
 
     def process_typeuse
       if can_read_list?(starting_with: 'type')
-        type = [read]
-      end
-      parameters = process_parameters
-      results = process_results
+        read => type
+        parameters = process_parameters
+        results = process_results
 
-      after_all_fields do
-        [*type, *parameters, *results]
+        after_all_fields do
+          [type, *parameters, *results]
+        end
+      else
+        parameters = process_parameters
+        results = process_results
+        type = function_type(['func', *parameters, *results])
+
+        after_all_fields do |type_definitions|
+          index = type_definitions.index { function_type(_1.last) == type }
+
+          if index.nil?
+            index = type_definitions.length
+            type_definitions << ['type', ['func', *parameters, *results]]
+          end
+
+          [['type', index.to_s], *parameters, *results]
+        end
       end
+    end
+
+    def function_type(functype)
+      functype => ['func', *parameters_and_results]
+      parameters, results =
+        parameters_and_results.partition { _1 in ['param', *] }
+      parameter_value_types = parameters.map(&:last)
+      result_value_types = results.map(&:last)
+
+      [parameter_value_types, result_value_types]
     end
 
     def process_parameters
@@ -400,14 +439,13 @@ module Wasminna
       read => 'type'
       read_optional_id => id
       functype = read_list { process_functype }
+      type_definition = ['type', *id, functype]
 
       [
         after_all_fields do
-          [
-            ['type', *id, functype]
-          ]
+          [type_definition]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        [type_definition]
       ]
     end
 
@@ -431,7 +469,7 @@ module Wasminna
             ['import', module_name, name, descriptor.call(type_definitions)]
           ]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -466,7 +504,7 @@ module Wasminna
         else
           process_passive_element_segment(id:)
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -587,7 +625,7 @@ module Wasminna
         else
           process_passive_data_segment(id:)
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
@@ -628,7 +666,7 @@ module Wasminna
             [kind, *rest]
           ]
         end,
-        DUMMY_TYPE_DEFINITIONS
+        []
       ]
     end
 
