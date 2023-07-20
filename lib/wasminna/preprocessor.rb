@@ -468,11 +468,11 @@ module Wasminna
 
         case keyword
         in 'call_indirect'
-          read_index => index if can_read_index?
+          index = can_read_index? ? read_index : '0'
           typeuse = process_typeuse
 
           after_all_fields do |type_definitions|
-            ['call_indirect', *index, *typeuse.call(type_definitions)]
+            ['call_indirect', index, *typeuse.call(type_definitions)]
           end
         in 'select'
           results = process_results

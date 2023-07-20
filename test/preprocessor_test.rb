@@ -936,6 +936,12 @@ assert_preprocess_instructions <<'--', <<'--'
   select (result i32)
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  call_indirect (type $t)
+--
+  call_indirect 0 (type $t)
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
