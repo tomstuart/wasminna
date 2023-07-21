@@ -850,6 +850,12 @@ BEGIN {
   def assert_preprocess_module_fields(input, expected)
     assert_preprocess "(module #{input})", "(module #{expected})"
   end
+
+  def assert_preprocess_instructions(input, expected)
+    assert_preprocess_module_fields \
+      "(type (func)) (func (type 0) #{input})",
+      "(type (func)) (func (type 0) #{expected})"
+  end
 }
 
 END {
