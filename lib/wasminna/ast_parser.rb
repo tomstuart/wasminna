@@ -549,28 +549,7 @@ module Wasminna
 
     def parse_folded_instruction(context:)
       read_list do
-        case peek
-        in 'block' | 'loop'
-          parse_folded_structured_instruction(context:)
-        else
-          parse_folded_plain_instruction(context:)
-        end
-      end
-    end
-
-    def parse_folded_structured_instruction(context:)
-      read => keyword
-      read_optional_id => label
-      type = parse_blocktype(context:)
-      context = Context.new(labels: [label]) + context
-
-      case keyword
-      in 'block'
-        body = parse_instructions(context:)
-        [Block.new(type:, body:)]
-      in 'loop'
-        body = parse_instructions(context:)
-        [Loop.new(type:, body:)]
+        parse_folded_plain_instruction(context:)
       end
     end
 
