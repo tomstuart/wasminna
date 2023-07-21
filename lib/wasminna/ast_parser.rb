@@ -550,7 +550,7 @@ module Wasminna
     def parse_folded_instruction(context:)
       read_list do
         case peek
-        in 'block' | 'loop' | 'if'
+        in 'block' | 'loop'
           parse_folded_structured_instruction(context:)
         else
           parse_folded_plain_instruction(context:)
@@ -571,25 +571,6 @@ module Wasminna
       in 'loop'
         body = parse_instructions(context:)
         [Loop.new(type:, body:)]
-      in 'if'
-        condition =
-          repeatedly do
-            raise StopIteration if can_read_list?(starting_with: 'then')
-            parse_folded_instruction(context:)
-          end.flatten(1)
-        consequent =
-          read_list(starting_with: 'then') do
-            parse_instructions(context:)
-          end
-        alternative =
-          if can_read_list?(starting_with: 'else')
-            read_list(starting_with: 'else') do
-              parse_instructions(context:)
-            end
-          else
-            []
-          end
-        [*condition, If.new(type:, consequent:, alternative:)]
       end
     end
 
