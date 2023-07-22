@@ -431,8 +431,23 @@ module Wasminna
       read_optional_id => label
       blocktype = process_blocktype
 
-      after_all_fields do |type_definitions|
-        [keyword, *label, *blocktype.call(type_definitions)]
+      case keyword
+      in 'block' | 'loop'
+        body = read_instructions { process_instructions }
+        read => 'end'
+        read_optional_id => end_label
+
+        after_all_fields do |type_definitions|
+          [
+            keyword, *label, *blocktype.call(type_definitions),
+            *body.call(type_definitions),
+            'end', *end_label
+          ]
+        end
+      else
+        after_all_fields do |type_definitions|
+          [keyword, *label, *blocktype.call(type_definitions)]
+        end
       end
     end
 
