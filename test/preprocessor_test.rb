@@ -949,6 +949,7 @@ assert_preprocess_instructions <<'--', <<'--'
   table.grow
   table.fill
   table.copy
+  table.init 42
 --
   table.get 0
   table.set 0
@@ -956,6 +957,7 @@ assert_preprocess_instructions <<'--', <<'--'
   table.grow 0
   table.fill 0
   table.copy 0 0
+  table.init 0 42
 --
 
 BEGIN {

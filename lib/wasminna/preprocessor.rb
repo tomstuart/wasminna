@@ -494,7 +494,7 @@ module Wasminna
           end
         in 'table.init'
           index = read_index
-          indexes = can_read_index? ? [index, read_index] : [index]
+          indexes = can_read_index? ? [index, read_index] : ['0', index]
 
           after_all_fields do
             ['table.init', *indexes]
