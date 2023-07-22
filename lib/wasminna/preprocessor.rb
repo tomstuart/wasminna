@@ -486,6 +486,12 @@ module Wasminna
           after_all_fields do
             [keyword, index]
           end
+        in 'table.copy'
+          indexes = [read_index, read_index] if can_read_index?
+
+          after_all_fields do
+            ['table.copy', *indexes]
+          end
         else
           immediates = repeatedly { read }
 
