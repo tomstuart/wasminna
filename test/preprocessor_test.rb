@@ -942,6 +942,20 @@ assert_preprocess_instructions <<'--', <<'--'
   call_indirect 0 (type $t)
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  table.get
+  table.set
+  table.size
+  table.grow
+  table.fill
+--
+  table.get 0
+  table.set 0
+  table.size 0
+  table.grow 0
+  table.fill 0
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

@@ -481,10 +481,10 @@ module Wasminna
             ['select', *results]
           end
         in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill'
-          index = read_index if can_read_index?
+          index = can_read_index? ? read_index : '0'
 
           after_all_fields do
-            [keyword, *index]
+            [keyword, index]
           end
         else
           immediates = repeatedly { read }
