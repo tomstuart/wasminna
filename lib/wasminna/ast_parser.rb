@@ -754,16 +754,8 @@ module Wasminna
         index = parse_index(context.functions)
         RefFunc.new(index:)
       in 'table.init'
-        read_index => index
-        if can_read_index?
-          table_index =
-            read_list(from: [index]) { parse_index(context.tables) }
-          element_index = parse_index(context.elem)
-        else
-          table_index = 0
-          element_index =
-            read_list(from: [index]) { parse_index(context.elem) }
-        end
+        table_index = parse_index(context.tables)
+        element_index = parse_index(context.elem)
 
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
