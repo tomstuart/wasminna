@@ -717,12 +717,7 @@ module Wasminna
           'elem.drop' => ElemDrop
         }.fetch(keyword).new(index:)
       in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => keyword
-        index =
-          if can_read_index?
-            parse_index(context.tables)
-          else
-            0
-          end
+        index = parse_index(context.tables)
 
         {
           'table.get' => TableGet,
