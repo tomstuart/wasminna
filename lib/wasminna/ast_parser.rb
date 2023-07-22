@@ -899,6 +899,8 @@ module Wasminna
         [*read_indexes, *read_typeuse]
       in 'select'
         read_declarations(kind: 'result')
+      in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill' | 'table.copy' | 'table.init' | 'br_table'
+        read_indexes
       else
         []
       end
