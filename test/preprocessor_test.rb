@@ -948,12 +948,14 @@ assert_preprocess_instructions <<'--', <<'--'
   table.size
   table.grow
   table.fill
+  table.copy
 --
   table.get 0
   table.set 0
   table.size 0
   table.grow 0
   table.fill 0
+  table.copy 0 0
 --
 
 BEGIN {

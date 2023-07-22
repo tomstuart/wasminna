@@ -487,7 +487,7 @@ module Wasminna
             [keyword, index]
           end
         in 'table.copy'
-          indexes = [read_index, read_index] if can_read_index?
+          indexes = can_read_index? ? [read_index, read_index] : ['0', '0']
 
           after_all_fields do
             ['table.copy', *indexes]
