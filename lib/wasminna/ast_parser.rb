@@ -767,12 +767,8 @@ module Wasminna
 
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
-        destination_index, source_index =
-          if can_read_index?
-            [parse_index(context.tables), parse_index(context.tables)]
-          else
-            [0, 0]
-          end
+        destination_index = parse_index(context.tables)
+        source_index = parse_index(context.tables)
 
         TableCopy.new(destination_index:, source_index:)
       in 'ref.is_null'
