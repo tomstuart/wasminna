@@ -380,11 +380,7 @@ module Wasminna
             ['select', *results]
           end
         in [*]
-          read_list { process_instructions }.then do |result|
-            after_all_fields do |type_definitions|
-              [result.call(type_definitions)]
-            end
-          end
+          process_folded_instruction
         else
           read.then do |result|
             after_all_fields do
@@ -395,6 +391,14 @@ module Wasminna
       end.then do |results|
         after_all_fields do |type_definitions|
           results.flat_map { _1.call(type_definitions) }
+        end
+      end
+    end
+
+    def process_folded_instruction
+      read_list { process_instructions }.then do |result|
+        after_all_fields do |type_definitions|
+          [result.call(type_definitions)]
         end
       end
     end
