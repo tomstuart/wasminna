@@ -960,6 +960,12 @@ assert_preprocess_instructions <<'--', <<'--'
   table.init 0 42
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  if i32.const 0 nop end
+--
+  if i32.const 0 nop else end
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'

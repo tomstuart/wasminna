@@ -437,7 +437,7 @@ module Wasminna
         in 'if'
           consequent = read_instructions { process_instructions }
           if peek in 'else'
-            read => else_keyword
+            read => 'else'
             read_optional_id => else_label
           end
           alternative = read_instructions { process_instructions }
@@ -445,7 +445,7 @@ module Wasminna
           after_all_fields do |type_definitions|
             [
               *consequent.call(type_definitions),
-              *else_keyword, *else_label,
+              'else', *else_label,
               *alternative.call(type_definitions)
             ]
           end
