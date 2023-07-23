@@ -648,10 +648,8 @@ module Wasminna
         Loop.new(type:, body:)
       in 'if'
         consequent = read_instructions { parse_instructions(context:) }
-        if peek in 'else'
-          read => 'else'
-          read_optional_id => nil | ^label
-        end
+        read => 'else'
+        read_optional_id => nil | ^label
         alternative = read_instructions { parse_instructions(context:) }
 
         If.new(type:, consequent:, alternative:)
