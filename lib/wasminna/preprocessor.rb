@@ -356,19 +356,21 @@ module Wasminna
     end
 
     def process_instructions
-      repeatedly do
-        case peek
-        in [*]
-          process_folded_instruction
-        in 'block' | 'loop' | 'if'
-          process_structured_instruction
-        else
-          process_plain_instruction
-        end
-      end.then do |results|
+      repeatedly { process_instruction }.then do |results|
         after_all_fields do |type_definitions|
           results.flat_map { _1.call(type_definitions) }
         end
+      end
+    end
+
+    def process_instruction
+      case peek
+      in [*]
+        process_folded_instruction
+      in 'block' | 'loop' | 'if'
+        process_structured_instruction
+      else
+        process_plain_instruction
       end
     end
 
@@ -476,10 +478,6 @@ module Wasminna
       else
         read_list(from: blocktype) { process_typeuse }
       end
-    end
-
-    def process_instruction
-      process_instructions # TODO only process one instruction
     end
 
     def process_type_definition
