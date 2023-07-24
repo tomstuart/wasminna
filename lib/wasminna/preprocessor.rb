@@ -360,27 +360,8 @@ module Wasminna
           process_folded_instruction
         in 'block' | 'loop' | 'if'
           process_structured_instruction
-        in 'call_indirect'
-          read => 'call_indirect'
-          read_index => index if can_read_index?
-          typeuse = process_typeuse
-
-          after_all_fields do |type_definitions|
-            ['call_indirect', *index, *typeuse.call(type_definitions)]
-          end
-        in 'select'
-          read => 'select'
-          results = process_results
-
-          after_all_fields do
-            ['select', *results]
-          end
         else
-          read.then do |result|
-            after_all_fields do
-              [result]
-            end
-          end
+          process_plain_instruction
         end
       end.then do |results|
         after_all_fields do |type_definitions|
@@ -404,6 +385,32 @@ module Wasminna
 
       after_all_fields do |type_definitions|
         [keyword, *label, *blocktype.call(type_definitions)]
+      end
+    end
+
+    def process_plain_instruction
+      case peek
+      in 'call_indirect'
+        read => 'call_indirect'
+        read_index => index if can_read_index?
+        typeuse = process_typeuse
+
+        after_all_fields do |type_definitions|
+          ['call_indirect', *index, *typeuse.call(type_definitions)]
+        end
+      in 'select'
+        read => 'select'
+        results = process_results
+
+        after_all_fields do
+          ['select', *results]
+        end
+      else
+        read.then do |result|
+          after_all_fields do
+            [result]
+          end
+        end
       end
     end
 
