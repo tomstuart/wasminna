@@ -528,12 +528,8 @@ module Wasminna
 
     def parse_instructions(context:)
       repeatedly do
-        if can_read_list?
-          parse_folded_instruction(context:)
-        else
-          [parse_instruction(context:)]
-        end
-      end.flatten(1)
+        parse_instruction(context:)
+      end
     end
 
     def parse_instruction(context:)
@@ -545,17 +541,6 @@ module Wasminna
       else
         parse_normal_instruction(context:)
       end
-    end
-
-    def parse_folded_instruction(context:)
-      read_list do
-        parse_folded_plain_instruction(context:)
-      end
-    end
-
-    def parse_folded_plain_instruction(context:)
-      parse_instructions(context:) => [first, *rest]
-      [*rest, first]
     end
 
     def parse_numeric_instruction
