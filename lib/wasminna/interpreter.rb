@@ -84,7 +84,7 @@ module Wasminna
                 float = Float.decode(actual_value, format:).to_f
                 success = float.nan? # TODO check whether canonical or arithmetic
               else
-                evaluate_expression(expected, locals: [])
+                evaluate_instruction(expected, locals: [])
                 stack.pop(1) => [expected_value]
                 raise unless stack.empty?
                 success = actual_value == expected_value

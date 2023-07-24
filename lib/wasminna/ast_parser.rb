@@ -184,7 +184,10 @@ module Wasminna
       read => 'invoke'
       read_optional_id => module_name
       parse_string => name
-      arguments = parse_instructions(context: Context.new)
+      arguments =
+        repeatedly do
+          read_list { parse_instruction(context: Context.new) }
+        end
 
       Invoke.new(module_name:, name:, arguments:)
     end
@@ -238,7 +241,7 @@ module Wasminna
           in 'f32.const' | 'f64.const'
             parse_float_expectation
           else
-            parse_instructions(context: Context.new)
+            parse_instruction(context: Context.new)
           end
         end
       end
@@ -253,7 +256,7 @@ module Wasminna
         NanExpectation.new(nan:, bits:)
       else
         number = parse_float(bits:)
-        [Const.new(type: :float, bits:, number:)]
+        Const.new(type: :float, bits:, number:)
       end
     end
 
