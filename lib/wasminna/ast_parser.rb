@@ -903,6 +903,8 @@ module Wasminna
         read_indexes
       in 'br' | 'br_if' | 'call' | 'ref.null' | 'ref.func' | 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'elem.drop' | 'memory.init' | 'data.drop' | %r{\A[fi](?:32|64)\.const\z}
         [read]
+      in %r{\A[fi](?:32|64)\.(?:load|store)}
+        [*(read if peek in %r{\Aoffset=}), *(read if peek in %r{\Aalign=})]
       else
         []
       end
