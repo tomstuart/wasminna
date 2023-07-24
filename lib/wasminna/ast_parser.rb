@@ -901,6 +901,8 @@ module Wasminna
         read_declarations(kind: 'result')
       in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill' | 'table.copy' | 'table.init' | 'br_table'
         read_indexes
+      in 'br' | 'br_if' | 'call' | 'ref.null' | 'ref.func' | 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'elem.drop' | 'memory.init' | 'data.drop' | %r{\A[fi](?:32|64)\.const\z}
+        [read]
       else
         []
       end
