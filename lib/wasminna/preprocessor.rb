@@ -356,6 +356,8 @@ module Wasminna
     def process_instructions
       repeatedly do
         case peek
+        in [*]
+          process_folded_instruction
         in 'block' | 'loop' | 'if'
           process_structured_instruction
         in 'call_indirect'
@@ -373,8 +375,6 @@ module Wasminna
           after_all_fields do
             ['select', *results]
           end
-        in [*]
-          process_folded_instruction
         else
           read.then do |result|
             after_all_fields do
