@@ -357,13 +357,7 @@ module Wasminna
       repeatedly do
         case peek
         in 'block' | 'loop' | 'if'
-          read => 'block' | 'loop' | 'if' => keyword
-          read_optional_id => label
-          blocktype = process_blocktype
-
-          after_all_fields do |type_definitions|
-            [keyword, *label, *blocktype.call(type_definitions)]
-          end
+          process_structured_instruction
         in 'call_indirect'
           read => 'call_indirect'
           read_index => index if can_read_index?
@@ -400,6 +394,16 @@ module Wasminna
         after_all_fields do |type_definitions|
           [result.call(type_definitions)]
         end
+      end
+    end
+
+    def process_structured_instruction
+      read => 'block' | 'loop' | 'if' => keyword
+      read_optional_id => label
+      blocktype = process_blocktype
+
+      after_all_fields do |type_definitions|
+        [keyword, *label, *blocktype.call(type_definitions)]
       end
     end
 
