@@ -380,11 +380,7 @@ module Wasminna
         in 'block' | 'loop' | 'if'
           expand_folded_structured_instruction
         else
-          process_instructions.then do |result|
-            after_all_fields do |type_definitions|
-              [result.call(type_definitions)]
-            end
-          end
+          expand_folded_plain_instruction
         end
       end
     end
@@ -418,6 +414,14 @@ module Wasminna
             'end'
           ]
         end
+
+      read_list(from: expanded) { process_instructions }
+    end
+
+    def expand_folded_plain_instruction
+      plain_instruction = read_plain_instruction
+      folded_instructions = read_folded_instructions
+      expanded = [*folded_instructions, *plain_instruction]
 
       read_list(from: expanded) { process_instructions }
     end

@@ -903,6 +903,39 @@ assert_preprocess_instructions <<'--', <<'--'
   end
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32) (i32.const 0)
+    (then i32.const 1)
+    (else i32.const 2)
+  )
+--
+  i32.const 0
+  if $label (result i32)
+    i32.const 1
+  else
+    i32.const 2
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (i32.mul (i32.add (local.get $x) (i32.const 2)) (i32.const 3))
+--
+  local.get $x
+  i32.const 2
+  i32.add
+  i32.const 3
+  i32.mul
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (select (result i32) (local.get 0) (local.get 1) (local.get 2))
+--
+  local.get 0
+  local.get 1
+  local.get 2
+  select (result i32)
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
