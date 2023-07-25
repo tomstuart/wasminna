@@ -408,21 +408,22 @@ module Wasminna
       in 'if'
         read => 'if'
         read_optional_id => label
-        blocktype = process_typeuse
-        condition = read_list(from: read_folded_instructions) { process_instructions }
-        consequent = read_list(starting_with: 'then') { process_instructions }
-        alternative = read_list(starting_with: 'else') { process_instructions } if can_read_list?(starting_with: 'else')
+        blocktype = read_typeuse
+        condition = read_folded_instructions
+        consequent = read_list(starting_with: 'then')
+        alternative = read_list(starting_with: 'else') if can_read_list?(starting_with: 'else')
 
-        after_all_fields do |type_definitions|
+        expanded =
           [
-            [
-              'if', *label, *blocktype.call(type_definitions),
-              *condition.call(type_definitions),
-              ['then', *consequent.call(type_definitions)],
-              *([['else', *alternative.call(type_definitions)]] if alternative)
-            ]
+            *condition,
+            'if', *label, *blocktype,
+            *consequent,
+            'else',
+            *alternative,
+            'end'
           ]
-        end
+
+        read_list(from: expanded) { process_instructions }
       end
     end
 

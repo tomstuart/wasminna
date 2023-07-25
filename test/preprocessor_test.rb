@@ -818,6 +818,45 @@ assert_preprocess_module_fields <<'--', <<'--'
   (type (func (param i64) (result i32)))
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32)
+    (then)
+    (else)
+  )
+--
+  if $label (result i32)
+  else
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32)
+    (then)
+  )
+--
+  if $label (result i32)
+  else
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label1 (result i32)
+    (if $label2 (result i32)
+      (then)
+      (else)
+    )
+    (then)
+    (else)
+  )
+--
+  if $label2 (result i32)
+  else
+  end
+  if $label1 (result i32)
+  else
+  end
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
