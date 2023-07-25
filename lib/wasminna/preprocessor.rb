@@ -369,11 +369,11 @@ module Wasminna
         case peek
         in 'block' | 'loop' | 'if'
           read => 'block' | 'loop' | 'if' => keyword
-          read_optional_id => id
+          read_optional_id => label
           blocktype = process_blocktype
 
           after_all_fields do |type_definitions|
-            [keyword, *id, *blocktype.call(type_definitions)]
+            [keyword, *label, *blocktype.call(type_definitions)]
           end
         in 'call_indirect'
           read => 'call_indirect'
