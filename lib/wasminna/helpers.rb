@@ -112,5 +112,97 @@ module Wasminna
         index
       end
     end
+
+    module ReadInstructions
+      private
+
+      def read_instructions(&)
+        return read_list(from: read_instructions, &) if block_given?
+
+        repeatedly do
+          raise StopIteration if peek in 'end' | 'else'
+          read_instruction
+        end.flatten(1)
+      end
+
+      def read_instruction
+        case peek
+        in [*]
+          read_folded_instruction
+        in 'block' | 'loop' | 'if'
+          read_structured_instruction
+        else
+          read_plain_instruction
+        end
+      end
+
+      def read_folded_instruction
+        [read_list]
+      end
+
+      def read_structured_instruction
+        case peek
+        in 'block' | 'loop'
+          [
+            read, *read_optional_id, *read_typeuse,
+            *read_instructions,
+            read, *read_optional_id
+          ]
+        in 'if'
+          [
+            read, *read_optional_id, *read_typeuse,
+            *read_instructions,
+            *([read, *read_instructions] if peek in 'else'),
+            read, *read_optional_id
+          ]
+        end
+      end
+
+      def read_plain_instruction
+        [
+          keyword = read,
+          *read_plain_instruction_immediates(keyword:)
+        ]
+      end
+
+      def read_plain_instruction_immediates(keyword:)
+        case keyword
+        in 'call_indirect'
+          [*read_indexes, *read_typeuse]
+        in 'select'
+          read_declarations(kind: 'result')
+        in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill' | 'table.copy' | 'table.init' | 'br_table'
+          read_indexes
+        in 'br' | 'br_if' | 'call' | 'ref.null' | 'ref.func' | 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'elem.drop' | 'memory.init' | 'data.drop' | %r{\A[fi](?:32|64)\.const\z}
+          [read]
+        in %r{\A[fi](?:32|64)\.(?:load|store)}
+          [*(read if peek in %r{\Aoffset=}), *(read if peek in %r{\Aalign=})]
+        else
+          []
+        end
+      end
+
+      def read_typeuse
+        [
+          *([read_list] if can_read_list?(starting_with: 'type')),
+          *read_declarations(kind: 'param'),
+          *read_declarations(kind: 'result')
+        ]
+      end
+
+      def read_declarations(kind:)
+        repeatedly do
+          raise StopIteration unless can_read_list?(starting_with: kind)
+          read_list
+        end
+      end
+
+      def read_indexes
+        repeatedly do
+          raise StopIteration unless can_read_index?
+          read_index
+        end
+      end
+    end
   end
 end
