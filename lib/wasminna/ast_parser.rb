@@ -693,7 +693,7 @@ module Wasminna
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      read_list(from: read_until('end')) do
+      read_list(from: read_instructions('end')) do
         case keyword
         in 'block'
           body = parse_instructions(context:)
@@ -729,7 +729,7 @@ module Wasminna
     end
 
     def parse_consequent(context:)
-      read_list(from: read_until('else')) do
+      read_list(from: read_instructions('else')) do
         parse_instructions(context:)
       end
     end
@@ -856,13 +856,13 @@ module Wasminna
       end
     end
 
-    def read_until(terminator)
+    def read_instructions(terminator)
       repeatedly do
         case peek
         in ^terminator
           raise StopIteration
         in 'block' | 'loop' | 'if'
-          [read, *read_until('end'), read]
+          [read, *read_instructions('end'), read]
         else
           [read]
         end
