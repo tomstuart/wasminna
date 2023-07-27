@@ -366,7 +366,7 @@ module Wasminna
     def process_instruction
       case peek
       in [*]
-        process_folded_instruction
+        expand_folded_instruction
       in 'block' | 'loop' | 'if'
         process_structured_instruction
       else
@@ -374,7 +374,7 @@ module Wasminna
       end
     end
 
-    def process_folded_instruction
+    def expand_folded_instruction
       read_list do
         case peek
         in 'block' | 'loop' | 'if'
