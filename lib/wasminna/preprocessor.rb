@@ -87,7 +87,7 @@ module Wasminna
       end.transpose.then do |fields = [], type_definitions = []|
         [
           after_all_fields do |type_definitions|
-            fields.flat_map { |field| field.call(type_definitions) }
+            fields.flat_map { _1.call(type_definitions) }
           end,
           type_definitions.flatten(1)
         ]
@@ -407,7 +407,7 @@ module Wasminna
         end
       end.then do |results|
         after_all_fields do |type_definitions|
-          results.flat_map { |result| result.call(type_definitions) }
+          results.flat_map { _1.call(type_definitions) }
         end
       end
     end
@@ -590,7 +590,7 @@ module Wasminna
         read_list { process_element_expression }
       end.then do |results|
         after_all_fields do |type_definitions|
-          results.map { |result| result.call(type_definitions) }
+          results.map { _1.call(type_definitions) }
         end
       end
     end
@@ -610,9 +610,7 @@ module Wasminna
     end
 
     def process_function_indexes
-      indexes = repeatedly { read }
-
-      indexes.map { |index| ['ref.func', index] }
+      repeatedly { read }.map { ['ref.func', _1] }
     end
 
     def process_data_segment
