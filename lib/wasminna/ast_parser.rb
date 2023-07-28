@@ -738,25 +738,6 @@ module Wasminna
       parse_instructions(context:)
     end
 
-    def read_labelled(atom = nil, label: nil)
-      if atom.nil?
-        read => atom
-      else
-        read => ^atom
-      end
-
-      read_optional_id => id
-      unless id.nil?
-        if label.nil?
-          id => label
-        else
-          id => ^label
-        end
-      end
-
-      [atom, label]
-    end
-
     def parse_normal_instruction(context:)
       case read
       in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => keyword
