@@ -169,19 +169,12 @@ module Wasminna
       read => 'funcref' | 'externref' => reftype
       item_type, items =
         read_list(starting_with: 'elem') do
-          item_type =
-            if can_read_list?
-              reftype
-            else
-              'func'
-            end
+          item_type = can_read_list? ? reftype : 'func'
           items = repeatedly { read }
           [item_type, items]
         end
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       limit = items.length.to_s
       expanded =
         [
@@ -221,9 +214,7 @@ module Wasminna
     def expand_inline_data_segment(id:)
       strings = read_list(starting_with: 'data') { repeatedly { read } }
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       bytes = strings.sum { string_value(_1).bytesize }
       limit = size_of(bytes, in: Memory::BYTES_PER_PAGE).to_s
       expanded =
@@ -285,9 +276,7 @@ module Wasminna
       read => ['export', name]
       description = repeatedly { read }
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       expanded =
         [
           ['export', name, [kind, id]],
@@ -377,9 +366,7 @@ module Wasminna
           end
         in 'call_indirect'
           read => 'call_indirect'
-          if can_read_index?
-            read_index => index
-          end
+          read_index => index if can_read_index?
           typeuse = process_typeuse
 
           after_all_fields do |type_definitions|
@@ -413,10 +400,7 @@ module Wasminna
     end
 
     def process_blocktype
-      type =
-        if can_read_list?(starting_with: 'type')
-          [read]
-        end
+      type = [read] if can_read_list?(starting_with: 'type')
       parameters = process_parameters
       results = process_results
       blocktype = [*type, *parameters, *results]
@@ -509,16 +493,10 @@ module Wasminna
     end
 
     def process_active_element_segment(id:)
-      table_use =
-        if can_read_list?(starting_with: 'table')
-          read
-        end
+      table_use = read if can_read_list?(starting_with: 'table')
       offset = read_list { process_offset }
       element_list = process_element_list(func_optional: table_use.nil?)
-
-      if table_use.nil?
-        table_use = %w[table 0]
-      end
+      table_use = %w[table 0] if table_use.nil?
 
       after_all_fields do |type_definitions|
         [
@@ -571,9 +549,7 @@ module Wasminna
           [reftype, *items.call(type_definitions)]
         end
       else
-        if !func_optional || (peek in 'func')
-          read => 'func'
-        end
+        read => 'func' if !func_optional || (peek in 'func')
         items =
           read_list(from: process_function_indexes) do
             process_element_expressions
