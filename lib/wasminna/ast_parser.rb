@@ -558,7 +558,8 @@ module Wasminna
     end
 
     def parse_folded_structured_instruction(context:)
-      read_labelled => [keyword, label]
+      read => keyword
+      read_optional_id => label
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
@@ -687,7 +688,8 @@ module Wasminna
     end
 
     def parse_structured_instruction(context:)
-      read_labelled => [keyword, label]
+      read => keyword
+      read_optional_id => label
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
@@ -701,13 +703,17 @@ module Wasminna
           Loop.new(type:, body:)
         in 'if'
           consequent = parse_consequent(context:)
-          read_labelled('else', label:) if peek in 'else'
+          if peek in 'else'
+            read => 'else'
+            read_optional_id => nil | ^label
+          end
           alternative = parse_alternative(context:)
 
           If.new(type:, consequent:, alternative:)
         end
       end.tap do
-        read_labelled('end', label:)
+        read => 'end'
+        read_optional_id => nil | ^label
       end
     end
 
