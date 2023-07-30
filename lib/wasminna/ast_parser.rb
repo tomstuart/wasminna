@@ -693,24 +693,22 @@ module Wasminna
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      read_instructions(until: 'end') do
-        case keyword
-        in 'block'
-          body = parse_instructions(context:)
-          Block.new(type:, body:)
-        in 'loop'
-          body = parse_instructions(context:)
-          Loop.new(type:, body:)
-        in 'if'
-          consequent = read_instructions(until: 'else') { parse_instructions(context:) }
-          if peek in 'else'
-            read => 'else'
-            read_optional_id => nil | ^label
-          end
-          alternative = parse_instructions(context:)
-
-          If.new(type:, consequent:, alternative:)
+      case keyword
+      in 'block'
+        body = read_instructions(until: 'end') { parse_instructions(context:) }
+        Block.new(type:, body:)
+      in 'loop'
+        body = read_instructions(until: 'end') { parse_instructions(context:) }
+        Loop.new(type:, body:)
+      in 'if'
+        consequent = read_instructions(until: %r{\A(?:end|else)\z}) { parse_instructions(context:) }
+        if peek in 'else'
+          read => 'else'
+          read_optional_id => nil | ^label
         end
+        alternative = read_instructions(until: 'end') { parse_instructions(context:) }
+
+        If.new(type:, consequent:, alternative:)
       end.tap do
         read => 'end'
         read_optional_id => nil | ^label
