@@ -248,8 +248,8 @@ module Wasminna
     end
 
     def parse_float_expectation
-      read => 'f32.const' | 'f64.const' => opcode
-      bits = opcode.slice(%r{\d+}).to_i(10)
+      read => 'f32.const' | 'f64.const' => keyword
+      bits = keyword.slice(%r{\d+}).to_i(10)
 
       if peek in 'nan:canonical' | 'nan:arithmetic'
         read => 'nan:canonical' | 'nan:arithmetic' => nan
@@ -558,11 +558,11 @@ module Wasminna
     end
 
     def parse_folded_structured_instruction(context:)
-      read_labelled => [opcode, label]
+      read_labelled => [keyword, label]
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      case opcode
+      case keyword
       in 'block'
         body = parse_instructions(context:)
         [Block.new(type:, body:)]
@@ -597,9 +597,9 @@ module Wasminna
     end
 
     def parse_numeric_instruction
-      read => opcode
+      read => keyword
 
-      opcode.match(NUMERIC_OPCODE_REGEXP) =>
+      keyword.match(NUMERIC_OPCODE_REGEXP) =>
         { type:, bits:, operation: }
       type = { 'f' => :float, 'i' => :integer }.fetch(type)
       bits = bits.to_i(10)
@@ -687,12 +687,12 @@ module Wasminna
     end
 
     def parse_structured_instruction(context:)
-      read_labelled => [opcode, label]
+      read_labelled => [keyword, label]
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
       read_list(from: read_until('end')) do
-        case opcode
+        case keyword
         in 'block'
           body = parse_instructions(context:)
           Block.new(type:, body:)
@@ -753,7 +753,7 @@ module Wasminna
 
     def parse_normal_instruction(context:)
       case read
-      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => opcode
+      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => keyword
         {
           'return' => Return,
           'nop' => Nop,
@@ -763,10 +763,10 @@ module Wasminna
           'memory.size' => MemorySize,
           'memory.fill' => MemoryFill,
           'memory.copy' => MemoryCopy
-        }.fetch(opcode).new
-      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'memory.init' | 'data.drop' | 'elem.drop' => opcode
+        }.fetch(keyword).new
+      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'memory.init' | 'data.drop' | 'elem.drop' => keyword
         index_space =
-          case opcode
+          case keyword
           in 'local.get' | 'local.set' | 'local.tee'
             context.locals
           in 'global.get' | 'global.set'
@@ -794,8 +794,8 @@ module Wasminna
           'memory.init' => MemoryInit,
           'data.drop' => DataDrop,
           'elem.drop' => ElemDrop
-        }.fetch(opcode).new(index:)
-      in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => opcode
+        }.fetch(keyword).new(index:)
+      in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => keyword
         index =
           if can_read_index?
             parse_index(context.tables)
@@ -809,7 +809,7 @@ module Wasminna
           'table.fill' => TableFill,
           'table.grow' => TableGrow,
           'table.size' => TableSize
-        }.fetch(opcode).new(index:)
+        }.fetch(keyword).new(index:)
       in 'br_table'
         indexes =
           repeatedly do
