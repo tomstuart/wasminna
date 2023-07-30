@@ -373,9 +373,11 @@ module Wasminna
     end
 
     def process_folded_instruction
-      read_list { process_instructions }.then do |result|
-        after_all_fields do |type_definitions|
-          [result.call(type_definitions)]
+      read_list do
+        process_instructions.then do |result|
+          after_all_fields do |type_definitions|
+            [result.call(type_definitions)]
+          end
         end
       end
     end
