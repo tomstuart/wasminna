@@ -856,7 +856,9 @@ module Wasminna
       end
     end
 
-    def read_instructions(**kwargs)
+    def read_instructions(**kwargs, &)
+      return read_list(from: read_instructions(**kwargs), &) if block_given?
+
       kwargs => { until: terminator }
 
       repeatedly do
