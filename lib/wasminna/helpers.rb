@@ -125,6 +125,13 @@ module Wasminna
         end.flatten(1)
       end
 
+      def read_folded_instructions
+        repeatedly do
+          raise StopIteration if can_read_list?(starting_with: 'then')
+          read_folded_instruction
+        end.flatten(1)
+      end
+
       def read_instruction
         case peek
         in [*]
