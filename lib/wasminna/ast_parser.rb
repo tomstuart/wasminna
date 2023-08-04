@@ -860,10 +860,18 @@ module Wasminna
     def read_instruction
       case peek
       in 'block' | 'loop' | 'if'
-        [read, *read_instructions(until: 'end'), read]
+        read_structured_instruction
       else
         [read]
       end
+    end
+
+    def read_structured_instruction
+      [
+        read,
+        *read_instructions(until: 'end'),
+        read
+      ]
     end
 
     def unsigned(signed, bits:)
