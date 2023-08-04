@@ -868,10 +868,25 @@ module Wasminna
 
     def read_structured_instruction
       [
-        read, *read_optional_id,
+        read, *read_optional_id, *read_typeuse,
         *read_instructions(until: 'end'),
         read, *read_optional_id
       ]
+    end
+
+    def read_typeuse
+      [
+        *([read_list] if can_read_list?(starting_with: 'type')),
+        *read_declarations(kind: 'param'),
+        *read_declarations(kind: 'result')
+      ]
+    end
+
+    def read_declarations(kind:)
+      repeatedly do
+        raise StopIteration unless can_read_list?(starting_with: kind)
+        read_list
+      end
     end
 
     def unsigned(signed, bits:)
