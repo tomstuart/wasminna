@@ -868,9 +868,9 @@ module Wasminna
 
     def read_structured_instruction
       [
-        read,
+        read, *read_optional_id,
         *read_instructions(until: 'end'),
-        read
+        read, *read_optional_id
       ]
     end
 
