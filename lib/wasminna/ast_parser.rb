@@ -853,13 +853,17 @@ module Wasminna
 
       repeatedly do
         raise StopIteration if peek in ^terminator
-        case peek
-        in 'block' | 'loop' | 'if'
-          [read, *read_instructions(until: 'end'), read]
-        else
-          [read]
-        end
+        read_instruction
       end.flatten(1)
+    end
+
+    def read_instruction
+      case peek
+      in 'block' | 'loop' | 'if'
+        [read, *read_instructions(until: 'end'), read]
+      else
+        [read]
+      end
     end
 
     def unsigned(signed, bits:)
