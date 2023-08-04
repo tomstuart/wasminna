@@ -855,11 +855,17 @@ module Wasminna
 
     def read_instruction
       case peek
+      in [*]
+        read_folded_instruction
       in 'block' | 'loop' | 'if'
         read_structured_instruction
       else
         [read]
       end
+    end
+
+    def read_folded_instruction
+      [read_list]
     end
 
     def read_structured_instruction
