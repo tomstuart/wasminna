@@ -847,10 +847,8 @@ module Wasminna
     def read_instructions(**kwargs, &)
       return read_list(from: read_instructions(**kwargs), &) if block_given?
 
-      kwargs => { until: terminator }
-
       repeatedly do
-        raise StopIteration if peek in ^terminator
+        raise StopIteration if peek in 'end' | 'else'
         read_instruction
       end.flatten(1)
     end
