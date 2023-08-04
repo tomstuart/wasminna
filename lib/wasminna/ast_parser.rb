@@ -695,18 +695,18 @@ module Wasminna
 
       case keyword
       in 'block'
-        body = read_instructions(until: 'end') { parse_instructions(context:) }
+        body = read_instructions { parse_instructions(context:) }
         Block.new(type:, body:)
       in 'loop'
-        body = read_instructions(until: 'end') { parse_instructions(context:) }
+        body = read_instructions { parse_instructions(context:) }
         Loop.new(type:, body:)
       in 'if'
-        consequent = read_instructions(until: %r{\A(?:end|else)\z}) { parse_instructions(context:) }
+        consequent = read_instructions { parse_instructions(context:) }
         if peek in 'else'
           read => 'else'
           read_optional_id => nil | ^label
         end
-        alternative = read_instructions(until: 'end') { parse_instructions(context:) }
+        alternative = read_instructions { parse_instructions(context:) }
 
         If.new(type:, consequent:, alternative:)
       end.tap do
@@ -844,8 +844,8 @@ module Wasminna
       end
     end
 
-    def read_instructions(**kwargs, &)
-      return read_list(from: read_instructions(**kwargs), &) if block_given?
+    def read_instructions(&)
+      return read_list(from: read_instructions, &) if block_given?
 
       repeatedly do
         raise StopIteration if peek in 'end' | 'else'
@@ -867,14 +867,14 @@ module Wasminna
       in 'block' | 'loop'
         [
           read, *read_optional_id, *read_typeuse,
-          *read_instructions(until: 'end'),
+          *read_instructions,
           read, *read_optional_id
         ]
       in 'if'
         [
           read, *read_optional_id, *read_typeuse,
-          *read_instructions(until: %r{\A(?:end|else)\z}),
-          *([read, *read_instructions(until: 'end')] if peek in 'else'),
+          *read_instructions,
+          *([read, *read_instructions] if peek in 'else'),
           read, *read_optional_id
         ]
       end
