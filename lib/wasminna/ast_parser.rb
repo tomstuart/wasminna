@@ -860,7 +860,7 @@ module Wasminna
       in 'block' | 'loop' | 'if'
         read_structured_instruction
       else
-        [read]
+        read_plain_instruction
       end
     end
 
@@ -884,6 +884,10 @@ module Wasminna
           read, *read_optional_id
         ]
       end
+    end
+
+    def read_plain_instruction
+      [read]
     end
 
     def read_typeuse
