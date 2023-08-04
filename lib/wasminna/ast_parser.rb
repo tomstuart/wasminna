@@ -867,11 +867,21 @@ module Wasminna
     end
 
     def read_structured_instruction
-      [
-        read, *read_optional_id, *read_typeuse,
-        *read_instructions(until: 'end'),
-        read, *read_optional_id
-      ]
+      case peek
+      in 'block' | 'loop'
+        [
+          read, *read_optional_id, *read_typeuse,
+          *read_instructions(until: 'end'),
+          read, *read_optional_id
+        ]
+      in 'if'
+        [
+          read, *read_optional_id, *read_typeuse,
+          *read_instructions(until: %r{\A(?:end|else)\z}),
+          *([read, *read_instructions(until: 'end')] if peek in 'else'),
+          read, *read_optional_id
+        ]
+      end
     end
 
     def read_typeuse
