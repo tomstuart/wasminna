@@ -894,7 +894,12 @@ module Wasminna
     end
 
     def read_plain_instruction_immediates(keyword:)
-      []
+      case keyword
+      in 'call_indirect'
+        [*read_indexes, *read_typeuse]
+      else
+        []
+      end
     end
 
     def read_typeuse
@@ -909,6 +914,13 @@ module Wasminna
       repeatedly do
         raise StopIteration unless can_read_list?(starting_with: kind)
         read_list
+      end
+    end
+
+    def read_indexes
+      repeatedly do
+        raise StopIteration unless can_read_index?
+        read_index
       end
     end
 
