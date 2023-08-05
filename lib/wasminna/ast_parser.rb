@@ -693,7 +693,7 @@ module Wasminna
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      read_list(from: read_instructions(until: 'end')) do
+      read_instructions(until: 'end') do
         case keyword
         in 'block'
           body = parse_instructions(context:)
@@ -729,7 +729,7 @@ module Wasminna
     end
 
     def parse_consequent(context:)
-      read_list(from: read_instructions(until: 'else')) do
+      read_instructions(until: 'else') do
         parse_instructions(context:)
       end
     end
