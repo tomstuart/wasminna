@@ -702,12 +702,12 @@ module Wasminna
           body = parse_instructions(context:)
           Loop.new(type:, body:)
         in 'if'
-          consequent = parse_consequent(context:)
+          consequent = read_instructions(until: 'else') { parse_instructions(context:) }
           if peek in 'else'
             read => 'else'
             read_optional_id => nil | ^label
           end
-          alternative = parse_alternative(context:)
+          alternative = parse_instructions(context:)
 
           If.new(type:, consequent:, alternative:)
         end
@@ -726,16 +726,6 @@ module Wasminna
         parse_results => [] | [_] => results
         results
       end
-    end
-
-    def parse_consequent(context:)
-      read_instructions(until: 'else') do
-        parse_instructions(context:)
-      end
-    end
-
-    def parse_alternative(context:)
-      parse_instructions(context:)
     end
 
     def parse_normal_instruction(context:)
