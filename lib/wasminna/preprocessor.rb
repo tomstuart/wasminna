@@ -212,7 +212,7 @@ module Wasminna
     end
 
     def expand_inline_data_segment(id:)
-      strings = read_list(starting_with: 'data') { repeatedly { read } }
+      strings = read_list(starting_with: 'data')
 
       id = fresh_id if id.nil?
       bytes = strings.sum { string_value(_1).bytesize }
@@ -288,7 +288,7 @@ module Wasminna
 
     def process_typeuse
       if can_read_list?(starting_with: 'type')
-        read => type
+        read_list => type
         parameters = process_parameters
         results = process_results
 
@@ -415,7 +415,7 @@ module Wasminna
     end
 
     def process_blocktype
-      type = [read] if can_read_list?(starting_with: 'type')
+      type = [read_list] if can_read_list?(starting_with: 'type')
       parameters = process_parameters
       results = process_results
       blocktype = [*type, *parameters, *results]
@@ -508,7 +508,7 @@ module Wasminna
     end
 
     def process_active_element_segment(id:)
-      table_use = read if can_read_list?(starting_with: 'table')
+      table_use = read_list if can_read_list?(starting_with: 'table')
       offset = read_list { process_offset }
       element_list = process_element_list(func_optional: table_use.nil?)
       table_use = %w[table 0] if table_use.nil?
@@ -621,7 +621,7 @@ module Wasminna
     def process_active_data_segment(id:)
       memory_use =
         if can_read_list?(starting_with: 'memory')
-          read
+          read_list
         else
           %w[memory 0]
         end
