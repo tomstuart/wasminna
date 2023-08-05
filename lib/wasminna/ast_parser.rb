@@ -887,7 +887,14 @@ module Wasminna
     end
 
     def read_plain_instruction
-      [read]
+      [
+        keyword = read,
+        *read_plain_instruction_immediates(keyword:)
+      ]
+    end
+
+    def read_plain_instruction_immediates(keyword:)
+      []
     end
 
     def read_typeuse
