@@ -897,6 +897,8 @@ module Wasminna
       case keyword
       in 'call_indirect'
         [*read_indexes, *read_typeuse]
+      in 'select'
+        read_declarations(kind: 'result')
       else
         []
       end
