@@ -158,7 +158,9 @@ module Wasminna
         end
       end
 
-      def read_plain_instruction
+      def read_plain_instruction(&)
+        return read_list(from: read_plain_instruction, &) if block_given?
+
         [
           keyword = read,
           *read_plain_instruction_immediates(keyword:)
