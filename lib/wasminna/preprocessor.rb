@@ -5,6 +5,7 @@ module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
     include Helpers::ReadIndex
+    include Helpers::ReadInstructions
     include Helpers::ReadOptionalId
     include Helpers::SizeOf
     include Helpers::StringValue
@@ -406,9 +407,12 @@ module Wasminna
           ['select', *results]
         end
       else
-        read.then do |result|
+        read_plain_instruction do
+          read => keyword
+          immediates = repeatedly { read }
+
           after_all_fields do
-            [result]
+            [keyword, *immediates]
           end
         end
       end
