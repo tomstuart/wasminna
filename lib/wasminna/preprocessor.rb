@@ -337,21 +337,22 @@ module Wasminna
     end
 
     def expand_anonymous_declarations(kind:)
-      repeatedly do
-        raise StopIteration unless can_read_list?(starting_with: kind)
-        read_list(starting_with: kind) do
-          read_optional_id => id
-          if id.nil?
-            repeatedly do
+      read_declarations(kind:) do
+        repeatedly do
+          read_list(starting_with: kind) do
+            read_optional_id => id
+            if id.nil?
+              repeatedly do
+                read => type
+                [kind, type]
+              end
+            else
               read => type
-              [kind, type]
+              [[kind, id, type]]
             end
-          else
-            read => type
-            [[kind, id, type]]
           end
-        end
-      end.flatten(1)
+        end.flatten(1)
+      end
     end
 
     def process_instructions
