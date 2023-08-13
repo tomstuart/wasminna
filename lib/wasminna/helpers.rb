@@ -192,7 +192,9 @@ module Wasminna
         ]
       end
 
-      def read_declarations(kind:)
+      def read_declarations(kind:, &)
+        return read_list(from: read_declarations(kind:), &) if block_given?
+
         repeatedly do
           raise StopIteration unless can_read_list?(starting_with: kind)
           read_list
