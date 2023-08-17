@@ -852,9 +852,8 @@ module Wasminna
       kwargs => { until: terminator }
 
       repeatedly do
+        raise StopIteration if peek in ^terminator
         case peek
-        in ^terminator
-          raise StopIteration
         in 'block' | 'loop' | 'if'
           [read, *read_instructions(until: 'end'), read]
         else
