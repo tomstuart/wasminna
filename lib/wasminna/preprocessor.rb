@@ -430,16 +430,6 @@ module Wasminna
       case keyword
       in 'block' | 'loop'
         body = read_instructions { process_instructions }
-        read => 'end'
-        read_optional_id => end_label
-
-        after_all_fields do |type_definitions|
-          [
-            keyword, *label, *blocktype.call(type_definitions),
-            *body.call(type_definitions),
-            'end', *end_label
-          ]
-        end
       in 'if'
         consequent = read_instructions { process_instructions }
         if peek in 'else'
@@ -455,16 +445,17 @@ module Wasminna
               *alternative.call(type_definitions)
             ]
           end
-        read => 'end'
-        read_optional_id => end_label
+      end
 
-        after_all_fields do |type_definitions|
-          [
-            keyword, *label, *blocktype.call(type_definitions),
-            *body.call(type_definitions),
-            'end', *end_label
-          ]
-        end
+      read => 'end'
+      read_optional_id => end_label
+
+      after_all_fields do |type_definitions|
+        [
+          keyword, *label, *blocktype.call(type_definitions),
+          *body.call(type_definitions),
+          'end', *end_label
+        ]
       end
     end
 
