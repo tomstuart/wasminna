@@ -374,9 +374,26 @@ module Wasminna
 
     def process_folded_instruction
       read_list do
-        process_instructions.then do |result|
+        case peek
+        in 'block' | 'loop'
+          read => 'block' | 'loop' => keyword
+          read_optional_id => label
+          blocktype = process_typeuse
+          body = process_instructions
+
           after_all_fields do |type_definitions|
-            [result.call(type_definitions)]
+            [
+              [
+                keyword, *label, *blocktype.call(type_definitions),
+                *body.call(type_definitions)
+              ]
+            ]
+          end
+        else
+          process_instructions.then do |result|
+            after_all_fields do |type_definitions|
+              [result.call(type_definitions)]
+            end
           end
         end
       end
