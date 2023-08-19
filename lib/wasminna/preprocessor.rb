@@ -447,15 +447,21 @@ module Wasminna
           read_optional_id => else_label
         end
         alternative = read_instructions { process_instructions }
+        body =
+          after_all_fields do |type_definitions|
+            [
+              *consequent.call(type_definitions),
+              *else_keyword, *else_label,
+              *alternative.call(type_definitions)
+            ]
+          end
         read => 'end'
         read_optional_id => end_label
 
         after_all_fields do |type_definitions|
           [
             keyword, *label, *blocktype.call(type_definitions),
-            *consequent.call(type_definitions),
-            *else_keyword, *else_label,
-            *alternative.call(type_definitions),
+            *body.call(type_definitions),
             'end', *end_label
           ]
         end
