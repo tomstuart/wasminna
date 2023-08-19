@@ -375,44 +375,51 @@ module Wasminna
     def process_folded_instruction
       read_list do
         case peek
-        in 'block' | 'loop'
-          read => 'block' | 'loop' => keyword
-          read_optional_id => label
-          blocktype = process_typeuse
-          body = process_instructions
-
-          after_all_fields do |type_definitions|
-            [
-              [
-                keyword, *label, *blocktype.call(type_definitions),
-                *body.call(type_definitions)
-              ]
-            ]
-          end
-        in 'if'
-          read => 'if'
-          read_optional_id => label
-          blocktype = process_typeuse
-          condition = read_list(from: read_folded_instructions) { process_instructions }
-          consequent = read_list(starting_with: 'then') { process_instructions }
-          alternative = read_list(starting_with: 'else') { process_instructions } if can_read_list?(starting_with: 'else')
-
-          after_all_fields do |type_definitions|
-            [
-              [
-                'if', *label, *blocktype.call(type_definitions),
-                *condition.call(type_definitions),
-                ['then', *consequent.call(type_definitions)],
-                *([['else', *alternative.call(type_definitions)]] if alternative)
-              ]
-            ]
-          end
+        in 'block' | 'loop' | 'if'
+          process_folded_structured_instruction
         else
           process_instructions.then do |result|
             after_all_fields do |type_definitions|
               [result.call(type_definitions)]
             end
           end
+        end
+      end
+    end
+
+    def process_folded_structured_instruction
+      case peek
+      in 'block' | 'loop'
+        read => 'block' | 'loop' => keyword
+        read_optional_id => label
+        blocktype = process_typeuse
+        body = process_instructions
+
+        after_all_fields do |type_definitions|
+          [
+            [
+              keyword, *label, *blocktype.call(type_definitions),
+              *body.call(type_definitions)
+            ]
+          ]
+        end
+      in 'if'
+        read => 'if'
+        read_optional_id => label
+        blocktype = process_typeuse
+        condition = read_list(from: read_folded_instructions) { process_instructions }
+        consequent = read_list(starting_with: 'then') { process_instructions }
+        alternative = read_list(starting_with: 'else') { process_instructions } if can_read_list?(starting_with: 'else')
+
+        after_all_fields do |type_definitions|
+          [
+            [
+              'if', *label, *blocktype.call(type_definitions),
+              *condition.call(type_definitions),
+              ['then', *consequent.call(type_definitions)],
+              *([['else', *alternative.call(type_definitions)]] if alternative)
+            ]
+          ]
         end
       end
     end
