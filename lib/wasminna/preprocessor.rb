@@ -390,11 +390,12 @@ module Wasminna
     end
 
     def process_folded_structured_instruction
-      case peek
+      read => 'block' | 'loop' | 'if' => keyword
+      read_optional_id => label
+      blocktype = read_typeuse
+
+      case keyword
       in 'block' | 'loop'
-        read => 'block' | 'loop' => keyword
-        read_optional_id => label
-        blocktype = read_typeuse
         body = read_instructions
 
         expanded =
@@ -406,9 +407,6 @@ module Wasminna
 
         read_list(from: expanded) { process_instructions }
       in 'if'
-        read => 'if'
-        read_optional_id => label
-        blocktype = read_typeuse
         condition = read_folded_instructions
         consequent = read_list(starting_with: 'then')
         alternative = read_list(starting_with: 'else') if can_read_list?(starting_with: 'else')
