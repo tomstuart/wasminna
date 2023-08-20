@@ -404,8 +404,6 @@ module Wasminna
             *body,
             'end'
           ]
-
-        read_list(from: expanded) { process_instructions }
       in 'if'
         condition = read_folded_instructions
         consequent = read_list(starting_with: 'then')
@@ -420,9 +418,9 @@ module Wasminna
             *alternative,
             'end'
           ]
-
-        read_list(from: expanded) { process_instructions }
       end
+
+      read_list(from: expanded) { process_instructions }
     end
 
     def process_structured_instruction
