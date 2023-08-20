@@ -528,12 +528,8 @@ module Wasminna
 
     def parse_instructions(context:)
       repeatedly do
-        if can_read_list?
-          parse_folded_instruction(context:)
-        else
-          [parse_instruction(context:)]
-        end
-      end.flatten(1)
+        parse_instruction(context:)
+      end
     end
 
     def parse_instruction(context:)
@@ -545,57 +541,6 @@ module Wasminna
       else
         parse_normal_instruction(context:)
       end
-    end
-
-    def parse_folded_instruction(context:)
-      read_list do
-        case peek
-        in 'block' | 'loop' | 'if'
-          parse_folded_structured_instruction(context:)
-        else
-          parse_folded_plain_instruction(context:)
-        end
-      end
-    end
-
-    def parse_folded_structured_instruction(context:)
-      read => keyword
-      read_optional_id => label
-      type = parse_blocktype(context:)
-      context = Context.new(labels: [label]) + context
-
-      case keyword
-      in 'block'
-        body = parse_instructions(context:)
-        [Block.new(type:, body:)]
-      in 'loop'
-        body = parse_instructions(context:)
-        [Loop.new(type:, body:)]
-      in 'if'
-        condition =
-          repeatedly do
-            raise StopIteration if can_read_list?(starting_with: 'then')
-            parse_folded_instruction(context:)
-          end.flatten(1)
-        consequent =
-          read_list(starting_with: 'then') do
-            parse_instructions(context:)
-          end
-        alternative =
-          if can_read_list?(starting_with: 'else')
-            read_list(starting_with: 'else') do
-              parse_instructions(context:)
-            end
-          else
-            []
-          end
-        [*condition, If.new(type:, consequent:, alternative:)]
-      end
-    end
-
-    def parse_folded_plain_instruction(context:)
-      parse_instructions(context:) => [first, *rest]
-      [*rest, first]
     end
 
     def parse_numeric_instruction
@@ -703,10 +648,8 @@ module Wasminna
         Loop.new(type:, body:)
       in 'if'
         consequent = read_instructions { parse_instructions(context:) }
-        if peek in 'else'
-          read => 'else'
-          read_optional_id => nil | ^label
-        end
+        read => 'else'
+        read_optional_id => nil | ^label
         alternative = read_instructions { parse_instructions(context:) }
 
         If.new(type:, consequent:, alternative:)
@@ -772,12 +715,7 @@ module Wasminna
           'elem.drop' => ElemDrop
         }.fetch(keyword).new(index:)
       in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => keyword
-        index =
-          if can_read_index?
-            parse_index(context.tables)
-          else
-            0
-          end
+        index = parse_index(context.tables)
 
         {
           'table.get' => TableGet,
@@ -796,12 +734,7 @@ module Wasminna
 
         BrTable.new(target_indexes:, default_index:)
       in 'call_indirect'
-        table_index =
-          if can_read_index?
-            parse_index(context.tables)
-          else
-            0
-          end
+        table_index = parse_index(context.tables)
         parse_typeuse(context:) => [type_index, parameter_names]
         raise unless parameter_names.all?(&:nil?)
 
@@ -819,25 +752,13 @@ module Wasminna
         index = parse_index(context.functions)
         RefFunc.new(index:)
       in 'table.init'
-        read_index => index
-        if can_read_index?
-          table_index =
-            read_list(from: [index]) { parse_index(context.tables) }
-          element_index = parse_index(context.elem)
-        else
-          table_index = 0
-          element_index =
-            read_list(from: [index]) { parse_index(context.elem) }
-        end
+        table_index = parse_index(context.tables)
+        element_index = parse_index(context.elem)
 
         TableInit.new(table_index:, element_index:)
       in 'table.copy'
-        destination_index, source_index =
-          if can_read_index?
-            [parse_index(context.tables), parse_index(context.tables)]
-          else
-            [0, 0]
-          end
+        destination_index = parse_index(context.tables)
+        source_index = parse_index(context.tables)
 
         TableCopy.new(destination_index:, source_index:)
       in 'ref.is_null'

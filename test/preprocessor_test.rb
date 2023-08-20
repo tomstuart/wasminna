@@ -818,6 +818,154 @@ assert_preprocess_module_fields <<'--', <<'--'
   (type (func (param i64) (result i32)))
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32)
+    (then)
+    (else)
+  )
+--
+  if $label (result i32)
+  else
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32)
+    (then)
+  )
+--
+  if $label (result i32)
+  else
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label1 (result i32)
+    (if $label2 (result i32)
+      (then)
+      (else)
+    )
+    (then)
+    (else)
+  )
+--
+  if $label2 (result i32)
+  else
+  end
+  if $label1 (result i32)
+  else
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (block $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  )
+--
+  block $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (loop $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  )
+--
+  loop $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (block $label1 (result i64)
+    (loop $label2 (result i32)
+      i32.const 1
+      i32.const 2
+      i32.add
+    )
+  )
+--
+  block $label1 (result i64)
+    loop $label2 (result i32)
+      i32.const 1
+      i32.const 2
+      i32.add
+    end
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (if $label (result i32) (i32.const 0)
+    (then i32.const 1)
+    (else i32.const 2)
+  )
+--
+  i32.const 0
+  if $label (result i32)
+    i32.const 1
+  else
+    i32.const 2
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (i32.mul (i32.add (local.get $x) (i32.const 2)) (i32.const 3))
+--
+  local.get $x
+  i32.const 2
+  i32.add
+  i32.const 3
+  i32.mul
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (select (result i32) (local.get 0) (local.get 1) (local.get 2))
+--
+  local.get 0
+  local.get 1
+  local.get 2
+  select (result i32)
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  call_indirect (type $t)
+--
+  call_indirect 0 (type $t)
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  table.get
+  table.set
+  table.size
+  table.grow
+  table.fill
+  table.copy
+  table.init 42
+--
+  table.get 0
+  table.set 0
+  table.size 0
+  table.grow 0
+  table.fill 0
+  table.copy 0 0
+  table.init 0 42
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  if i32.const 0 nop end
+--
+  if i32.const 0 nop else end
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
@@ -849,6 +997,12 @@ BEGIN {
 
   def assert_preprocess_module_fields(input, expected)
     assert_preprocess "(module #{input})", "(module #{expected})"
+  end
+
+  def assert_preprocess_instructions(input, expected)
+    assert_preprocess_module_fields \
+      "(type (func)) (func (type 0) #{input})",
+      "(type (func)) (func (type 0) #{expected})"
   end
 }
 

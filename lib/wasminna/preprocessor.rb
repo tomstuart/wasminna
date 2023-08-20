@@ -366,7 +366,7 @@ module Wasminna
     def process_instruction
       case peek
       in [*]
-        process_folded_instruction
+        expand_folded_instruction
       in 'block' | 'loop' | 'if'
         process_structured_instruction
       else
@@ -374,95 +374,91 @@ module Wasminna
       end
     end
 
-    def process_folded_instruction
+    def expand_folded_instruction
       read_list do
         case peek
         in 'block' | 'loop' | 'if'
-          process_folded_structured_instruction
+          expand_folded_structured_instruction
         else
-          process_instructions.then do |result|
-            after_all_fields do |type_definitions|
-              [result.call(type_definitions)]
-            end
-          end
+          expand_folded_plain_instruction
         end
       end
     end
 
-    def process_folded_structured_instruction
-      case peek
-      in 'block' | 'loop'
-        read => 'block' | 'loop' => keyword
-        read_optional_id => label
-        blocktype = process_typeuse
-        body = process_instructions
+    def expand_folded_structured_instruction
+      read => 'block' | 'loop' | 'if' => keyword
+      read_optional_id => label
+      blocktype = read_typeuse
 
-        after_all_fields do |type_definitions|
+      expanded =
+        case keyword
+        in 'block' | 'loop'
+          body = read_instructions
+
           [
-            [
-              keyword, *label, *blocktype.call(type_definitions),
-              *body.call(type_definitions)
-            ]
+            keyword, *label, *blocktype,
+            *body,
+            'end'
+          ]
+        in 'if'
+          condition = read_folded_instructions
+          consequent = read_list(starting_with: 'then')
+          alternative = read_list(starting_with: 'else') if can_read_list?(starting_with: 'else')
+
+          [
+            *condition,
+            'if', *label, *blocktype,
+            *consequent,
+            'else',
+            *alternative,
+            'end'
           ]
         end
-      in 'if'
-        read => 'if'
-        read_optional_id => label
-        blocktype = process_typeuse
-        condition = read_list(from: read_folded_instructions) { process_instructions }
-        consequent = read_list(starting_with: 'then') { process_instructions }
-        alternative = read_list(starting_with: 'else') { process_instructions } if can_read_list?(starting_with: 'else')
 
-        after_all_fields do |type_definitions|
-          [
-            [
-              'if', *label, *blocktype.call(type_definitions),
-              *condition.call(type_definitions),
-              ['then', *consequent.call(type_definitions)],
-              *([['else', *alternative.call(type_definitions)]] if alternative)
-            ]
-          ]
-        end
-      end
+      read_list(from: expanded) { process_instructions }
+    end
+
+    def expand_folded_plain_instruction
+      plain_instruction = read_plain_instruction
+      folded_instructions = read_folded_instructions
+      expanded = [*folded_instructions, *plain_instruction]
+
+      read_list(from: expanded) { process_instructions }
     end
 
     def process_structured_instruction
       read => 'block' | 'loop' | 'if' => keyword
       read_optional_id => label
       blocktype = process_blocktype
+      body =
+        case keyword
+        in 'block' | 'loop'
+          read_instructions { process_instructions }
+        in 'if'
+          consequent = read_instructions { process_instructions }
+          if peek in 'else'
+            read => 'else'
+            read_optional_id => else_label
+          end
+          alternative = read_instructions { process_instructions }
 
-      case keyword
-      in 'block' | 'loop'
-        body = read_instructions { process_instructions }
-        read => 'end'
-        read_optional_id => end_label
+          after_all_fields do |type_definitions|
+            [
+              *consequent.call(type_definitions),
+              'else', *else_label,
+              *alternative.call(type_definitions)
+            ]
+          end
+        end
+      read => 'end'
+      read_optional_id => end_label
 
-        after_all_fields do |type_definitions|
-          [
-            keyword, *label, *blocktype.call(type_definitions),
-            *body.call(type_definitions),
-            'end', *end_label
-          ]
-        end
-      in 'if'
-        consequent = read_instructions { process_instructions }
-        if peek in 'else'
-          read => else_keyword
-          read_optional_id => else_label
-        end
-        alternative = read_instructions { process_instructions }
-        read => 'end'
-        read_optional_id => end_label
-
-        after_all_fields do |type_definitions|
-          [
-            keyword, *label, *blocktype.call(type_definitions),
-            *consequent.call(type_definitions),
-            *else_keyword, *else_label,
-            *alternative.call(type_definitions),
-            'end', *end_label
-          ]
-        end
+      after_all_fields do |type_definitions|
+        [
+          keyword, *label, *blocktype.call(type_definitions),
+          *body.call(type_definitions),
+          'end', *end_label
+        ]
       end
     end
 
@@ -472,17 +468,36 @@ module Wasminna
 
         case keyword
         in 'call_indirect'
-          read_index => index if can_read_index?
+          index = can_read_index? ? read_index : '0'
           typeuse = process_typeuse
 
           after_all_fields do |type_definitions|
-            ['call_indirect', *index, *typeuse.call(type_definitions)]
+            ['call_indirect', index, *typeuse.call(type_definitions)]
           end
         in 'select'
           results = process_results
 
           after_all_fields do
             ['select', *results]
+          end
+        in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill'
+          index = can_read_index? ? read_index : '0'
+
+          after_all_fields do
+            [keyword, index]
+          end
+        in 'table.copy'
+          indexes = can_read_index? ? [read_index, read_index] : ['0', '0']
+
+          after_all_fields do
+            ['table.copy', *indexes]
+          end
+        in 'table.init'
+          index = read_index
+          indexes = can_read_index? ? [index, read_index] : ['0', index]
+
+          after_all_fields do
+            ['table.init', *indexes]
           end
         else
           immediates = repeatedly { read }
