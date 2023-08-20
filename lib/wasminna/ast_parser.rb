@@ -693,24 +693,22 @@ module Wasminna
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      read_instructions(until: 'end') do
-        case keyword
-        in 'block'
-          body = parse_instructions(context:)
-          Block.new(type:, body:)
-        in 'loop'
-          body = parse_instructions(context:)
-          Loop.new(type:, body:)
-        in 'if'
-          consequent = read_instructions(until: 'else') { parse_instructions(context:) }
-          if peek in 'else'
-            read => 'else'
-            read_optional_id => nil | ^label
-          end
-          alternative = parse_instructions(context:)
-
-          If.new(type:, consequent:, alternative:)
+      case keyword
+      in 'block'
+        body = read_instructions { parse_instructions(context:) }
+        Block.new(type:, body:)
+      in 'loop'
+        body = read_instructions { parse_instructions(context:) }
+        Loop.new(type:, body:)
+      in 'if'
+        consequent = read_instructions { parse_instructions(context:) }
+        if peek in 'else'
+          read => 'else'
+          read_optional_id => nil | ^label
         end
+        alternative = read_instructions { parse_instructions(context:) }
+
+        If.new(type:, consequent:, alternative:)
       end.tap do
         read => 'end'
         read_optional_id => nil | ^label
@@ -846,32 +844,92 @@ module Wasminna
       end
     end
 
-    def read_instructions(**kwargs, &)
-      return read_list(from: read_instructions(**kwargs), &) if block_given?
-
-      kwargs => { until: terminator }
+    def read_instructions(&)
+      return read_list(from: read_instructions, &) if block_given?
 
       repeatedly do
-        raise StopIteration if peek in ^terminator
+        raise StopIteration if peek in 'end' | 'else'
         read_instruction
       end.flatten(1)
     end
 
     def read_instruction
       case peek
+      in [*]
+        read_folded_instruction
       in 'block' | 'loop' | 'if'
         read_structured_instruction
       else
-        [read]
+        read_plain_instruction
       end
     end
 
+    def read_folded_instruction
+      [read_list]
+    end
+
     def read_structured_instruction
+      case peek
+      in 'block' | 'loop'
+        [
+          read, *read_optional_id, *read_typeuse,
+          *read_instructions,
+          read, *read_optional_id
+        ]
+      in 'if'
+        [
+          read, *read_optional_id, *read_typeuse,
+          *read_instructions,
+          *([read, *read_instructions] if peek in 'else'),
+          read, *read_optional_id
+        ]
+      end
+    end
+
+    def read_plain_instruction
       [
-        read,
-        *read_instructions(until: 'end'),
-        read
+        keyword = read,
+        *read_plain_instruction_immediates(keyword:)
       ]
+    end
+
+    def read_plain_instruction_immediates(keyword:)
+      case keyword
+      in 'call_indirect'
+        [*read_indexes, *read_typeuse]
+      in 'select'
+        read_declarations(kind: 'result')
+      in 'table.get' | 'table.set' | 'table.size' | 'table.grow' | 'table.fill' | 'table.copy' | 'table.init' | 'br_table'
+        read_indexes
+      in 'br' | 'br_if' | 'call' | 'ref.null' | 'ref.func' | 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'elem.drop' | 'memory.init' | 'data.drop' | %r{\A[fi](?:32|64)\.const\z}
+        [read]
+      in %r{\A[fi](?:32|64)\.(?:load|store)}
+        [*(read if peek in %r{\Aoffset=}), *(read if peek in %r{\Aalign=})]
+      else
+        []
+      end
+    end
+
+    def read_typeuse
+      [
+        *([read_list] if can_read_list?(starting_with: 'type')),
+        *read_declarations(kind: 'param'),
+        *read_declarations(kind: 'result')
+      ]
+    end
+
+    def read_declarations(kind:)
+      repeatedly do
+        raise StopIteration unless can_read_list?(starting_with: kind)
+        read_list
+      end
+    end
+
+    def read_indexes
+      repeatedly do
+        raise StopIteration unless can_read_index?
+        read_index
+      end
     end
 
     def unsigned(signed, bits:)
