@@ -394,22 +394,21 @@ module Wasminna
       read_optional_id => label
       blocktype = read_typeuse
 
-      case keyword
-      in 'block' | 'loop'
-        body = read_instructions
+      expanded =
+        case keyword
+        in 'block' | 'loop'
+          body = read_instructions
 
-        expanded =
           [
             keyword, *label, *blocktype,
             *body,
             'end'
           ]
-      in 'if'
-        condition = read_folded_instructions
-        consequent = read_list(starting_with: 'then')
-        alternative = read_list(starting_with: 'else') if can_read_list?(starting_with: 'else')
+        in 'if'
+          condition = read_folded_instructions
+          consequent = read_list(starting_with: 'then')
+          alternative = read_list(starting_with: 'else') if can_read_list?(starting_with: 'else')
 
-        expanded =
           [
             *condition,
             'if', *label, *blocktype,
@@ -418,7 +417,7 @@ module Wasminna
             *alternative,
             'end'
           ]
-      end
+        end
 
       read_list(from: expanded) { process_instructions }
     end
