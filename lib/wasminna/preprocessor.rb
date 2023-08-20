@@ -5,6 +5,7 @@ module Wasminna
   class Preprocessor
     include Helpers::ReadFromSExpression
     include Helpers::ReadIndex
+    include Helpers::ReadInstructions
     include Helpers::ReadOptionalId
     include Helpers::SizeOf
     include Helpers::StringValue
@@ -336,44 +337,91 @@ module Wasminna
     end
 
     def expand_anonymous_declarations(kind:)
-      repeatedly do
-        raise StopIteration unless can_read_list?(starting_with: kind)
-        read_list(starting_with: kind) do
-          read_optional_id => id
-          if id.nil?
-            repeatedly do
+      read_declarations(kind:) do
+        repeatedly do
+          read_list(starting_with: kind) do
+            read_optional_id => id
+            if id.nil?
+              repeatedly do
+                read => type
+                [kind, type]
+              end
+            else
               read => type
-              [kind, type]
+              [[kind, id, type]]
             end
-          else
-            read => type
-            [[kind, id, type]]
           end
-        end
-      end.flatten(1)
+        end.flatten(1)
+      end
     end
 
     def process_instructions
-      repeatedly do
-        case peek
-        in [*]
-          process_folded_instruction
-        in 'block' | 'loop' | 'if'
-          process_structured_instruction
-        else
-          process_plain_instruction
-        end
-      end.then do |results|
+      repeatedly { process_instruction }.then do |results|
         after_all_fields do |type_definitions|
           results.flat_map { _1.call(type_definitions) }
         end
       end
     end
 
+    def process_instruction
+      case peek
+      in [*]
+        process_folded_instruction
+      in 'block' | 'loop' | 'if'
+        process_structured_instruction
+      else
+        process_plain_instruction
+      end
+    end
+
     def process_folded_instruction
-      read_list { process_instructions }.then do |result|
+      read_list do
+        case peek
+        in 'block' | 'loop' | 'if'
+          process_folded_structured_instruction
+        else
+          process_instructions.then do |result|
+            after_all_fields do |type_definitions|
+              [result.call(type_definitions)]
+            end
+          end
+        end
+      end
+    end
+
+    def process_folded_structured_instruction
+      case peek
+      in 'block' | 'loop'
+        read => 'block' | 'loop' => keyword
+        read_optional_id => label
+        blocktype = process_typeuse
+        body = process_instructions
+
         after_all_fields do |type_definitions|
-          [result.call(type_definitions)]
+          [
+            [
+              keyword, *label, *blocktype.call(type_definitions),
+              *body.call(type_definitions)
+            ]
+          ]
+        end
+      in 'if'
+        read => 'if'
+        read_optional_id => label
+        blocktype = process_typeuse
+        condition = read_list(from: read_folded_instructions) { process_instructions }
+        consequent = read_list(starting_with: 'then') { process_instructions }
+        alternative = read_list(starting_with: 'else') { process_instructions } if can_read_list?(starting_with: 'else')
+
+        after_all_fields do |type_definitions|
+          [
+            [
+              'if', *label, *blocktype.call(type_definitions),
+              *condition.call(type_definitions),
+              ['then', *consequent.call(type_definitions)],
+              *([['else', *alternative.call(type_definitions)]] if alternative)
+            ]
+          ]
         end
       end
     end
@@ -389,26 +437,28 @@ module Wasminna
     end
 
     def process_plain_instruction
-      case peek
-      in 'call_indirect'
-        read => 'call_indirect'
-        read_index => index if can_read_index?
-        typeuse = process_typeuse
+      read_plain_instruction do
+        read => keyword
 
-        after_all_fields do |type_definitions|
-          ['call_indirect', *index, *typeuse.call(type_definitions)]
-        end
-      in 'select'
-        read => 'select'
-        results = process_results
+        case keyword
+        in 'call_indirect'
+          read_index => index if can_read_index?
+          typeuse = process_typeuse
 
-        after_all_fields do
-          ['select', *results]
-        end
-      else
-        read.then do |result|
+          after_all_fields do |type_definitions|
+            ['call_indirect', *index, *typeuse.call(type_definitions)]
+          end
+        in 'select'
+          results = process_results
+
           after_all_fields do
-            [result]
+            ['select', *results]
+          end
+        else
+          immediates = repeatedly { read }
+
+          after_all_fields do
+            [keyword, *immediates]
           end
         end
       end
@@ -428,10 +478,6 @@ module Wasminna
       else
         read_list(from: blocktype) { process_typeuse }
       end
-    end
-
-    def process_instruction
-      process_instructions # TODO only process one instruction
     end
 
     def process_type_definition
