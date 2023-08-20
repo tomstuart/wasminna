@@ -394,17 +394,17 @@ module Wasminna
       in 'block' | 'loop'
         read => 'block' | 'loop' => keyword
         read_optional_id => label
-        blocktype = process_typeuse
-        body = process_instructions
+        blocktype = read_typeuse
+        body = read_instructions
 
-        after_all_fields do |type_definitions|
+        expanded =
           [
-            [
-              keyword, *label, *blocktype.call(type_definitions),
-              *body.call(type_definitions)
-            ]
+            keyword, *label, *blocktype,
+            *body,
+            'end'
           ]
-        end
+
+        read_list(from: expanded) { process_instructions }
       in 'if'
         read => 'if'
         read_optional_id => label

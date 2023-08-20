@@ -857,6 +857,52 @@ assert_preprocess_instructions <<'--', <<'--'
   end
 --
 
+assert_preprocess_instructions <<'--', <<'--'
+  (block $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  )
+--
+  block $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (loop $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  )
+--
+  loop $label (result i32)
+    i32.const 1
+    i32.const 2
+    i32.add
+  end
+--
+
+assert_preprocess_instructions <<'--', <<'--'
+  (block $label1 (result i64)
+    (loop $label2 (result i32)
+      i32.const 1
+      i32.const 2
+      i32.add
+    )
+  )
+--
+  block $label1 (result i64)
+    loop $label2 (result i32)
+      i32.const 1
+      i32.const 2
+      i32.add
+    end
+  end
+--
+
 BEGIN {
   require 'wasminna/preprocessor'
   require 'wasminna/s_expression_parser'
