@@ -392,19 +392,23 @@ module Wasminna
     def process_plain_instruction
       case peek
       in 'call_indirect'
-        read => 'call_indirect'
-        read_index => index if can_read_index?
-        typeuse = process_typeuse
+        read_plain_instruction do
+          read => 'call_indirect'
+          read_index => index if can_read_index?
+          typeuse = process_typeuse
 
-        after_all_fields do |type_definitions|
-          ['call_indirect', *index, *typeuse.call(type_definitions)]
+          after_all_fields do |type_definitions|
+            ['call_indirect', *index, *typeuse.call(type_definitions)]
+          end
         end
       in 'select'
-        read => 'select'
-        results = process_results
+        read_plain_instruction do
+          read => 'select'
+          results = process_results
 
-        after_all_fields do
-          ['select', *results]
+          after_all_fields do
+            ['select', *results]
+          end
         end
       else
         read_plain_instruction do
