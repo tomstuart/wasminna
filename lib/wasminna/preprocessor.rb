@@ -378,7 +378,7 @@ module Wasminna
       read_list do
         case peek
         in 'block' | 'loop' | 'if'
-          process_folded_structured_instruction
+          expand_folded_structured_instruction
         else
           process_instructions.then do |result|
             after_all_fields do |type_definitions|
@@ -389,7 +389,7 @@ module Wasminna
       end
     end
 
-    def process_folded_structured_instruction
+    def expand_folded_structured_instruction
       read => 'block' | 'loop' | 'if' => keyword
       read_optional_id => label
       blocktype = read_typeuse
