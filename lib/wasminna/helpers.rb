@@ -21,6 +21,8 @@ module Wasminna
       private
 
       def read_list(from: read, starting_with: nil)
+        return read_list(from:, starting_with:) { repeatedly { read } } unless block_given?
+
         raise "not a list: #{from.inspect}" unless from in [*]
         previous_s_expression, self.s_expression = self.s_expression, from
 

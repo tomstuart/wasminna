@@ -87,7 +87,7 @@ module Wasminna
       end.transpose.then do |fields = [], type_definitions = []|
         [
           after_all_fields do |type_definitions|
-            fields.flat_map { |field| field.call(type_definitions) }
+            fields.flat_map { _1.call(type_definitions) }
           end,
           type_definitions.flatten(1)
         ]
@@ -169,19 +169,12 @@ module Wasminna
       read => 'funcref' | 'externref' => reftype
       item_type, items =
         read_list(starting_with: 'elem') do
-          item_type =
-            if can_read_list?
-              reftype
-            else
-              'func'
-            end
+          item_type = can_read_list? ? reftype : 'func'
           items = repeatedly { read }
           [item_type, items]
         end
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       limit = items.length.to_s
       expanded =
         [
@@ -219,11 +212,9 @@ module Wasminna
     end
 
     def expand_inline_data_segment(id:)
-      strings = read_list(starting_with: 'data') { repeatedly { read } }
+      strings = read_list(starting_with: 'data')
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       bytes = strings.sum { string_value(_1).bytesize }
       limit = size_of(bytes, in: Memory::BYTES_PER_PAGE).to_s
       expanded =
@@ -285,9 +276,7 @@ module Wasminna
       read => ['export', name]
       description = repeatedly { read }
 
-      if id.nil?
-        id = fresh_id
-      end
+      id = fresh_id if id.nil?
       expanded =
         [
           ['export', name, [kind, id]],
@@ -299,7 +288,7 @@ module Wasminna
 
     def process_typeuse
       if can_read_list?(starting_with: 'type')
-        read => type
+        read_list => type
         parameters = process_parameters
         results = process_results
 
@@ -367,56 +356,66 @@ module Wasminna
     def process_instructions
       repeatedly do
         case peek
-        in 'block' | 'loop' | 'if'
-          read => 'block' | 'loop' | 'if' => kind
-          read_optional_id => id
-          blocktype = process_blocktype
-
-          after_all_fields do |type_definitions|
-            [kind, *id, *blocktype.call(type_definitions)]
-          end
-        in 'call_indirect'
-          read => 'call_indirect'
-          if can_read_index?
-            read_index => index
-          end
-          typeuse = process_typeuse
-
-          after_all_fields do |type_definitions|
-            ['call_indirect', *index, *typeuse.call(type_definitions)]
-          end
-        in 'select'
-          read => 'select'
-          results = process_results
-
-          after_all_fields do
-            ['select', *results]
-          end
         in [*]
-          read_list { process_instructions }.then do |result|
-            after_all_fields do |type_definitions|
-              [result.call(type_definitions)]
-            end
-          end
+          process_folded_instruction
+        in 'block' | 'loop' | 'if'
+          process_structured_instruction
         else
-          read.then do |result|
-            after_all_fields do
-              [result]
-            end
-          end
+          process_plain_instruction
         end
       end.then do |results|
         after_all_fields do |type_definitions|
-          results.flat_map { |result| result.call(type_definitions) }
+          results.flat_map { _1.call(type_definitions) }
+        end
+      end
+    end
+
+    def process_folded_instruction
+      read_list { process_instructions }.then do |result|
+        after_all_fields do |type_definitions|
+          [result.call(type_definitions)]
+        end
+      end
+    end
+
+    def process_structured_instruction
+      read => 'block' | 'loop' | 'if' => keyword
+      read_optional_id => label
+      blocktype = process_blocktype
+
+      after_all_fields do |type_definitions|
+        [keyword, *label, *blocktype.call(type_definitions)]
+      end
+    end
+
+    def process_plain_instruction
+      case peek
+      in 'call_indirect'
+        read => 'call_indirect'
+        read_index => index if can_read_index?
+        typeuse = process_typeuse
+
+        after_all_fields do |type_definitions|
+          ['call_indirect', *index, *typeuse.call(type_definitions)]
+        end
+      in 'select'
+        read => 'select'
+        results = process_results
+
+        after_all_fields do
+          ['select', *results]
+        end
+      else
+        read.then do |result|
+          after_all_fields do
+            [result]
+          end
         end
       end
     end
 
     def process_blocktype
-      type =
-        if can_read_list?(starting_with: 'type')
-          [read]
-        end
+      type = [read_list] if can_read_list?(starting_with: 'type')
       parameters = process_parameters
       results = process_results
       blocktype = [*type, *parameters, *results]
@@ -509,16 +508,10 @@ module Wasminna
     end
 
     def process_active_element_segment(id:)
-      table_use =
-        if can_read_list?(starting_with: 'table')
-          read
-        end
+      table_use = read_list if can_read_list?(starting_with: 'table')
       offset = read_list { process_offset }
       element_list = process_element_list(func_optional: table_use.nil?)
-
-      if table_use.nil?
-        table_use = %w[table 0]
-      end
+      table_use = %w[table 0] if table_use.nil?
 
       after_all_fields do |type_definitions|
         [
@@ -571,9 +564,7 @@ module Wasminna
           [reftype, *items.call(type_definitions)]
         end
       else
-        if !func_optional || (peek in 'func')
-          read => 'func'
-        end
+        read => 'func' if !func_optional || (peek in 'func')
         items =
           read_list(from: process_function_indexes) do
             process_element_expressions
@@ -590,7 +581,7 @@ module Wasminna
         read_list { process_element_expression }
       end.then do |results|
         after_all_fields do |type_definitions|
-          results.map { |result| result.call(type_definitions) }
+          results.map { _1.call(type_definitions) }
         end
       end
     end
@@ -610,9 +601,7 @@ module Wasminna
     end
 
     def process_function_indexes
-      indexes = repeatedly { read }
-
-      indexes.map { |index| ['ref.func', index] }
+      repeatedly { read }.map { ['ref.func', _1] }
     end
 
     def process_data_segment
@@ -632,7 +621,7 @@ module Wasminna
     def process_active_data_segment(id:)
       memory_use =
         if can_read_list?(starting_with: 'memory')
-          read
+          read_list
         else
           %w[memory 0]
         end

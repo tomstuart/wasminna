@@ -184,7 +184,10 @@ module Wasminna
       read => 'invoke'
       read_optional_id => module_name
       parse_string => name
-      arguments = parse_instructions(context: Context.new)
+      arguments =
+        repeatedly do
+          read_list { parse_instruction(context: Context.new) }
+        end
 
       Invoke.new(module_name:, name:, arguments:)
     end
@@ -238,22 +241,22 @@ module Wasminna
           in 'f32.const' | 'f64.const'
             parse_float_expectation
           else
-            parse_instructions(context: Context.new)
+            parse_instruction(context: Context.new)
           end
         end
       end
     end
 
     def parse_float_expectation
-      read => 'f32.const' | 'f64.const' => opcode
-      bits = opcode.slice(%r{\d+}).to_i(10)
+      read => 'f32.const' | 'f64.const' => keyword
+      bits = keyword.slice(%r{\d+}).to_i(10)
 
       if peek in 'nan:canonical' | 'nan:arithmetic'
         read => 'nan:canonical' | 'nan:arithmetic' => nan
         NanExpectation.new(nan:, bits:)
       else
         number = parse_float(bits:)
-        [Const.new(type: :float, bits:, number:)]
+        Const.new(type: :float, bits:, number:)
       end
     end
 
@@ -555,11 +558,12 @@ module Wasminna
     end
 
     def parse_folded_structured_instruction(context:)
-      read_labelled => [opcode, label]
+      read => keyword
+      read_optional_id => label
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      case opcode
+      case keyword
       in 'block'
         body = parse_instructions(context:)
         [Block.new(type:, body:)]
@@ -594,9 +598,9 @@ module Wasminna
     end
 
     def parse_numeric_instruction
-      read => opcode
+      read => keyword
 
-      opcode.match(NUMERIC_OPCODE_REGEXP) =>
+      keyword.match(NUMERIC_OPCODE_REGEXP) =>
         { type:, bits:, operation: }
       type = { 'f' => :float, 'i' => :integer }.fetch(type)
       bits = bits.to_i(10)
@@ -684,12 +688,13 @@ module Wasminna
     end
 
     def parse_structured_instruction(context:)
-      read_labelled => [opcode, label]
+      read => keyword
+      read_optional_id => label
       type = parse_blocktype(context:)
       context = Context.new(labels: [label]) + context
 
-      read_list(from: read_until('end')) do
-        case opcode
+      read_instructions(until: 'end') do
+        case keyword
         in 'block'
           body = parse_instructions(context:)
           Block.new(type:, body:)
@@ -697,14 +702,18 @@ module Wasminna
           body = parse_instructions(context:)
           Loop.new(type:, body:)
         in 'if'
-          consequent = parse_consequent(context:)
-          read_labelled('else', label:) if peek in 'else'
-          alternative = parse_alternative(context:)
+          consequent = read_instructions(until: 'else') { parse_instructions(context:) }
+          if peek in 'else'
+            read => 'else'
+            read_optional_id => nil | ^label
+          end
+          alternative = parse_instructions(context:)
 
           If.new(type:, consequent:, alternative:)
         end
       end.tap do
-        read_labelled('end', label:)
+        read => 'end'
+        read_optional_id => nil | ^label
       end
     end
 
@@ -719,38 +728,9 @@ module Wasminna
       end
     end
 
-    def parse_consequent(context:)
-      read_list(from: read_until('else')) do
-        parse_instructions(context:)
-      end
-    end
-
-    def parse_alternative(context:)
-      parse_instructions(context:)
-    end
-
-    def read_labelled(atom = nil, label: nil)
-      if atom.nil?
-        read => atom
-      else
-        read => ^atom
-      end
-
-      read_optional_id => id
-      unless id.nil?
-        if label.nil?
-          id => label
-        else
-          id => ^label
-        end
-      end
-
-      [atom, label]
-    end
-
     def parse_normal_instruction(context:)
       case read
-      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => opcode
+      in 'return' | 'nop' | 'drop' | 'unreachable' | 'memory.grow' | 'memory.size' | 'memory.fill' | 'memory.copy' => keyword
         {
           'return' => Return,
           'nop' => Nop,
@@ -760,10 +740,10 @@ module Wasminna
           'memory.size' => MemorySize,
           'memory.fill' => MemoryFill,
           'memory.copy' => MemoryCopy
-        }.fetch(opcode).new
-      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'memory.init' | 'data.drop' | 'elem.drop' => opcode
+        }.fetch(keyword).new
+      in 'local.get' | 'local.set' | 'local.tee' | 'global.get' | 'global.set' | 'br' | 'br_if' | 'call' | 'memory.init' | 'data.drop' | 'elem.drop' => keyword
         index_space =
-          case opcode
+          case keyword
           in 'local.get' | 'local.set' | 'local.tee'
             context.locals
           in 'global.get' | 'global.set'
@@ -791,8 +771,8 @@ module Wasminna
           'memory.init' => MemoryInit,
           'data.drop' => DataDrop,
           'elem.drop' => ElemDrop
-        }.fetch(opcode).new(index:)
-      in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => opcode
+        }.fetch(keyword).new(index:)
+      in 'table.get' | 'table.set' | 'table.fill' | 'table.grow' | 'table.size' => keyword
         index =
           if can_read_index?
             parse_index(context.tables)
@@ -806,7 +786,7 @@ module Wasminna
           'table.fill' => TableFill,
           'table.grow' => TableGrow,
           'table.size' => TableSize
-        }.fetch(opcode).new(index:)
+        }.fetch(keyword).new(index:)
       in 'br_table'
         indexes =
           repeatedly do
@@ -866,17 +846,32 @@ module Wasminna
       end
     end
 
-    def read_until(terminator)
+    def read_instructions(**kwargs, &)
+      return read_list(from: read_instructions(**kwargs), &) if block_given?
+
+      kwargs => { until: terminator }
+
       repeatedly do
-        case peek
-        in ^terminator
-          raise StopIteration
-        in 'block' | 'loop' | 'if'
-          [read, *read_until('end'), read]
-        else
-          [read]
-        end
+        raise StopIteration if peek in ^terminator
+        read_instruction
       end.flatten(1)
+    end
+
+    def read_instruction
+      case peek
+      in 'block' | 'loop' | 'if'
+        read_structured_instruction
+      else
+        [read]
+      end
+    end
+
+    def read_structured_instruction
+      [
+        read,
+        *read_instructions(until: 'end'),
+        read
+      ]
     end
 
     def unsigned(signed, bits:)
